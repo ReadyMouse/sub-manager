@@ -384,7 +384,17 @@ describe("SubChainSubscription", function () {
       it("Should create subscription with endDate only (no maxPayments)", async function () {
         const amount = ethers.parseUnits("20", 6); // 20 PYUSD
         const interval = THIRTY_DAYS;
-        const endDate = Math.floor(Date.now() / 1000) + (365 * ONE_DAY); // 1 year from now
+        
+        // Get current block timestamp
+        const block = await ethers.provider.getBlock("latest");
+        const startTime = block!.timestamp;
+        
+        // Set endDate far in the future (1 year)
+        const endDate = startTime + (365 * ONE_DAY);
+        
+        // Fast forward a bit to ensure timestamps are fresh
+        await ethers.provider.send("evm_increaseTime", [1]);
+        await ethers.provider.send("evm_mine", []);
         
         const tx = await subChainContract.connect(user1).createSubscription(
           NETFLIX_ID,
@@ -397,8 +407,6 @@ describe("SubChainSubscription", function () {
         );
         
         const receipt = await tx.wait();
-        const block = await ethers.provider.getBlock(receipt!.blockNumber);
-        
         const event = receipt?.logs.find(log => {
           try {
             return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
@@ -422,6 +430,14 @@ describe("SubChainSubscription", function () {
         const interval = THIRTY_DAYS;
         const maxPayments = 12; // 12 payments
         
+        // Get current block timestamp
+        const block = await ethers.provider.getBlock("latest");
+        const startTime = block!.timestamp;
+        
+        // Fast forward a bit to ensure timestamps are fresh
+        await ethers.provider.send("evm_increaseTime", [1]);
+        await ethers.provider.send("evm_mine", []);
+        
         const tx = await subChainContract.connect(user1).createSubscription(
           NETFLIX_ID,
           amount,
@@ -433,8 +449,6 @@ describe("SubChainSubscription", function () {
         );
         
         const receipt = await tx.wait();
-        const block = await ethers.provider.getBlock(receipt!.blockNumber);
-        
         const event = receipt?.logs.find(log => {
           try {
             return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
@@ -449,8 +463,12 @@ describe("SubChainSubscription", function () {
         const sub = await subChainContract.getSubscription(newSubId);
         expect(sub.maxPayments).to.equal(maxPayments);
         
-        // When maxPayments is set, endDate is calculated automatically
-        const expectedEndDate = block!.timestamp + (maxPayments * interval);
+        // Get block timestamp after tx
+        const txBlock = await ethers.provider.getBlock(receipt!.blockNumber);
+        
+        // Contract calculates endDate as: now + (maxPayments + 1) * interval
+        // +1 because first payment is due after first interval
+        const expectedEndDate = txBlock!.timestamp + ((maxPayments + 1) * interval);
         expect(sub.endDate).to.equal(expectedEndDate);
         
         console.log("  ✅ Created subscription with maxPayments:", maxPayments);
@@ -461,7 +479,17 @@ describe("SubChainSubscription", function () {
         const amount = ethers.parseUnits("25", 6); // 25 PYUSD
         const interval = THIRTY_DAYS;
         const maxPayments = 6; // 6 payments (6 months)
-        const endDate = Math.floor(Date.now() / 1000) + (365 * ONE_DAY); // 1 year from now
+        
+        // Get current block timestamp
+        const block = await ethers.provider.getBlock("latest");
+        const startTime = block!.timestamp;
+        
+        // Set endDate far in the future (1 year)
+        const endDate = startTime + (365 * ONE_DAY);
+        
+        // Fast forward a bit to ensure timestamps are fresh
+        await ethers.provider.send("evm_increaseTime", [1]);
+        await ethers.provider.send("evm_mine", []);
         
         const tx = await subChainContract.connect(user1).createSubscription(
           NETFLIX_ID,
@@ -474,8 +502,6 @@ describe("SubChainSubscription", function () {
         );
         
         const receipt = await tx.wait();
-        const block = await ethers.provider.getBlock(receipt!.blockNumber);
-        
         const event = receipt?.logs.find(log => {
           try {
             return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
@@ -489,10 +515,16 @@ describe("SubChainSubscription", function () {
         
         const sub = await subChainContract.getSubscription(newSubId);
         
-        // maxPayments ends in 6 months, endDate is 1 year
-        // So endDate should be the earlier one (from maxPayments calculation)
-        const calculatedEndFromPayments = block!.timestamp + (maxPayments * interval);
-        expect(sub.endDate).to.equal(calculatedEndFromPayments);
+        // Get block timestamp after tx
+        const txBlock = await ethers.provider.getBlock(receipt!.blockNumber);
+        
+        // Contract calculates endDate as: now + (maxPayments + 1) * interval
+        // +1 because first payment is due after first interval
+        const calculatedEndDate = txBlock!.timestamp + ((maxPayments + 1) * interval);
+        
+        // Verify endDate is based on maxPayments since it's earlier
+        expect(sub.endDate).to.equal(calculatedEndDate);
+        expect(sub.endDate).to.be.lt(endDate); // Should be earlier than provided endDate
         expect(sub.maxPayments).to.equal(maxPayments);
         
         console.log("  ✅ Both limits set - earlier limit (maxPayments) applies");
@@ -534,6 +566,10 @@ describe("SubChainSubscription", function () {
         const amount = ethers.parseUnits("5", 6);
         const interval = THIRTY_DAYS;
         
+        // Get current subscription count
+        const beforeSubs = await subChainContract.getUserSubscriptions(user1.address);
+        const beforeCount = beforeSubs.length;
+        
         // Create another subscription to Netflix
         await subChainContract.connect(user1).createSubscription(
           NETFLIX_ID,
@@ -545,10 +581,10 @@ describe("SubChainSubscription", function () {
           false
         );
         
-        const userSubs = await subChainContract.getUserSubscriptions(user1.address);
+        const afterSubs = await subChainContract.getUserSubscriptions(user1.address);
         
-        // User1 should now have 6 subscriptions total (from all the tests above)
-        expect(userSubs.length).to.equal(6);
+        // User1 should have one more subscription than before
+        expect(afterSubs.length).to.equal(beforeCount + 1);
         
         console.log("  ✅ User can have multiple subscriptions to same provider");
       });
@@ -717,6 +753,21 @@ describe("SubChainSubscription", function () {
           await subChainContract.getAddress(),
           ethers.parseUnits("1000", 6)
         );
+        
+        // Fast forward a bit to ensure timestamps are fresh
+        await ethers.provider.send("evm_increaseTime", [1]);
+        await ethers.provider.send("evm_mine", []);
+        
+        // Remove any extra PYUSD from previous tests
+        const balance = await pyusdContract.balanceOf(poorUser.address);
+        if (balance > ethers.parseUnits("5", 6)) {
+          const excessAmount = balance - ethers.parseUnits("5", 6);
+          await pyusdContract.connect(poorUser).transfer(user2.address, excessAmount);
+        }
+        
+        // Verify balance is exactly 5 PYUSD
+        const finalBalance = await pyusdContract.balanceOf(poorUser.address);
+        expect(finalBalance).to.equal(ethers.parseUnits("5", 6));
         
         await expect(
           subChainContract.connect(poorUser).createSubscription(

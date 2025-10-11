@@ -431,7 +431,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // Calculate end date from maxPayments if specified
         uint256 calculatedEndDate = endDate;
         if (maxPayments > 0) {
-            uint256 durationFromPayments = block.timestamp + (maxPayments * interval);
+            // Calculate endDate as: now + (maxPayments + 1) * interval
+            // This gives time for all maxPayments to be processed
+            // +1 because first payment is due after first interval
+            uint256 durationFromPayments = block.timestamp + ((maxPayments + 1) * interval);
             // If both are set, use the earlier date
             if (calculatedEndDate == 0 || durationFromPayments < calculatedEndDate) {
                 calculatedEndDate = durationFromPayments;
@@ -522,21 +525,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         require(sub.isActive, "Subscription is not active");
         require(block.timestamp >= sub.nextPaymentDue, "Payment not due yet");
         
-        // Check if subscription has reached end date
-        // endDate 0 = unlimited payments
-        if (sub.endDate > 0 && block.timestamp > sub.endDate) {
-            sub.isActive = false;
-            emit SubscriptionCancelled(
-                sub.id,
-                sub.subscriber,
-                sub.serviceProviderId,
-                block.timestamp,
-                "expired_end_date"
-            );
-            return;
-        }
-        
-        // Check if subscription has reached max payments
+        // Check if subscription has reached max payments first
         // maxPayments 0 = unlimited payments
         if (sub.maxPayments > 0 && sub.paymentCount >= sub.maxPayments) {
             sub.isActive = false;
@@ -546,6 +535,20 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
                 sub.serviceProviderId,
                 block.timestamp,
                 "expired_max_payments"
+            );
+            return;
+        }
+
+        // Then check if subscription has reached end date
+        // endDate 0 = unlimited payments
+        if (sub.endDate > 0 && block.timestamp > sub.endDate) {
+            sub.isActive = false;
+            emit SubscriptionCancelled(
+                sub.id,
+                sub.subscriber,
+                sub.serviceProviderId,
+                block.timestamp,
+                "expired_end_date"
             );
             return;
         }
