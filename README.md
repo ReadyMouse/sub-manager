@@ -1,17 +1,20 @@
 # Project Overview
 
-Project Summary: **SubChain - Universal Crypto Subscription Manager**
-SubChain is a decentralized subscription management protocol that brings 
-familiar "set and forget" recurring payments to crypto. Users create 
-subscriptions by approving the SubChain smart contract to spend **PYUSD** 
-(PayPal's stablecoin) directly from their wallet using the ERC-20 allowance 
-pattern—similar to giving a gym ACH authorization to auto-charge your bank 
-account each month. When a subscription payment becomes due (based on the 
-billing interval), the service provider or an automation bot calls the 
-contract's ```processPayment()``` function, which pulls the exact subscription 
-amount from the user's wallet and transfers it to the service provider. The 
-smart contract tracks billing cycles, handles failed payments gracefully 
-(auto-canceling after consecutive failures), and allows users to cancel anytime. **Envio** indexes all subscription events to power a unified dashboard where users see all their active subscriptions, upcoming payments, balance warnings, and payment history in one place. Built with **Hardhat** for development and testing, the platform solves crypto's recurring payment problem without requiring users to lock funds in escrow—money stays in their wallet until payment is due, preserving financial sovereignty while enabling the subscription economy.
+SubChain is a decentralized subscription management protocol that brings familiar "set and forget" recurring payments to cryptocurrency. The platform solves a critical pain point in the crypto ecosystem: the inability to easily manage recurring payments.
+
+**The Problem We're Solving:**
+- Crypto users hold $150B+ in stablecoins but have no native way to manage subscriptions
+- Subscriptions management ystems like Privacy.com with million of users is fiat-only
+- Current solutions require locking funds in escrow (poor UX) or manual monthly payments (friction) or streaming micro-payments like Hyperliquid
+- On-chain payment history is fully public, exposing sensitive subscription data
+- No unified dashboard exists to view all crypto-based subscriptions in one place
+- Recurring tax-deductable charitable donations via crypto (with on-chain proof)
+- Recurring peer-to-peer transcations (rent, allowance, savings accounts, etc.)
+
+**Our Solution:**
+SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern—similar to giving a gym ACH authorization to auto-charge your bank account each month. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments when due—truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capibility to fork mainnet ETH for development. 
+
+**Target Audience:** Crypto-native users who hold PYUSD and want to pay for subscriptions (Netflix, Spotify, SaaS tools, etc.) without linking traditional bank accounts or credit cards.
 
 ## 🚀 Quick Start
 
@@ -110,6 +113,7 @@ Privacy.com has proven people want unified subscription management—they have m
 * Alchemy -> used for this project
 * Mintstars -> showcase the privacy aspects with encrypted label
 * Bitrefill/Coinsbee -> requires manual code entry
+* Charity that accepts crypto (TLC?) 
 
 ## Privacy-Preserving Subscriptions
 
@@ -151,7 +155,7 @@ Qualification Requirements:
 - Deployment to the hosted service (please reachout if you need production resources)
 - Clear usage in your application
 
-### Hardhat
+### Hardhat ⸺ $2,500
 
 Usage of a Hardhat release 3.0.0*. Usage of Hardhat 2 releases won't qualify.
 
@@ -182,3 +186,7 @@ Qualification Requirements
 3. Include a public code repo; if private, share access credentials
 4. Submit a 2–4 minute demo video explaining and showcasing the project
 5. Project must be original
+
+## Note
+
+Cursor + Claude AI was used to support development. 
