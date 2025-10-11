@@ -780,3 +780,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     }
 }
 
+/**
+ * Coding Fortune Cookie: 
+ * May your children grieve your death and never the reverse.
+ */

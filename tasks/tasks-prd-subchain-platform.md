@@ -119,17 +119,17 @@ Generated from: `prd-subchain-platform.md`
   - [x] 2.18 NEW: Implement `registerUserProvider()` for users to add personal providers (landlord, allowance recipient, etc.)
 
 - [ ] 3.0 Write comprehensive Hardhat tests with mainnet fork
-  - [ ] 3.1 Create `test/SubChainSubscription.test.ts` with basic test structure
-  - [ ] 3.2 Set up test fixtures: deploy contract on forked mainnet, get PYUSD token instance, create test accounts
-  - [ ] 3.3 Write helper to fund test accounts with PYUSD from a whale address on mainnet fork
-  - [ ] 3.4 Test `createSubscription()`: happy path with valid parameters
-  - [ ] 3.5 Test `createSubscription()`: revert cases (insufficient allowance, invalid parameters)
-  - [ ] 3.6 Test `processPayment()`: successful payment when due
-  - [ ] 3.7 Test `processPayment()`: revert when payment not yet due
-  - [ ] 3.8 Test `processPayment()`: revert with insufficient balance
-  - [ ] 3.9 Test `processPayment()`: revert with insufficient allowance
-  - [ ] 3.10 Test failed payment handling: verify failedPaymentCount increments
-  - [ ] 3.11 Test auto-cancellation: verify subscription cancels after 3 consecutive failures
+  - [x] 3.1 Create `test/SubChainSubscription.test.ts` with basic test structure
+  - [x] 3.2 Set up test fixtures: deploy contract on forked mainnet, get PYUSD token instance, create test accounts
+  - [x] 3.3 Write helper to fund test accounts with PYUSD from a whale address on mainnet fork
+  - [x] 3.4 Test `createSubscription()`: happy path with valid parameters
+  - [x] 3.5 Test `createSubscription()`: revert cases (insufficient allowance, invalid parameters)
+  - [x] 3.6 Test `processPayment()`: successful payment when due
+  - [x] 3.7 Test `processPayment()`: revert when payment not yet due
+  - [x] 3.8 Test `processPayment()`: revert with insufficient balance
+  - [x] 3.9 Test `processPayment()`: revert with insufficient allowance
+  - [x] 3.10 Test failed payment handling: verify failedPaymentCount increments
+  - [x] 3.11 Test auto-cancellation: verify subscription cancels after 3 consecutive failures
   - [ ] 3.12 Test `cancelSubscription()`: user can cancel their own subscription
   - [ ] 3.13 Test `cancelSubscription()`: revert if non-owner tries to cancel
   - [ ] 3.14 Test view functions: verify all getters return correct data

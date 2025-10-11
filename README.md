@@ -190,3 +190,8 @@ Qualification Requirements
 ## Note
 
 Cursor + Claude AI was used to support development. 
+
+## Things I'll need to deal with later:
+
+- Handling of fees (user approves $15/mo to Netflix, who pays the fee)
+- ETH/SOL fees for PYUSD transcations (this is why normies hate crypto)
