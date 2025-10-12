@@ -116,6 +116,22 @@ The script will:
 
 Privacy.com has proven people want unified subscription management—they have millions of users. But they're 100% fiat. We're building the crypto-native version for the 500M+ people holding stablecoins who want to pay with crypto instead of linking their bank account.
 
+## Hardhat testing + Coverage 
+
+Reults in `coverage.json`
+
+October 12, 2025 : 1725
+---------------------------|----------|----------|----------|----------|----------------|
+File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+---------------------------|----------|----------|----------|----------|----------------|
+ contracts/                |      100 |    91.18 |      100 |      100 |                |
+  Interfaces.sol           |      100 |      100 |      100 |      100 |                |
+  SubChainSubscription.sol |      100 |    91.18 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+All files                  |      100 |    91.18 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+
+
 ## Hackathon requirments
 ### Envio
 Best Use of HyperIndex ⸺ $1,500

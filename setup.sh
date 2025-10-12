@@ -1,93 +1,188 @@
 #!/bin/bash
-# Hardhat + PYUSD Setup Script
-# Usage: ./setup.sh
+
+# ============================================================================
+# SubChain Setup Script
+# ============================================================================
+# This script sets up the complete development environment including:
+# - Node.js dependencies (root + backend)
+# - Environment configuration files
+# - Smart contract compilation
+# - TypeChain type generation
+# ============================================================================
 
 set -e  # Exit on error
 
-echo "🚀 Setting up Hardhat + PYUSD environment..."
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Check Node.js version
-NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-echo "📍 Detected Node.js version: $(node -v)"
+echo ""
+echo "============================================================================"
+echo "🚀 SubChain Development Environment Setup"
+echo "============================================================================"
+echo ""
 
-if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "❌ Node.js version 18+ is required. You have: $(node -v)"
-    echo "   Please upgrade Node.js or use nvm: nvm install 22 && nvm use 22"
+# ============================================================================
+# 1. Check Prerequisites
+# ============================================================================
+echo -e "${BLUE}📋 Checking prerequisites...${NC}"
+
+# Check Node.js
+if ! command -v node &> /dev/null; then
+    echo -e "${RED}❌ Node.js is not installed. Please install Node.js v18+ first.${NC}"
     exit 1
-elif [ "$NODE_VERSION" -eq 21 ]; then
-    echo "⚠️  Node.js v21 may have compatibility issues. Recommend v22 or v20."
 fi
+NODE_VERSION=$(node -v)
+echo -e "${GREEN}✅ Node.js ${NODE_VERSION}${NC}"
 
-echo "✓ Node.js version is compatible"
+# Check npm
+if ! command -v npm &> /dev/null; then
+    echo -e "${RED}❌ npm is not installed.${NC}"
+    exit 1
+fi
+NPM_VERSION=$(npm -v)
+echo -e "${GREEN}✅ npm ${NPM_VERSION}${NC}"
 
-# Create directories
-mkdir -p contracts test scripts
+echo ""
 
-# Create .env if it doesn't exist
-if [ ! -f .env ]; then
-    cat > .env << 'EOF'
-MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_ACTUAL_API_KEY_HERE
-PYUSD_ADDRESS=0x6c3ea9036406852006290770BEdFcAbA0e23A0e8
-EOF
-    echo "✓ Created .env (add your Alchemy API key!)"
+# ============================================================================
+# 2. Install Root Dependencies
+# ============================================================================
+echo -e "${BLUE}📦 Installing root project dependencies...${NC}"
+npm install
+echo -e "${GREEN}✅ Root dependencies installed${NC}"
+echo ""
+
+# ============================================================================
+# 3. Install Backend Dependencies
+# ============================================================================
+echo -e "${BLUE}📦 Installing backend dependencies...${NC}"
+if [ -d "backend" ]; then
+    cd backend
+    npm install
+    cd ..
+    echo -e "${GREEN}✅ Backend dependencies installed${NC}"
 else
-    echo "✓ .env exists"
+    echo -e "${YELLOW}⚠️  Backend directory not found - skipping${NC}"
 fi
+echo ""
 
-# Create .gitignore if it doesn't exist
-if [ ! -f .gitignore ]; then
-    cat > .gitignore << 'EOF'
-node_modules
-.env
-coverage
-coverage.json
-typechain-types
-dist
-cache
-artifacts
-.DS_Store
+# ============================================================================
+# 4. Setup Environment Files
+# ============================================================================
+echo -e "${BLUE}⚙️  Setting up environment files...${NC}"
+
+# Root .env (if needed for Hardhat)
+if [ ! -f .env ]; then
+    echo -e "${YELLOW}Creating root .env file...${NC}"
+    cat > .env << 'EOF'
+# SubChain Root Configuration
+# Used by Hardhat for deployment
+
+# Alchemy/Infura API Key for mainnet/testnet access
+MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_KEY
+PYUSD_ADDRESS=0x6c3ea9036406852006290770BEdFcAbA0e23A0e8
+
+# Private key for deployment (DO NOT COMMIT THIS)
+PRIVATE_KEY=your_private_key_here
+
+# Etherscan API key for contract verification
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
 EOF
-    echo "✓ Created .gitignore"
+    echo -e "${GREEN}✅ Created .env - Please update with your keys${NC}"
+else
+    echo -e "${GREEN}✅ .env already exists${NC}"
 fi
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-echo "   Using Hardhat 2.x (more stable than 3.x)"
-npm install --save-dev \
-  hardhat@^2.22.0 \
-  @nomicfoundation/hardhat-toolbox@^5.0.0 \
-  @nomicfoundation/hardhat-network-helpers@^1.0.0 \
-  @nomicfoundation/hardhat-chai-matchers@^2.0.0 \
-  @nomicfoundation/hardhat-ethers@^3.0.0 \
-  @nomicfoundation/hardhat-verify@^2.0.0 \
-  @nomicfoundation/hardhat-ignition@^0.15.0 \
-  @nomicfoundation/hardhat-ignition-ethers@^0.15.0 \
-  @typechain/hardhat@^9.0.0 \
-  @typechain/ethers-v6@^0.5.0 \
-  typechain@^8.3.0 \
-  chai@^4.3.0 \
-  @types/chai@^4.3.0 \
-  @types/node@^20.0.0 \
-  typescript@^5.0.0 \
-  ts-node@^10.9.0 \
-  ethers@^6.4.0 \
-  hardhat-gas-reporter@^1.0.0 \
-  solidity-coverage@^0.8.0
-
-npm install @openzeppelin/contracts@^5.4.0 dotenv@^17.2.3
-
-# Compile contracts if any exist
-if ls contracts/*.sol 1> /dev/null 2>&1; then
-    echo "🔨 Compiling contracts..."
-    npm run compile
+# Backend .env
+if [ -f "backend/.env.example" ] && [ ! -f "backend/.env" ]; then
+    echo -e "${YELLOW}Creating backend/.env file...${NC}"
+    cp backend/.env.example backend/.env
+    echo -e "${GREEN}✅ Created backend/.env - Please update with your keys${NC}"
+elif [ -f "backend/.env" ]; then
+    echo -e "${GREEN}✅ backend/.env already exists${NC}"
 fi
 
 echo ""
-echo "✅ Setup complete!"
+
+# ============================================================================
+# 5. Compile Smart Contracts
+# ============================================================================
+echo -e "${BLUE}🔨 Compiling smart contracts...${NC}"
+npm run compile
+echo -e "${GREEN}✅ Contracts compiled${NC}"
 echo ""
-echo "📝 Next steps:"
-echo "   1. Add your Alchemy API key to .env"
-echo "   2. Run: npm test"
+
+# ============================================================================
+# 6. Generate TypeChain Types
+# ============================================================================
+echo -e "${BLUE}📝 Generating TypeChain types...${NC}"
+# TypeChain is generated automatically during compile
+if [ -d "typechain-types" ]; then
+    echo -e "${GREEN}✅ TypeChain types generated in typechain-types/${NC}"
+else
+    echo -e "${YELLOW}⚠️  typechain-types directory not found${NC}"
+fi
 echo ""
-echo "💡 Note: This project uses Hardhat 2.x with Node.js v22"
-echo "   If you encounter issues, ensure you're using Node.js 18+, 20, or 22"
+
+# ============================================================================
+# 7. Optional: Install Envio CLI
+# ============================================================================
+echo -e "${BLUE}🔧 Checking for Envio CLI...${NC}"
+if ! command -v envio &> /dev/null; then
+    echo -e "${YELLOW}⚠️  Envio CLI not installed${NC}"
+    echo -e "${YELLOW}   To install: npm install -g envio${NC}"
+    echo -e "${YELLOW}   (Optional but recommended for deploying indexer)${NC}"
+else
+    ENVIO_VERSION=$(envio --version 2>/dev/null || echo "unknown")
+    echo -e "${GREEN}✅ Envio CLI installed: ${ENVIO_VERSION}${NC}"
+fi
+echo ""
+
+# ============================================================================
+# 8. Optional: Install ngrok for webhook testing
+# ============================================================================
+echo -e "${BLUE}🔧 Checking for ngrok...${NC}"
+if ! command -v ngrok &> /dev/null; then
+    echo -e "${YELLOW}⚠️  ngrok not installed${NC}"
+    echo -e "${YELLOW}   To install: brew install ngrok (macOS)${NC}"
+    echo -e "${YELLOW}   (Optional but useful for local webhook testing)${NC}"
+else
+    echo -e "${GREEN}✅ ngrok installed${NC}"
+fi
+echo ""
+
+# ============================================================================
+# Summary
+# ============================================================================
+echo "============================================================================"
+echo -e "${GREEN}✅ Setup Complete!${NC}"
+echo "============================================================================"
+echo ""
+echo -e "${BLUE}📋 Next Steps:${NC}"
+echo ""
+echo "1. Update configuration files:"
+echo "   - Edit .env with your Alchemy API key and private key"
+echo "   - Edit backend/.env with your Coinbase and Envio credentials"
+echo ""
+echo "2. Run tests:"
+echo "   npm test"
+echo ""
+echo "3. Deploy contracts (local):"
+echo "   npx hardhat node           # Terminal 1"
+echo "   npx hardhat run scripts/deploy.ts --network localhost"
+echo ""
+echo "4. Start services:"
+echo "   ./launch.sh               # Starts all services"
+echo ""
+echo "5. Deploy Envio indexer:"
+echo "   envio init"
+echo "   envio deploy"
+echo ""
+echo "============================================================================"
+echo -e "${YELLOW}⚠️  Remember to update .env files with your actual credentials!${NC}"
+echo "============================================================================"
+echo ""

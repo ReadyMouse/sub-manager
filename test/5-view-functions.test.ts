@@ -30,20 +30,6 @@ describe("SubChainSubscription - View Functions", function () {
     // Get contracts and signers
     ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
-      
-    // Register Netflix as a verified provider
-    await subChainContract.connect(owner).registerServiceProvider(
-      NETFLIX_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
-    
-    // Register Spotify as a verified provider
-    await subChainContract.connect(owner).registerServiceProvider(
-      SPOTIFY_ID,
-      landlord.address, // Using landlord address as Spotify's payment address
-      0 // PaymentType.DirectCrypto
-    );
     
     // Create a test subscription
     const amount = ethers.parseUnits("10", 6); // 10 PYUSD
@@ -63,7 +49,10 @@ describe("SubChainSubscription - View Functions", function () {
       "Netflix Premium",
       0, // No endDate
       0, // No maxPayments
-      false // Not private
+      2, // PaymentType.DirectRecipientWallet
+      0, // ProviderType.PublicVerified
+      serviceProvider.address, // recipientAddress
+      "" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -79,48 +68,6 @@ describe("SubChainSubscription - View Functions", function () {
     subscriptionId = parsedEvent!.args[0];
   });
   
-  describe("Provider View Functions", function () {
-    it("Should return correct provider address", async function () {
-      expect(await subChainContract.getProviderAddress(NETFLIX_ID)).to.equal(serviceProvider.address);
-      expect(await subChainContract.getProviderAddress(SPOTIFY_ID)).to.equal(landlord.address);
-    });
-    
-    it("Should return correct provider type", async function () {
-      expect(await subChainContract.getProviderType(NETFLIX_ID)).to.equal(0); // PublicVerified
-      expect(await subChainContract.getProviderType(SPOTIFY_ID)).to.equal(0); // PublicVerified
-    });
-    
-    it("Should return correct provider owner", async function () {
-      expect(await subChainContract.getProviderOwner(NETFLIX_ID)).to.equal(ethers.ZeroAddress); // Owner is zero for verified providers
-      expect(await subChainContract.getProviderOwner(SPOTIFY_ID)).to.equal(ethers.ZeroAddress);
-    });
-    
-    it("Should return correct provider payment type", async function () {
-      expect(await subChainContract.getProviderPaymentType(NETFLIX_ID)).to.equal(0); // DirectCrypto
-      expect(await subChainContract.getProviderPaymentType(SPOTIFY_ID)).to.equal(0);
-    });
-    
-    it("Should return correct provider existence", async function () {
-      expect(await subChainContract.providerExists(NETFLIX_ID)).to.be.true;
-      expect(await subChainContract.providerExists(SPOTIFY_ID)).to.be.true;
-      expect(await subChainContract.providerExists(99999)).to.be.false;
-    });
-    
-    it("Should revert when querying non-existent provider", async function () {
-      await expect(subChainContract.getProviderAddress(99999))
-        .to.be.revertedWith("Service provider does not exist");
-      
-      await expect(subChainContract.getProviderType(99999))
-        .to.be.revertedWith("Service provider does not exist");
-      
-      await expect(subChainContract.getProviderOwner(99999))
-        .to.be.revertedWith("Service provider does not exist");
-      
-      await expect(subChainContract.getProviderPaymentType(99999))
-        .to.be.revertedWith("Service provider does not exist");
-    });
-  });
-  
   describe("Subscription View Functions", function () {
     it("Should return correct subscription details", async function () {
       const sub = await subChainContract.getSubscription(subscriptionId);
@@ -131,7 +78,10 @@ describe("SubChainSubscription - View Functions", function () {
       expect(sub.amount).to.equal(ethers.parseUnits("10", 6));
       expect(sub.interval).to.equal(THIRTY_DAYS);
       expect(sub.isActive).to.be.true;
-      expect(sub.isPrivate).to.be.false;
+      expect(sub.paymentType).to.equal(2); // DirectRecipientWallet
+      expect(sub.providerType).to.equal(0); // PublicVerified
+      expect(sub.recipientAddress).to.equal(serviceProvider.address);
+      expect(sub.recipientCurrency).to.equal("");
       expect(sub.failedPaymentCount).to.equal(0);
       expect(sub.paymentCount).to.equal(0);
       expect(sub.serviceName).to.equal("Netflix Premium");
@@ -148,7 +98,10 @@ describe("SubChainSubscription - View Functions", function () {
         "Spotify Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        landlord.address, // recipientAddress (using landlord for Spotify)
+        "" // recipientCurrency
       );
       
       const userSubs = await subChainContract.getUserSubscriptions(user1.address);

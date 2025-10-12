@@ -29,13 +29,6 @@ describe("SubChainSubscription - Payment Processing", function () {
     // Get contracts and signers
     ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
-      
-    // Register Netflix as a provider for these tests
-    await subChainContract.connect(owner).registerServiceProvider(
-      NETFLIX_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
     
     // Create a test subscription for payment processing tests
     const amount = ethers.parseUnits("50", 6); // 50 PYUSD
@@ -55,7 +48,10 @@ describe("SubChainSubscription - Payment Processing", function () {
       "Netflix Test Sub",
       0,
       0,
-      false
+      2, // PaymentType.DirectRecipientWallet
+      0, // ProviderType.PublicVerified
+      serviceProvider.address, // recipientAddress
+      "" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -162,7 +158,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Reset Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -222,7 +221,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Not Due Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -261,7 +263,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Inactive Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -303,7 +308,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Insufficient Balance Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -367,7 +375,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Insufficient Allowance Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -424,7 +435,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Consecutive Failures Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -479,7 +493,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Auto-Cancel Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -552,7 +569,10 @@ describe("SubChainSubscription - Payment Processing", function () {
         "Netflix Auto-Cancel Verify Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -590,6 +610,86 @@ describe("SubChainSubscription - Payment Processing", function () {
       await expect(
         subChainContract.processPayment(verifySubId)
       ).to.be.revertedWith("Subscription is not active");
+    });
+    
+    it("Should auto-cancel subscription after 3 consecutive failed payments due to insufficient allowance", async function () {
+      // Create subscription
+      const amount = ethers.parseUnits("100", 6);
+      const interval = THIRTY_DAYS;
+      
+      // Re-fund and re-approve PYUSD (may have been depleted in previous tests)
+      await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
+      await pyusdContract.connect(user1).approve(
+        await subChainContract.getAddress(),
+        ethers.parseUnits("10000", 6)
+      );
+      
+      const tx = await subChainContract.connect(user1).createSubscription(
+        NETFLIX_ID,
+        amount,
+        interval,
+        "Netflix Allowance Auto-Cancel Test",
+        0,
+        0,
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
+      );
+      
+      const receipt = await tx.wait();
+      const event = receipt?.logs.find(log => {
+        try {
+          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+        } catch {
+          return false;
+        }
+      });
+      
+      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const allowanceSubId = parsedEvent!.args[0];
+      
+      // Fast-forward time
+      await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
+      await ethers.provider.send("evm_mine", []);
+      
+      // Revoke allowance (user still has balance, but no allowance)
+      await pyusdContract.connect(user1).approve(
+        await subChainContract.getAddress(),
+        0
+      );
+      
+      // First payment failure due to insufficient allowance
+      await subChainContract.processPayment(allowanceSubId);
+      
+      let sub = await subChainContract.getSubscription(allowanceSubId);
+      expect(sub.failedPaymentCount).to.equal(1);
+      expect(sub.isActive).to.be.true;
+      
+      // Second payment failure
+      await subChainContract.processPayment(allowanceSubId);
+      
+      sub = await subChainContract.getSubscription(allowanceSubId);
+      expect(sub.failedPaymentCount).to.equal(2);
+      expect(sub.isActive).to.be.true;
+      
+      // Third payment failure - should auto-cancel
+      const thirdAttempt = await subChainContract.processPayment(allowanceSubId);
+      
+      // Verify SubscriptionCancelled event was emitted with correct reason
+      await expect(thirdAttempt).to.emit(subChainContract, "SubscriptionCancelled")
+        .withArgs(
+          allowanceSubId,
+          user1.address,
+          NETFLIX_ID,
+          await ethers.provider.getBlock("latest").then(b => b!.timestamp),
+          "auto_cancelled_failures"
+        );
+      
+      // Verify subscription is inactive
+      sub = await subChainContract.getSubscription(allowanceSubId);
+      expect(sub.isActive).to.be.false;
+      expect(sub.failedPaymentCount).to.equal(3);
     });
   });
 });

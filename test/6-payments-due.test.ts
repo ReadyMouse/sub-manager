@@ -30,25 +30,6 @@ describe("SubChainSubscription - Payments Due", function () {
     // Get contracts and signers
     ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
-      
-    // Register service providers
-    await subChainContract.connect(owner).registerServiceProvider(
-      NETFLIX_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
-    
-    await subChainContract.connect(owner).registerServiceProvider(
-      SPOTIFY_ID,
-      landlord.address,
-      0 // PaymentType.DirectCrypto
-    );
-    
-    await subChainContract.connect(owner).registerServiceProvider(
-      ALCHEMY_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
     
     // Approve PYUSD spending for both users
     await pyusdContract.connect(user1).approve(
@@ -72,7 +53,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Netflix Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       // Check payments due - should be empty as first payment isn't due yet
@@ -89,7 +73,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Spotify Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        landlord.address, // recipientAddress (using landlord for Spotify)
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -123,7 +110,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Alchemy Pro",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -159,7 +149,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Netflix Basic",
         0,
         1, // maxPayments = 1
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -206,7 +199,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Spotify Family",
         endDate,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        landlord.address, // recipientAddress (using landlord for Spotify)
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -244,7 +240,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Netflix Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
@@ -254,7 +253,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Spotify Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        landlord.address, // recipientAddress (using landlord for Spotify)
+        "" // recipientCurrency
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
@@ -264,7 +266,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Alchemy Pro",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       // Get subscription IDs
@@ -324,7 +329,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Netflix Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
@@ -334,7 +342,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Spotify Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        landlord.address, // recipientAddress (using landlord for Spotify)
+        "" // recipientCurrency
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
@@ -344,7 +355,10 @@ describe("SubChainSubscription - Payments Due", function () {
         "Alchemy Pro",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       // Get subscription IDs

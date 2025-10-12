@@ -29,13 +29,6 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
     // Get contracts and signers
     ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
-      
-    // Register Netflix as a provider for these tests
-    await subChainContract.connect(owner).registerServiceProvider(
-      NETFLIX_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
     
     // Create a test subscription for cancellation tests
     const amount = ethers.parseUnits("20", 6);
@@ -55,7 +48,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       "Netflix Cancel Test",
       0,
       0,
-      false
+      2, // PaymentType.DirectRecipientWallet
+      0, // ProviderType.PublicVerified
+      serviceProvider.address, // recipientAddress
+      "" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -116,7 +112,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         "Netflix Non-Owner Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -155,7 +154,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         "Netflix Cancel Then Pay Test",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -199,7 +201,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         "Netflix EndDate Test",
         endDate,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -260,7 +265,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         "Netflix MaxPayments Test",
         endDate, // Set explicit endDate far in future
         maxPayments,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       // Get subscription state to see what endDate the contract calculated
@@ -285,7 +293,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         "Netflix MaxPayments Test",
         Number(calculatedEndDate) + (7 * ONE_DAY), // Set endDate far after the contract's calculated endDate
         maxPayments,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt2 = await tx2.wait();

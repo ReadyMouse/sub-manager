@@ -496,21 +496,13 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             return;
         }
         
-        // Transfer PYUSD from subscriber to service provider
-        // Note: All payment types transfer on-chain first. Off-chain processing happens based on payment flow:
-        // - ViaUserPayPal: Backend converts PYUSD → USD in Coinbase, withdraws to User's PayPal, user pays subscription
-        // - DirectRecipientPayPal: Backend converts PYUSD → USD in Coinbase, sends via PayPal Payouts API to recipient
-        // - DirectRecipientWallet: Direct wallet-to-wallet transfer, payment complete on-chain (no off-chain processing)
+        // Transfer PYUSD from subscriber based on payment type
+        // Note: All payment types transfer on-chain first. Off-chain processing happens based on payment flow.
+        bool success;
         
-        // IF DirectRecipientWallet, paymentAddress is the recipient's wallet address
-        bool success = pyusdToken.transferFrom(sub.subscriber, paymentAddress, sub.amount);
+        success = pyusdToken.transferFrom(sub.subscriber, paymentAddress, sub.amount);
         require(success, "PYUSD transfer failed");
 
-        // IF DirectRecipientPayPal, paymentAddress is the recipient's PayPal email address
-
-
-        // IF ViaUserPayPal, paymentAddress is the House Coinbase account address
-        
         // ========================================
         // UPDATE STATE & EMIT EVENT
         // ========================================

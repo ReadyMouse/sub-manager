@@ -29,13 +29,6 @@ describe("SubChainSubscription - Subscription Creation", function () {
     // Get contracts and signers
     ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
-      
-    // Register Netflix as a provider for these tests
-    await subChainContract.connect(owner).registerServiceProvider(
-      NETFLIX_ID,
-      serviceProvider.address,
-      0 // PaymentType.DirectCrypto
-    );
   });
   
   describe("Happy Path - Valid Subscriptions", function () {
@@ -57,7 +50,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix Premium",
         0, // endDate = 0 (unlimited)
         0, // maxPayments = 0 (unlimited)
-        false // not private
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency (empty = PYUSD)
       );
       
       const receipt = await tx.wait();
@@ -89,7 +85,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0, // endDate (unlimited)
           0, // maxPayments (unlimited)
           "Netflix Premium",
-          false,
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address, // recipientAddress
+          "", // recipientCurrency
           block!.timestamp
         );
     });
@@ -103,7 +102,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
       expect(sub.amount).to.equal(ethers.parseUnits("10", 6));
       expect(sub.interval).to.equal(THIRTY_DAYS);
       expect(sub.isActive).to.be.true;
-      expect(sub.isPrivate).to.be.false;
+      expect(sub.paymentType).to.equal(2); // DirectRecipientWallet
+      expect(sub.providerType).to.equal(0); // PublicVerified
+      expect(sub.recipientAddress).to.equal(serviceProvider.address);
+      expect(sub.recipientCurrency).to.equal("");
       expect(sub.failedPaymentCount).to.equal(0);
       expect(sub.paymentCount).to.equal(0);
       expect(sub.serviceName).to.equal("Netflix Premium");
@@ -133,7 +135,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix Premium Annual",
         endDate,
         0, // maxPayments = 0 (unlimited, but limited by endDate)
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -169,7 +174,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix 12-Month Plan",
         0, // endDate = 0 (unlimited, but limited by maxPayments)
         maxPayments,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -238,7 +246,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix Flexible Plan",
         endDate,
         maxPayments,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -302,7 +313,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Private Subscription",
         0,
         0,
-        true // private subscription
+        2, // PaymentType.DirectRecipientWallet
+        2, // ProviderType.Private
+        landlord.address, // recipientAddress (private recipient)
+        "" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -318,7 +332,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const newSubId = parsedEvent!.args[0];
       
       const sub = await subChainContract.getSubscription(newSubId);
-      expect(sub.isPrivate).to.be.true;
+      expect(sub.providerType).to.equal(2); // Private
     });
     
     it("Should allow multiple subscriptions from same user to same provider", async function () {
@@ -337,7 +351,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix Basic",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const afterSubs = await subChainContract.getUserSubscriptions(user1.address);
@@ -363,7 +380,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
         "Netflix Premium",
         0,
         0,
-        false
+        2, // PaymentType.DirectRecipientWallet
+        0, // ProviderType.PublicVerified
+        serviceProvider.address, // recipientAddress
+        "" // recipientCurrency
       );
       
       const user2Subs = await subChainContract.getUserSubscriptions(user2.address);
@@ -375,18 +395,21 @@ describe("SubChainSubscription - Subscription Creation", function () {
     const amount = ethers.parseUnits("10", 6);
     const interval = THIRTY_DAYS;
     
-    it("Should revert if service provider does not exist", async function () {
+    it("Should revert if recipient address is not provided", async function () {
       await expect(
         subChainContract.connect(user1).createSubscription(
-          99999, // Non-existent provider
+          NETFLIX_ID,
           amount,
           interval,
           "Test Service",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          ethers.ZeroAddress, // Invalid recipient address
+          "" // recipientCurrency
         )
-      ).to.be.revertedWith("Service provider not registered");
+      ).to.be.revertedWith("Recipient address required");
     });
     
     it("Should revert if amount is zero", async function () {
@@ -398,7 +421,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Amount must be greater than 0");
     });
@@ -412,7 +438,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Interval must be at least 1 day");
     });
@@ -426,7 +455,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Interval must be at most 365 days");
     });
@@ -440,7 +472,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "", // Empty name
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Service name cannot be empty");
     });
@@ -456,9 +491,31 @@ describe("SubChainSubscription - Subscription Creation", function () {
           longName,
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Service name too long");
+    });
+    
+    it("Should revert if recipient currency ticker is too long", async function () {
+      const longTicker = "A".repeat(11); // 11 characters (max is 10)
+      
+      await expect(
+        subChainContract.connect(user1).createSubscription(
+          NETFLIX_ID,
+          amount,
+          interval,
+          "Test Service",
+          0,
+          0,
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          longTicker // Too long
+        )
+      ).to.be.revertedWith("Recipient currency ticker too long");
     });
     
     it("Should revert if endDate is in the past", async function () {
@@ -472,7 +529,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           pastDate,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("End date must be in future");
     });
@@ -492,7 +552,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD");
     });
@@ -525,7 +588,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Insufficient PYUSD balance for first payment");
     });
@@ -550,7 +616,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           "Netflix Premium",
           0,
           0,
-          false
+          2, // PaymentType.DirectRecipientWallet
+          0, // ProviderType.PublicVerified
+          serviceProvider.address,
+          ""
         )
       ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD");
     });
