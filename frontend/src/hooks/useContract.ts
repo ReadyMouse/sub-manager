@@ -1,0 +1,219 @@
+import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
+import type { Address } from 'viem';
+import { CONTRACTS } from '../lib/constants';
+import { SubChainSubscriptionABI, ERC20_ABI } from '../lib/abi';
+import { parsePYUSD } from '../lib/utils';
+
+/**
+ * Hook for interacting with SubChainSubscription contract
+ */
+export const useSubChainContract = () => {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const createSubscription = async (
+    serviceProviderId: string,
+    amount: string,
+    interval: number,
+    endDate?: number,
+    maxPayments?: number
+  ) => {
+    const amountWei = parsePYUSD(amount);
+    return writeContract({
+      address: CONTRACTS.SubChainSubscription as Address,
+      abi: SubChainSubscriptionABI,
+      functionName: 'createSubscription',
+      args: [
+        serviceProviderId,
+        amountWei,
+        BigInt(interval),
+        BigInt(endDate || 0),
+        BigInt(maxPayments || 0),
+      ],
+    });
+  };
+
+  const processPayment = async (subscriptionId: bigint) => {
+    return writeContract({
+      address: CONTRACTS.SubChainSubscription as Address,
+      abi: SubChainSubscriptionABI,
+      functionName: 'processPayment',
+      args: [subscriptionId],
+    });
+  };
+
+  const cancelSubscription = async (subscriptionId: bigint) => {
+    return writeContract({
+      address: CONTRACTS.SubChainSubscription as Address,
+      abi: SubChainSubscriptionABI,
+      functionName: 'cancelSubscription',
+      args: [subscriptionId],
+    });
+  };
+
+  const registerUserProvider = async (providerAddress: Address) => {
+    return writeContract({
+      address: CONTRACTS.SubChainSubscription as Address,
+      abi: SubChainSubscriptionABI,
+      functionName: 'registerUserProvider',
+      args: [providerAddress],
+    });
+  };
+
+  return {
+    createSubscription,
+    processPayment,
+    cancelSubscription,
+    registerUserProvider,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  };
+};
+
+/**
+ * Hook for reading subscription data
+ */
+export const useSubscription = (subscriptionId: bigint | undefined) => {
+  const { data, isLoading, error, refetch } = useReadContract({
+    address: CONTRACTS.SubChainSubscription as Address,
+    abi: SubChainSubscriptionABI,
+    functionName: 'getSubscription',
+    args: subscriptionId !== undefined ? [subscriptionId] : undefined,
+    query: {
+      enabled: subscriptionId !== undefined,
+    },
+  });
+
+  return {
+    subscription: data,
+    isLoading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Hook for reading user's subscriptions
+ */
+export const useUserSubscriptions = (userAddress: Address | undefined) => {
+  const { data, isLoading, error, refetch } = useReadContract({
+    address: CONTRACTS.SubChainSubscription as Address,
+    abi: SubChainSubscriptionABI,
+    functionName: 'getUserSubscriptions',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!userAddress,
+    },
+  });
+
+  return {
+    subscriptionIds: data as bigint[] | undefined,
+    isLoading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Hook for PYUSD token interactions
+ */
+export const usePYUSD = () => {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const approve = async (spender: Address, amount: string) => {
+    const amountWei = parsePYUSD(amount);
+    return writeContract({
+      address: CONTRACTS.PYUSD as Address,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [spender, amountWei],
+    });
+  };
+
+  return {
+    approve,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  };
+};
+
+/**
+ * Hook for reading PYUSD balance
+ */
+export const usePYUSDBalance = (address: Address | undefined) => {
+  const { data, isLoading, error, refetch } = useReadContract({
+    address: CONTRACTS.PYUSD as Address,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
+  });
+
+  return {
+    balance: data as bigint | undefined,
+    isLoading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Hook for reading PYUSD allowance
+ */
+export const usePYUSDAllowance = (
+  owner: Address | undefined,
+  spender: Address | undefined
+) => {
+  const { data, isLoading, error, refetch } = useReadContract({
+    address: CONTRACTS.PYUSD as Address,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: owner && spender ? [owner, spender] : undefined,
+    query: {
+      enabled: !!(owner && spender),
+    },
+  });
+
+  return {
+    allowance: data as bigint | undefined,
+    isLoading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Hook for checking provider existence
+ */
+export const useProviderExists = (providerId: string | undefined) => {
+  const { data, isLoading, error } = useReadContract({
+    address: CONTRACTS.SubChainSubscription as Address,
+    abi: SubChainSubscriptionABI,
+    functionName: 'providerExists',
+    args: providerId ? [providerId] : undefined,
+    query: {
+      enabled: !!providerId,
+    },
+  });
+
+  return {
+    exists: data as boolean | undefined,
+    isLoading,
+    error,
+  };
+};
+

@@ -118,7 +118,7 @@ Privacy.com has proven people want unified subscription management—they have m
 
 ## Hardhat testing + Coverage 
 
-Reults in `coverage.json`
+Output in `coverage.json`
 
 October 12, 2025 : 1725
 ---------------------------|----------|----------|----------|----------|----------------|
