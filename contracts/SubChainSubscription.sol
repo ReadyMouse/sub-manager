@@ -27,7 +27,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Users approve PYUSD spending once, payments auto-process on billing cycle
  * - No fund locking - money stays in user wallet until payment is due
  * - Handles payment failures gracefully (auto-cancel after 3 consecutive failures)
- * - Supports multiple payment types: Direct Crypto, Gift Cards, Manual Entry
+ * - Supports multiple payment flows: ViaUserPayPal, DirectRecipientPayPal, DirectRecipientWallet
  * - Emits events for Envio indexer to track subscription lifecycle
  * 
  * FLOW:
@@ -45,21 +45,23 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Provider type enum for different service provider categories
      * @dev Three types to distinguish verified, unverified public, and private providers
+     * @dev Provider verification and management happens off-chain
      */
     enum ProviderType {
-        PublicVerified,    // 0: Owner-approved provider, any payment type (e.g., Netflix, Spotify, verified creators)
-        PublicUnverified,  // 1: Self-registered public provider, DirectCrypto only (e.g., GoFundMe, unverified creators)
-        Private            // 2: Self-registered private provider, DirectCrypto only (e.g., landlord, child's allowance)
+        PublicVerified,    // 0: Verified provider from off-chain database (e.g., Netflix, Spotify, verified creators)
+        PublicUnverified,  // 1: Unverified public provider (e.g., GoFundMe, unverified creators)
+        Private            // 2: Private provider for personal use (e.g., landlord, child's allowance)
     }
     
     /**
-     * @notice Payment type enum for different subscription integration methods
+     * @notice Payment type enum for different subscription payment flow methods
      * @dev Used in Subscription struct to determine how payment should be processed
+     * @dev Based on the three money flow diagrams in README.md
      */
     enum PaymentType {
-        DirectCrypto,        // 0: Service accepts PYUSD directly (e.g., Alchemy, Mintstars)
-        AutomatedGiftCard,   // 1: Auto-purchase gift card via Bitrefill API (e.g., Netflix)
-        ManualEntry          // 2: User manually enters payment details (universal fallback)
+        ViaUserPayPal,           // 0: PYUSD → House Coinbase → House PayPal → User's PayPal → Subscription Service
+        DirectRecipientPayPal,   // 1: PYUSD → House Coinbase → House PayPal → Recipient's PayPal (charity, Patreon, etc.)
+        DirectRecipientWallet    // 2: PYUSD → Smart Contract → Recipient's PYUSD Wallet (peer-to-peer: rent, allowance, etc.)
     }
     
     /**
@@ -68,7 +70,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @dev Analytics fields (createdAt, lastPaymentTime) calculated from events via Envio
      * @param id Unique subscription ID (same as mapping key, included for convenience)
      * @param subscriber User's wallet address who created the subscription
-     * @param serviceProviderId Unique ID referencing service provider in external registry/database
+     * @param serviceProviderId Unique ID referencing service provider in off-chain database
      * @param amount Payment amount in PYUSD base units (6 decimals, e.g., 10 PYUSD = 10000000)
      * @param interval Billing interval in seconds (e.g., 30 days = 2592000)
      * @param nextPaymentDue Unix timestamp when next payment is due
@@ -76,14 +78,17 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param maxPayments Maximum number of payments before auto-cancel (0 = unlimited)
      * @param paymentCount Number of successful payments made so far
      * @param isActive Whether subscription is currently active (false = cancelled)
-     * @param isPrivate Privacy flag - if true, encrypt all data (serviceName, amount, addresses) for ZK-proof usage
      * @param failedPaymentCount Consecutive failed payment attempts (auto-cancel at 3)
-     * @param serviceName Human-readable service name (encrypted if isPrivate is true)
+     * @param paymentType Payment flow method for this subscription (stored at creation time)
+     * @param providerType Type of service provider (stored at creation time)
+     * @param recipientAddress Recipient wallet address where payments are sent (required)
+     * @param serviceName Human-readable service name
+     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD, e.g., "BTC", "ETH", "USDC")
      */
     struct Subscription {
         uint256 id;                  // 32 bytes - unique subscription ID
         address subscriber;           // 20 bytes - user's wallet address
-        uint256 serviceProviderId;   // 32 bytes - ID referencing service provider registry (payment details stored off-chain/separate mapping)
+        uint256 serviceProviderId;   // 32 bytes - ID referencing service provider in off-chain database
         uint256 amount;              // 32 bytes - payment amount in PYUSD base units
         uint256 interval;            // 32 bytes - billing interval in seconds
         uint256 nextPaymentDue;      // 32 bytes - timestamp for next payment
@@ -91,9 +96,12 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 maxPayments;         // 32 bytes - max payment count (0 = unlimited)
         uint256 paymentCount;        // 32 bytes - successful payments made
         bool isActive;               // 1 byte - subscription status
-        bool isPrivate;              // 1 byte - privacy flag: if true, as much as possible encrypted/ZK-proofs
         uint8 failedPaymentCount;    // 1 byte - consecutive failures (max 3)
-        string serviceName;          // dynamic - human-readable name (encrypted if isPrivate is true)
+        PaymentType paymentType;     // 1 byte - payment flow method (ViaUserPayPal, DirectRecipientPayPal, DirectRecipientWallet)
+        ProviderType providerType;   // 1 byte - provider type (PublicVerified, PublicUnverified, Private)
+        address recipientAddress;     // 20 bytes - recipient wallet address where payments are sent (required)
+        string serviceName;          // dynamic - human-readable name
+        string recipientCurrency;    // dynamic - optional recipient currency ticker (e.g., "BTC", "ETH", "USDC")
     }
     
     // ========================================
@@ -111,7 +119,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param endDate Timestamp when subscription ends (0 = unlimited)
      * @param maxPayments Maximum number of payments (0 = unlimited)
      * @param serviceName Human-readable service name
-     * @param isPrivate Whether subscription uses privacy features
+     * @param paymentType Payment flow method for this subscription
+     * @param providerType Type of service provider
+     * @param recipientAddress Recipient wallet address where payments are sent
+     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD)
      * @param timestamp Block timestamp when subscription was created
      */
     event SubscriptionCreated(
@@ -124,7 +135,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 endDate,
         uint256 maxPayments,
         string serviceName,
-        bool isPrivate,
+        PaymentType paymentType,
+        ProviderType providerType,
+        address recipientAddress,
+        string recipientCurrency,
         uint256 timestamp
     );
     
@@ -184,24 +198,6 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         string reason
     );
     
-    /**
-     * @notice Emitted when a service provider is registered or updated
-     * @param serviceProviderId Unique ID of the service provider
-     * @param paymentAddress Wallet address where payments are sent
-     * @param providerType Type of provider (0=PublicVerified, 1=PublicUnverified, 2=Private)
-     * @param paymentType Integration method (0=DirectCrypto, 1=AutomatedGiftCard, 2=ManualEntry)
-     * @param providerOwner Address of the user who created the provider (address(0) for PublicVerified)
-     * @param timestamp Block timestamp when provider was registered/updated
-     */
-    event ServiceProviderUpdated(
-        uint256 indexed serviceProviderId,
-        address indexed paymentAddress,
-        ProviderType providerType,
-        PaymentType paymentType,
-        address providerOwner,
-        uint256 timestamp
-    );
-    
     // ========================================
     // STATE VARIABLES
     // ========================================
@@ -222,27 +218,6 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /// @dev Allows efficient lookup of all subscriptions for a given user
     mapping(address => uint256[]) private _userSubscriptions;
     
-    /// @notice Mapping of service provider ID to wallet address
-    /// @dev Separates service provider identity from payment destination
-    /// @dev Allows service providers to update payment address without affecting subscriptions
-    mapping(uint256 => address) private _serviceProviderAddresses;
-    
-    /// @notice Mapping to track if a service provider ID exists
-    /// @dev Used for validation when creating subscriptions
-    mapping(uint256 => bool) private _serviceProviderExists;
-    
-    /// @notice Mapping of service provider ID to provider type
-    /// @dev Distinguishes between PublicVerified, PublicUnverified, and Private providers
-    mapping(uint256 => ProviderType) private _serviceProviderTypes;
-    
-    /// @notice Mapping of service provider ID to the user who created it
-    /// @dev Only populated for PublicUnverified and Private providers, address(0) for PublicVerified
-    mapping(uint256 => address) private _serviceProviderOwners;
-    
-    /// @notice Mapping of service provider ID to payment integration method
-    /// @dev Defines how payments are processed (DirectCrypto, AutomatedGiftCard, ManualEntry)
-    mapping(uint256 => PaymentType) private _serviceProviderPaymentTypes;
-    
     // ========================================
     // CONSTRUCTOR
     // ========================================
@@ -260,141 +235,26 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     }
     
     // ========================================
-    // ADMIN FUNCTIONS
-    // ========================================
-    
-    /**
-     * @notice Register or update a verified public service provider (e.g., Netflix, Spotify, verified creators)
-     * @param serviceProviderId Unique ID for the service provider
-     * @param paymentAddress Wallet address where payments should be sent
-     * @param paymentType Integration method (0=DirectCrypto, 1=AutomatedGiftCard, 2=ManualEntry)
-     * @dev Only contract owner can register verified public service providers
-     * @dev Verified providers can use any payment type
-     */
-    function registerServiceProvider(
-        uint256 serviceProviderId, 
-        address paymentAddress,
-        PaymentType paymentType
-    ) external onlyOwner {
-        require(serviceProviderId > 0, "Invalid service provider ID");
-        require(paymentAddress != address(0), "Invalid payment address");
-        
-        _serviceProviderAddresses[serviceProviderId] = paymentAddress;
-        _serviceProviderExists[serviceProviderId] = true;
-        _serviceProviderTypes[serviceProviderId] = ProviderType.PublicVerified;
-        _serviceProviderOwners[serviceProviderId] = address(0); // Verified providers have no individual owner
-        _serviceProviderPaymentTypes[serviceProviderId] = paymentType;
-        
-        emit ServiceProviderUpdated(
-            serviceProviderId, 
-            paymentAddress, 
-            ProviderType.PublicVerified,
-            paymentType,
-            address(0), 
-            block.timestamp
-        );
-    }
-    
-    /**
-     * @notice Register an unverified public provider (e.g., GoFundMe, content creator, anyone accepting donations)
-     * @param paymentAddress Wallet address where payments should be sent
-     * @return serviceProviderId The unique ID assigned to this provider
-     * @dev Any user can register an unverified public provider
-     * @dev These providers are shareable and appear in public listings with "unverified" status
-     * @dev Provider ID is generated as: hash(msg.sender, paymentAddress, block.timestamp, "unverified")
-     * @dev Unverified public providers always use DirectCrypto only
-     */
-    function registerPublicUnverifiedProvider(address paymentAddress) external returns (uint256) {
-        require(paymentAddress != address(0), "Invalid payment address");
-        
-        // Generate unique provider ID using hash of user, payment address, timestamp, and type marker
-        uint256 serviceProviderId = uint256(keccak256(abi.encodePacked(
-            msg.sender,
-            paymentAddress,
-            block.timestamp,
-            "unverified"
-        )));
-        
-        // Ensure ID doesn't collide (extremely unlikely, but check anyway)
-        require(!_serviceProviderExists[serviceProviderId], "Provider ID collision");
-        
-        _serviceProviderAddresses[serviceProviderId] = paymentAddress;
-        _serviceProviderExists[serviceProviderId] = true;
-        _serviceProviderTypes[serviceProviderId] = ProviderType.PublicUnverified;
-        _serviceProviderOwners[serviceProviderId] = msg.sender;
-        _serviceProviderPaymentTypes[serviceProviderId] = PaymentType.DirectCrypto; // Unverified providers only use DirectCrypto
-        
-        emit ServiceProviderUpdated(
-            serviceProviderId, 
-            paymentAddress, 
-            ProviderType.PublicUnverified,
-            PaymentType.DirectCrypto,
-            msg.sender, 
-            block.timestamp
-        );
-        
-        return serviceProviderId;
-    }
-    
-    /**
-     * @notice Register a private provider for personal peer-to-peer payments (e.g., landlord, child's allowance)
-     * @param paymentAddress Wallet address where payments should be sent
-     * @return serviceProviderId The unique ID assigned to this provider
-     * @dev Any user can register private providers for personal subscriptions
-     * @dev These providers are NOT shown in public listings, only in the user's personal list
-     * @dev Provider ID is generated as: hash(msg.sender, paymentAddress, block.timestamp, "private")
-     * @dev Private providers always use DirectCrypto only
-     */
-    function registerPrivateProvider(address paymentAddress) external returns (uint256) {
-        require(paymentAddress != address(0), "Invalid payment address");
-        
-        // Generate unique provider ID using hash of user, payment address, timestamp, and type marker
-        uint256 serviceProviderId = uint256(keccak256(abi.encodePacked(
-            msg.sender,
-            paymentAddress,
-            block.timestamp,
-            "private"
-        )));
-        
-        // Ensure ID doesn't collide (extremely unlikely, but check anyway)
-        require(!_serviceProviderExists[serviceProviderId], "Provider ID collision");
-        
-        _serviceProviderAddresses[serviceProviderId] = paymentAddress;
-        _serviceProviderExists[serviceProviderId] = true;
-        _serviceProviderTypes[serviceProviderId] = ProviderType.Private;
-        _serviceProviderOwners[serviceProviderId] = msg.sender;
-        _serviceProviderPaymentTypes[serviceProviderId] = PaymentType.DirectCrypto; // Private providers only use DirectCrypto
-        
-        emit ServiceProviderUpdated(
-            serviceProviderId, 
-            paymentAddress, 
-            ProviderType.Private,
-            PaymentType.DirectCrypto,
-            msg.sender, 
-            block.timestamp
-        );
-        
-        return serviceProviderId;
-    }
-    
-    // ========================================
     // CORE SUBSCRIPTION FUNCTIONS
     // ========================================
     
     /**
      * @notice Create a new subscription
-     * @param serviceProviderId ID of the service provider to subscribe to
+     * @param serviceProviderId ID of the service provider (reference to off-chain database)
      * @param amount Payment amount in PYUSD base units (6 decimals)
      * @param interval Billing interval in seconds (e.g., 2592000 = 30 days)
      * @param serviceName Human-readable service name (e.g., "Netflix Premium")
      * @param endDate Unix timestamp when subscription ends (0 = unlimited)
      * @param maxPayments Maximum number of payments before auto-cancel (0 = unlimited)
-     * @param isPrivate Whether to use privacy features (encryption/ZK-proofs)
+     * @param paymentType Payment flow method (0=ViaUserPayPal, 1=DirectRecipientPayPal, 2=DirectRecipientWallet)
+     * @param providerType Type of service provider (0=PublicVerified, 1=PublicUnverified, 2=Private)
+     * @param recipientAddress Recipient wallet address where payments should be sent
+     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD, e.g., "BTC", "ETH", "USDC")
      * @return subscriptionId The unique ID of the created subscription
      * @dev User must approve this contract to spend PYUSD before calling this function
      * @dev If both endDate and maxPayments are set, the earlier limit applies
      * @dev If maxPayments is set, endDate will be calculated as: now + (maxPayments * interval)
-     * @dev Payment integration method is determined by the service provider's paymentType
+     * @dev All service provider information comes from off-chain database
      */
     function createSubscription(
         uint256 serviceProviderId,
@@ -403,14 +263,17 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         string calldata serviceName,
         uint256 endDate,
         uint256 maxPayments,
-        bool isPrivate
+        PaymentType paymentType,
+        ProviderType providerType,
+        address recipientAddress,
+        string calldata recipientCurrency
     ) external returns (uint256) {
         // ========================================
         // VALIDATION
         // ========================================
         
-        // Validate service provider exists
-        require(_serviceProviderExists[serviceProviderId], "Service provider not registered");
+        // Validate recipient address is provided
+        require(recipientAddress != address(0), "Recipient address required");
         
         // Validate amount is positive
         require(amount > 0, "Amount must be greater than 0");
@@ -422,6 +285,11 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // Validate service name is not empty
         require(bytes(serviceName).length > 0, "Service name cannot be empty");
         require(bytes(serviceName).length <= 100, "Service name too long");
+        
+        // Validate recipient currency ticker if provided (max 10 characters for ticker symbols)
+        if (bytes(recipientCurrency).length > 0) {
+            require(bytes(recipientCurrency).length <= 10, "Recipient currency ticker too long");
+        }
         
         // Validate end date (if set, must be in future)
         if (endDate > 0) {
@@ -461,6 +329,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 nextPaymentDue = block.timestamp + interval;
         
         // Create subscription struct
+        // All payment information is passed in from off-chain and stored in the subscription
         _subscriptions[subscriptionId] = Subscription({
             id: subscriptionId,
             subscriber: msg.sender,
@@ -472,9 +341,12 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             maxPayments: maxPayments,
             paymentCount: 0,
             isActive: true,
-            isPrivate: isPrivate,
             failedPaymentCount: 0,
-            serviceName: serviceName
+            paymentType: paymentType,
+            providerType: providerType,
+            recipientAddress: recipientAddress,
+            serviceName: serviceName,
+            recipientCurrency: recipientCurrency
         });
         
         // Track subscription for user
@@ -497,7 +369,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             sub.endDate,
             sub.maxPayments,
             sub.serviceName,
-            sub.isPrivate,
+            sub.paymentType,
+            sub.providerType,
+            sub.recipientAddress,
+            sub.recipientCurrency,
             block.timestamp
         );
         
@@ -508,11 +383,11 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @notice Process a payment for a subscription
      * @param subscriptionId The ID of the subscription to process payment for
      * @dev Can be called by anyone (typically Chainlink Automation or Gelato)
-     * @dev Payment handling varies by service provider's integration method:
-     *      - DirectCrypto: Transfer to service provider, payment complete
-     *      - AutomatedGiftCard: Transfer to service provider, emit event for off-chain Bitrefill API call
-     *      - ManualEntry: Transfer to intermediary/treasury, emit event for off-chain virtual card generation
-     * @dev Payment integration method is determined by querying the service provider's paymentType
+     * @dev Payment handling varies by the subscription's payment flow method (stored at creation time):
+     *      - ViaUserPayPal: Transfer to House Coinbase account, off-chain process converts PYUSD → USD → User's PayPal
+     *      - DirectRecipientPayPal: Transfer to House Coinbase account, off-chain process sends directly to recipient's PayPal
+     *      - DirectRecipientWallet: Transfer directly to recipient's wallet address (peer-to-peer), payment complete on-chain
+     * @dev Payment flow method is retrieved from the subscription's paymentType field
      */
     function processPayment(uint256 subscriptionId) external nonReentrant {
         Subscription storage sub = _subscriptions[subscriptionId];
@@ -553,9 +428,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             return;
         }
         
-        // Get service provider payment address
-        address paymentAddress = _serviceProviderAddresses[sub.serviceProviderId];
-        require(paymentAddress != address(0), "Invalid service provider address");
+        // Get payment address from subscription (always required to be set at creation)
+        address paymentAddress = sub.recipientAddress;
+        require(paymentAddress != address(0), "Invalid payment address");
         
         // ========================================
         // PROCESS PAYMENT
@@ -622,13 +497,19 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         }
         
         // Transfer PYUSD from subscriber to service provider
-        // Note: All payment types (DirectCrypto, AutomatedGiftCard, ManualEntry) 
-        // transfer on-chain first. Off-chain processing happens based on payment type:
-        // - DirectCrypto: Nothing else needed, payment complete
-        // - AutomatedGiftCard: Backend listens to PaymentProcessed event, calls Bitrefill API
-        // - ManualEntry: Backend listens to PaymentProcessed event, generates virtual card details
+        // Note: All payment types transfer on-chain first. Off-chain processing happens based on payment flow:
+        // - ViaUserPayPal: Backend converts PYUSD → USD in Coinbase, withdraws to User's PayPal, user pays subscription
+        // - DirectRecipientPayPal: Backend converts PYUSD → USD in Coinbase, sends via PayPal Payouts API to recipient
+        // - DirectRecipientWallet: Direct wallet-to-wallet transfer, payment complete on-chain (no off-chain processing)
+        
+        // IF DirectRecipientWallet, paymentAddress is the recipient's wallet address
         bool success = pyusdToken.transferFrom(sub.subscriber, paymentAddress, sub.amount);
         require(success, "PYUSD transfer failed");
+
+        // IF DirectRecipientPayPal, paymentAddress is the recipient's PayPal email address
+
+
+        // IF ViaUserPayPal, paymentAddress is the House Coinbase account address
         
         // ========================================
         // UPDATE STATE & EMIT EVENT
@@ -729,58 +610,6 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         return _userSubscriptions[user];
     }
     
-    // ========================================
-    // VIEW FUNCTIONS - SERVICE PROVIDER QUERIES
-    // ========================================
-    
-    /**
-     * @notice Get the payment address for a service provider
-     * @param serviceProviderId The ID of the service provider
-     * @return The payment address for this provider
-     */
-    function getProviderAddress(uint256 serviceProviderId) external view returns (address) {
-        require(_serviceProviderExists[serviceProviderId], "Service provider does not exist");
-        return _serviceProviderAddresses[serviceProviderId];
-    }
-    
-    /**
-     * @notice Get the type of a service provider
-     * @param serviceProviderId The ID of the service provider
-     * @return The provider type (0=PublicVerified, 1=PublicUnverified, 2=Private)
-     */
-    function getProviderType(uint256 serviceProviderId) external view returns (ProviderType) {
-        require(_serviceProviderExists[serviceProviderId], "Service provider does not exist");
-        return _serviceProviderTypes[serviceProviderId];
-    }
-    
-    /**
-     * @notice Get the owner of a provider
-     * @param serviceProviderId The ID of the service provider
-     * @return The address of the user who created this provider (address(0) for PublicVerified providers)
-     */
-    function getProviderOwner(uint256 serviceProviderId) external view returns (address) {
-        require(_serviceProviderExists[serviceProviderId], "Service provider does not exist");
-        return _serviceProviderOwners[serviceProviderId];
-    }
-    
-    /**
-     * @notice Check if a service provider exists
-     * @param serviceProviderId The ID of the service provider
-     * @return True if the provider exists, false otherwise
-     */
-    function providerExists(uint256 serviceProviderId) external view returns (bool) {
-        return _serviceProviderExists[serviceProviderId];
-    }
-    
-    /**
-     * @notice Get the payment integration method for a service provider
-     * @param serviceProviderId The ID of the service provider
-     * @return The payment type (0=DirectCrypto, 1=AutomatedGiftCard, 2=ManualEntry)
-     */
-    function getProviderPaymentType(uint256 serviceProviderId) external view returns (PaymentType) {
-        require(_serviceProviderExists[serviceProviderId], "Service provider does not exist");
-        return _serviceProviderPaymentTypes[serviceProviderId];
-    }
 }
 
 /**

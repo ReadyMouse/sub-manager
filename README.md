@@ -18,7 +18,7 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 ## How It Works
 
 ### PayPal-Enabled Subscription Flow:
-
+```
 User's PYUSD Wallet
     ↓ (Smart Contract Approval)
 House Coinbase PYUSD Account
@@ -29,19 +29,42 @@ House PayPal Business Account
     ↓ (PayPal Payouts API)
 User's PayPal Account
     ↓ (User automatically pays subscription)
-Subscription Renewed ✅
+Subscription Renewed 
+```
 
 The system enables users to pay for any PayPal-accepting subscription using their PYUSD. No subscription data is stored on-chain - the smart contract only handles payment approvals and transfers.
 
 ### Digital Peer-to-Peer Option:
-
+```
 Renter's PYUSD
     ↓ 
 Smart Contract
     ↓ 
 Landlord's PYUSD 
     ↓ 
-Rent gets paid ✅
+Rent gets paid 
+```
+
+### Off Shoot Flows
+```
+User's PYUSD Wallet
+    ↓ 
+Smart Contract 
+    ↓       -> Recipient PYUSD Wallet  
+House Coinbase PYUSD Account
+    ↓       -> (Future) NEAR/DEX -> Recipient Wallet 
+House Coinbase USD Balance
+    ↓ 
+House PayPal Business Account
+    ↓       -> Recipient Paypal (Charity/Patreon) 
+User's PayPal Account
+    ↓ 
+Subscription Renewed 
+```
+## Relevant Links 
+* [Charities that Directly Accept PayPal](https://www.paypal.com/fundraiser/hub)
+
+
 
 ## 🚀 Quick Start
 

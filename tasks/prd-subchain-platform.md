@@ -41,6 +41,22 @@ Landlord's PYUSD
 Rent gets paid ✅
 ```
 
+AND
+
+```
+User's PYUSD Wallet
+    ↓ (Smart Contract Approval)
+House Coinbase PYUSD Account
+    ↓ (Zero-fee conversion - API triggered)
+House Coinbase USD Balance
+    ↓ (Coinbase API → PayPal withdrawal)
+House PayPal Business Account
+    ↓ (PayPal Payouts API)
+Recipient's PayPal Account
+    ↓ 
+Patreon Supported ✅
+```
+
 **Key Innovation:** The system enables users to pay for ANY PayPal-accepting subscription using their PYUSD. No subscription data is stored on-chain - the smart contract only handles payment approvals and transfers.
 
 **Target Audience:** Crypto-native users who hold PYUSD and want to pay for subscriptions (Netflix, Spotify, SaaS tools, etc.) without linking traditional bank accounts or credit cards.
