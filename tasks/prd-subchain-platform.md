@@ -14,36 +14,67 @@ SubChain is a decentralized subscription management protocol that brings familia
 - Recurring peer-to-peer transcations (rent, allowance, savings accounts, etc.)
 
 **Our Solution:**
-SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern—similar to giving a gym ACH authorization to auto-charge your bank account each month. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments when due—truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capibility to fork mainnet ETH for development. 
+SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into PayPal. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments from PYUSD → PayPal account when due. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capability to fork mainnet ETH for development.
+
+**The Flow:**
+```
+User's PYUSD Wallet
+    ↓ (Smart Contract Approval)
+House Coinbase PYUSD Account
+    ↓ (Zero-fee conversion - API triggered)
+House Coinbase USD Balance
+    ↓ (Coinbase API → PayPal withdrawal)
+House PayPal Business Account
+    ↓ (PayPal Payouts API)
+User's PayPal Account
+    ↓ (User automatically pays subscription)
+Subscription Renewed ✅
+```
+AND 
+```
+Renter's PYUSD
+    ↓ 
+Smart Contract
+    ↓ 
+Landlord's PYUSD 
+    ↓ 
+Rent gets paid ✅
+```
+
+**Key Innovation:** The system enables users to pay for ANY PayPal-accepting subscription using their PYUSD. No subscription data is stored on-chain - the smart contract only handles payment approvals and transfers.
 
 **Target Audience:** Crypto-native users who hold PYUSD and want to pay for subscriptions (Netflix, Spotify, SaaS tools, etc.) without linking traditional bank accounts or credit cards.
 
 ## 2. Goals
 
-1. **Enable Recurring PYUSD Payments:** Allow users to approve one-time authorization for recurring subscription payments from their wallet
+1. **Enable PYUSD to PayPal Bridge:** Allow users to use PYUSD for any PayPal-accepting subscription service
 2. **Automate Payment Processing:** Use Chainlink Automation or Gelato Network to automatically trigger payments when due (true "set and forget")
-3. **Support Multiple Payment Flows:** Handle both direct crypto-to-crypto subscriptions AND non-crypto subscitions (potentially with gift card redemption flows via Bitrefill)
-4. **Provide Unified Dashboard:** Give users a single place to view, manage, and monitor all crypto-based subscriptions
+3. **Seamless Off-Ramping:** Automatic PYUSD → USD → PayPal conversion via Coinbase and PayPal APIs
+4. **Universal Subscription Support:** Works with ANY service that accepts PayPal (Netflix, Spotify, gyms, SaaS, etc.)
 5. **Maintain User Financial Control:** Never lock user funds, payments pulled only when due
-6. **Win PYUSD Consumer Champion Prize:** Demonstrate the most seamless consumer payment experience with programmable subscriptions
-7. **Win Envio Indexing:** Demostrate leveraging HyperIndex for real-time subscription tracking and event monitoring
-8. **Win Hardhat 3:** Demostrate using Hardhat's capibility to fork mainnet ETH for development
+6. **Provide Unified Dashboard:** Give users a single place to view, manage, and monitor all crypto-based subscriptions
+7. **Support Peer-to-Peer Payments:** Maintain direct PYUSD transfer option for rent, allowances, etc.
+8. **Win PYUSD Consumer Champion Prize:** Demonstrate the most seamless consumer payment experience with programmable subscriptions
+9. **Win Envio Indexing:** Demonstrate leveraging HyperIndex for real-time subscription tracking and event monitoring
+10. **Win Hardhat 3:** Demonstrate using Hardhat's capability to fork mainnet ETH for development
 
 ## 3. User Stories
 
 ### Primary User: End Consumer (PYUSD Holder)
 
-**US-1: Creating a Subscription**
-> As a crypto user holding PYUSD, I want to subscribe to Netflix using my stablecoin balance, so that I can pay for services without linking my bank account or credit card.
+**US-1: Creating a Subscription with PayPal**
+> As a crypto user holding PYUSD, I want to subscribe to Netflix using my stablecoin balance that automatically converts to PayPal, so that I can pay for services without linking my bank account or credit card.
 
 **Acceptance Criteria:**
 - User can connect wallet (MetaMask/WalletConnect)
-- User can browse available services in marketplace
-- User can see subscription details (price, billing interval, service name)
+- User can link their PayPal account (one-time setup)
+- User can browse marketplace showing any PayPal-accepting subscription
+- User can see subscription details (price in PYUSD, billing interval, service name)
 - User can approve PYUSD allowance for SubChain contract
 - User can create subscription with one transaction
 - Transaction is indexed within 5 seconds
 - Subscription appears in dashboard immediately
+- System stores encrypted PayPal account info for automated payouts
 
 **US-2: Viewing Subscription Dashboard**
 > As a user with multiple active subscriptions, I want to see all my subscriptions in one dashboard, so that I can track my recurring expenses and upcoming payments.
@@ -55,16 +86,21 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - Dashboard provides balance warnings if wallet has insufficient PYUSD for upcoming payments
 - Dashboard updates in real-time when events occur
 
-**US-3: Processing Recurring Payments**
-> As a subscriber, I want my subscription payments to process automatically each billing cycle, so that I don't have to manually send payments each month.
+**US-3: Processing Recurring Payments via PayPal**
+> As a subscriber, I want my subscription payments to process automatically each billing cycle with PYUSD converting to PayPal, so that I don't have to manually send payments each month.
 
 **Acceptance Criteria:**
-- When payment is due, authorized party (service provider or bot) can call `processPayment()`
+- When payment is due, automation triggers `processPayment()` on smart contract
 - Contract verifies payment is due based on billing interval
 - Contract checks user has sufficient PYUSD balance and allowance
-- Contract transfers exact subscription amount from user wallet to service provider
+- Contract transfers exact subscription amount from user wallet to house account
+- Backend service receives payment event and initiates conversion flow:
+  - PYUSD converted to USD via Coinbase API (zero fees)
+  - USD transferred to house PayPal business account
+  - PayPal Payouts API sends funds to user's linked PayPal account
 - Payment event is indexed and appears in dashboard
 - Next payment date is automatically calculated and updated
+- User's PayPal receives funds to pay their subscription
 
 **US-4: Canceling a Subscription**
 > As a user, I want to cancel my subscription at any time, so that I maintain control over my recurring expenses.
@@ -86,15 +122,15 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - User receives notification (dashboard indicator) before auto-cancellation
 - Service provider is notified of payment failure
 
-**US-6: Gift Card Automation (Netflix, Spotify, etc.)**
-> As a user subscribing to traditional services like Netflix, I want SubChain to automatically purchase and redeem gift cards, so that I can use PYUSD for services that don't accept crypto directly.
+**US-6: PayPal Account Linking**
+> As a user, I want to securely link my PayPal account once, so that all my subscriptions can automatically receive funds without repeated setup.
 
 **Acceptance Criteria:**
-- When payment processes for gift card-based subscription, system calls Bitrefill API
-- Gift card is purchased with PYUSD equivalent amount
-- Gift card code is stored securely and associated with subscription
-- User can view gift card codes in dashboard
-- (Stretch Goal: Browser extension auto-redeems gift card via automation)
+- User can link PayPal account through secure OAuth flow or email input
+- System stores encrypted PayPal account details associated with wallet address
+- User can view linked PayPal status in dashboard
+- User can update or unlink PayPal account at any time
+- System validates PayPal account is active before processing first payment
 
 ## 4. Functional Requirements
 
@@ -112,25 +148,30 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - `failedPaymentCount` (uint8): Number of consecutive failed payments
 - `createdAt` (uint256): Subscription creation timestamp
 - `serviceName` (string): Human-readable service name (e.g., "Netflix Premium", "Alchemy Pro")
-- `paymentType` (uint8): Integration method (0 = Direct Crypto, 1 = Automated Gift Card, 2 = Manual Entry)
+- `paymentType` (uint8): Integration method (0 = Direct Crypto, 1 = Paypal)
+- `endDate` (datetime): End date for the subscription
+- `maxPayments` (int): Maximum number of payments to approve
 
 **FR-3:** The contract MUST implement a `createSubscription()` function that:
-- Accepts parameters: serviceProvider ID, amount, interval, serviceName, paymentType
+- Accepts parameters: serviceProvider ID, amount, interval, endDate (optional), maxPayments (optional)
 - Requires user has approved sufficient PYUSD allowance
 - Creates new subscription with `nextPaymentDue` set to current timestamp + interval
 - Assigns unique subscription ID
 - Emits `SubscriptionCreated` event
 - Returns subscription ID
+- Note: Subscription metadata (service name, PayPal details) stored off-chain in backend
 
 **FR-4:** The contract MUST implement a `processPayment()` function that:
 - Accepts subscription ID as parameter
-- Can be called by service provider OR any automation bot
+- Can be called by automation bot or service provider
 - Verifies subscription is active
 - Verifies current timestamp >= nextPaymentDue
 - Checks user has sufficient PYUSD balance
 - Checks user has sufficient PYUSD allowance
-- Checks what type of payment methods, and executes payment based on service provider type
+- Transfers PYUSD from user to house account (for PayPal conversion) or directly to provider (for P2P)
+- Increments `paymentCount` on successful payment
 - Updates `nextPaymentDue` to current value + interval
+- Checks if subscription should expire (endDate reached or maxPayments reached)
 - Resets `failedPaymentCount` to 0 on successful payment
 - Emits `PaymentProcessed` event with amount, timestamp, subscription ID
 - If payment fails, increments `failedPaymentCount`
@@ -188,16 +229,15 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - WalletConnect (for mobile wallet support) (reach goal)
 
 **FR-15:** The dashboard MUST display a subscription marketplace showing:
-- Available services with clear payment type indicators:
-  - **Alchemy** (Direct Crypto Payment) - accepts PYUSD natively
-  - **Mintstars** (Direct Crypto Payment) - accepts PYUSD natively
-  - **Netflix** (Automated Gift Card) - via Bitrefill API
-  - Additional services as time allows
+- Popular PayPal-accepting services as examples:
+  - **Netflix** - $15.49/month (paid via PayPal)
+  - **Spotify** - $10.99/month (paid via PayPal)
+  - **Any service that accepts PayPal** - emphasize universal compatibility
 - Service logo, name, and description
 - Subscription price in PYUSD (with USD equivalent)
 - Billing interval (monthly, annual, etc.)
-- Payment method badge: "Direct Crypto" / "Automated Gift Card" / "Manual Entry Required" / "Other"
-- Brief explanation of how payment works for each service type
+- Payment method badge: "PayPal-Enabled" for marketplace items, "Direct PYUSD" for P2P
+- Clear explanation: "Works with ANY service that accepts PayPal"
 
 **FR-16:** The dashboard MUST provide a "My Subscriptions" page displaying:
 - Grid/list of active subscriptions with: service name, amount, billing interval, next payment date
@@ -217,43 +257,50 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - List of upcoming payments in next 7 days with total required balance
 
 **FR-19:** The dashboard MUST provide subscription creation flow:
-- Select service from marketplace
-- Review subscription details (amount, interval, total per year)
+- Select service from marketplace or enter custom subscription
+- Link PayPal account if not already linked (one-time setup)
+- Review subscription details (PYUSD amount, interval, total per year)
 - Approve PYUSD allowance (separate transaction)
 - Create subscription (transaction)
 - Show loading states during transaction confirmation
 - Show success confirmation with subscription details
 
-### As Many Subscription Integrations As Time Allows (ex. Bitrefill API)
+### PayPal Integration Backend Requirements
 
-**FR-20:** The system MAY support crypto-native direct payment integrations:
-- For services that accept PYUSD directly (e.g., Alchemy, Mintstars), route payments straight to service provider wallet
-- Payment processing flow: User approves allowance → SubChain contract transfers PYUSD to service provider on payment date
-- Service provider receives full subscription amount (no intermediary fees or conversions)
-- Dashboard displays "Direct Crypto Payment" badge for these subscriptions
-- Service receives webhook/notification when payment is processed (optional integration)
+**FR-20:** The system MUST implement a backend payment processing service that:
+- Listens to smart contract `PaymentProcessed` events via webhook or polling
+- Receives PYUSD payment notifications with subscription ID, amount, user wallet address
+- Looks up user's linked PayPal account from encrypted database
+- Initiates PYUSD to USD conversion via Coinbase API (zero fees)
+- Transfers USD to house PayPal business account
+- Sends payout to user's PayPal account via PayPal Payouts API
+- Logs full transaction trail: PYUSD amount, USD amount, PayPal payout ID, timestamps
+- Handles errors and retries gracefully (network failures, API timeouts, insufficient balance)
+- Sends status updates back to frontend for dashboard display
 
-**FR-21:** The system MAY support automated gift card purchases via Bitrefill (or similar APIs):
-- For services available on Bitrefill (e.g., Netflix, Spotify), automatically purchase gift cards when subscription payment processes
-- Payment flow: PYUSD transfers to service provider wallet → Backend calls Bitrefill API → Gift card purchased → Code stored in database
-- Store gift card codes securely associated with subscription ID and payment ID
-- Dashboard displays "Automated Gift Card" badge for these subscriptions
-- Display purchased gift card codes in dashboard with: date, amount, code (revealed on click), redemption status
-- Provide "Copy Code" button for easy manual redemption
-- Handle API failures gracefully: log error, notify user, but don't fail the PYUSD payment
+**FR-21:** The backend MUST implement secure PayPal account management:
+- API endpoint for users to link PayPal account (via OAuth or email input)
+- Store PayPal account details encrypted in database, associated with wallet address
+- Validate PayPal accounts are active before accepting subscription creation
+- Allow users to update or remove PayPal account
+- Support multiple wallet addresses per PayPal account (optional)
 
-**FR-22:** The system MAY provide universal payment method for non-crypto services (Privacy.com approach):
-- For any service not directly integrated, provide "Manual Payment Card" option
-- When subscription payment processes, PYUSD transfers to DEX like NEAR Intents then fills a refillable generic credit card
-- System generates/displays payment fulfillment information for user to manually enter into service
-  - Virtual payment details (virtual card number/CVV for manual entry)
-- Dashboard shows clear instructions
-- This method works universally for ANY service (most flexible, requires fiat off-ramping, and external card service)
-- Dashboard displays "Manual Entry Required" badge for these subscriptions
+**FR-22:** The backend MUST implement Coinbase API integration:
+- Connect to Coinbase Commerce or Coinbase Exchange API
+- Convert received PYUSD to USD at market rate (should be 1:1 with minimal slippage)
+- Handle conversion via zero-fee or low-fee method
+- Track conversion rates and amounts for transparency
+- Handle API rate limits and failures
+
+**FR-23:** The system MAY support direct peer-to-peer PYUSD payments:
+- For user-created providers (landlord, allowance recipient), route payments directly wallet-to-wallet
+- No PayPal conversion needed for these subscriptions
+- Smart contract transfers PYUSD directly to provider's wallet address
+- Dashboard displays "Direct PYUSD Payment" badge for P2P subscriptions
 
 ### Automation Requirements (Chainlink or Gelato)
 
-**FR-23:** The system MUST implement automated payment processing using either Chainlink Automation or Gelato Network:
+**FR-24:** The system MUST implement automated payment processing using either Chainlink Automation or Gelato Network:
 - Configure automation service to monitor subscription contract
 - Implement upkeep/task that checks for due payments and triggers `processPayment()`
 - Automation should run at regular intervals (e.g., every hour or daily)
@@ -262,7 +309,7 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 
 ### Testing Requirements (Hardhat)
 
-**FR-26:** The project MUST include comprehensive Hardhat tests covering:
+**FR-25:** The project MUST include comprehensive Hardhat tests covering:
 - Subscription creation with valid/invalid parameters
 - Payment processing for due/not-due subscriptions
 - Failed payment handling and auto-cancellation after 3 failures
@@ -270,29 +317,29 @@ SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin)
 - Edge cases: insufficient balance, insufficient allowance, non-existent subscription
 - Event emission verification
 
-**FR-27:** Tests MUST use Hardhat mainnet fork to test with actual PYUSD contract
+**FR-26:** Tests MUST use Hardhat mainnet fork to test with actual PYUSD contract
 
-**FR-28:** Tests MUST achieve >80% code coverage
+**FR-27:** Tests MUST achieve >80% code coverage
 
 ## 5. Non-Goals (Out of Scope)
 
 The following features are explicitly **out of scope** for this version:
 
-**NG-1:** **ZK-SNARKs/Full Privacy Features** - While the README mentions client-side encryption and future ZK privacy, full privacy implementation (encrypted metadata, zero-knowledge proofs) is deferred to future versions. MVP subscriptions will have public on-chain data.
+**NG-1:** **On-Chain Subscription Metadata** - Subscription details (service names, PayPal accounts) are NOT stored on-chain. Only payment approvals and basic subscription parameters are on-chain. Metadata is stored off-chain in the backend.
 
 **NG-2:** **Multiple Coin Support** - Only PYUSD is supported.
 
 **NG-3:** **Mobile Native Apps** - Web-only interface. No iOS or Android native applications.
 
-**NG-4:** **Browser Extension for Auto-Redemption** - Automated gift card redemption via Puppeteer/browser automation is a stretch goal, not required for MVP.
+**NG-4:** **Gift Card Integration** - No Bitrefill or gift card API integration. PayPal Payouts handle all subscription payments.
 
 **NG-5:** **Multi-Chain Support** - Deployment on single chain only (Ethereum mainnet or testnet), no multi-chain indexing.
 
-**NG-6:** **Service Provider Onboarding Portal** - No self-service portal for service providers to register. Services are hardcoded in marketplace for MVP.
+**NG-6:** **Service Provider Onboarding Portal** - No self-service portal for service providers. Marketplace shows example services for demonstration.
 
 **NG-7:** **Notifications/Alerts** - No email, SMS, or push notifications. Dashboard-only indicators for warnings and status updates.
 
-**NG-8:** **Fiat On/Off Ramps** - No integration with fiat payment processors. Users must acquire PYUSD through external means.
+**NG-8:** **Direct Fiat On-Ramps** - Users must acquire PYUSD through external exchanges. PayPal off-ramping is handled by the backend.
 
 ## 6. Design Considerations
 
@@ -306,7 +353,7 @@ The following features are explicitly **out of scope** for this version:
 **DC-2: Dashboard Layout**
 - Left sidebar navigation: Marketplace, My Subscriptions, Payment History, Settings
 - Main content area with appropriate page content
-- Top bar: Wallet connection status, PYUSD balane
+- Top bar: Wallet connection status, PayPal connection status, PYUSD balance
 
 **DC-3: Subscription Cards**
 - Visual card design for each subscription showing:
@@ -321,10 +368,12 @@ The following features are explicitly **out of scope** for this version:
 - Transaction pending states with spinner
 - Success/error toast notifications
 
-**DC-5: Wallet Connection**
+**DC-5: Wallet and PayPal Connection**
 - Prominent "Connect Wallet" button if not connected
-- Modal with MetaMask
-- Show connected address and balance after connection
+- Modal with MetaMask for wallet connection
+- "Link PayPal" button for PayPal account setup
+- Show connected wallet address, PYUSD balance, and PayPal status in top bar
+- Clear indicators when both wallet and PayPal are connected
 
 ### Component Suggestions
 
@@ -369,9 +418,36 @@ The following features are explicitly **out of scope** for this version:
 - Optimize queries with proper indexing in schema
 - Consider pagination for payment history queries
 
+### Backend Payment Processing Architecture
+
+**TC-7:** Backend Service Requirements:
+- **Technology Stack:** Node.js/Express backend service
+- **Event Monitoring:** Listen to smart contract events via Alchemy webhooks or polling
+- **Database:** PostgreSQL or MongoDB for storing PayPal account mappings (encrypted)
+- **API Integrations:** Coinbase APIs, PayPal Payouts API
+- **Security:** Encrypt PayPal account details at rest, use secure API key management
+- **Deployment:** Railway, Render, or AWS for cloud hosting
+
+**TC-8:** Payment Processing Flow:
+1. Backend receives `PaymentProcessed` event from smart contract
+2. Lookup user's PayPal account from database using wallet address
+3. Call Coinbase API to convert PYUSD to USD (1:1 expected, zero fees)
+4. Transfer USD to house PayPal business account via Coinbase withdrawal
+5. Call PayPal Payouts API to send funds to user's PayPal
+6. Log transaction: PYUSD amount, USD amount, conversion rate, PayPal payout ID, timestamps
+7. Update database with payment status
+8. Emit status update to frontend via GraphQL subscription or polling
+
+**TC-9:** Error Handling and Retries:
+- Implement exponential backoff for API failures
+- Store failed transactions in queue for manual review
+- Send alerts for persistent failures (>3 retries)
+- Maintain audit log of all payment processing attempts
+- Handle edge cases: insufficient balance, closed PayPal accounts, API rate limits
+
 ### Automation Architecture
 
-**TC-7:** Chainlink Automation vs Gelato Selection Criteria:
+**TC-10:** Chainlink Automation vs Gelato Selection Criteria:
 - **Chainlink Automation:**
   - More decentralized keeper network
   - Requires LINK token for upkeep funding
@@ -383,13 +459,13 @@ The following features are explicitly **out of scope** for this version:
   - May be easier for hackathon demo
   - Can use Automate SDK for quick integration
 
-**TC-8:** Keeper Contract Implementation:
+**TC-11:** Keeper Contract Implementation:
 - Implement view function `getPaymentsDue()` that returns array of subscription IDs ready for processing
 - Optimize gas by limiting batch size (e.g., max 10 subscriptions per upkeep call)
 - Use efficient loops and early returns to minimize gas in `checkUpkeep`
 - Consider implementing time-based batching (process oldest due payments first)
 
-**TC-9:** Automation Monitoring:
+**TC-12:** Automation Monitoring:
 - Track automation upkeep balance to ensure continuous operation
 - Set up alerts for low balance or failed upkeeps
 - Log all automated payment attempts for debugging
@@ -397,26 +473,33 @@ The following features are explicitly **out of scope** for this version:
 
 ### Deployment Strategy
 
-**TC-10:** Smart Contract Deployment:
+**TC-13:** Smart Contract Deployment:
 - Deploy to Ethereum Sepolia testnet first for testing
 - Deploy to Ethereum mainnet for production demo
 - Use Hardhat Ignition modules for deployment automation
 - Verify contract on Etherscan
 
-**TC-11:** Envio Indexer Deployment:
+**TC-14:** Backend Service Deployment:
+- Deploy payment processing backend to cloud provider (Railway, Render, AWS)
+- Configure environment variables for Coinbase and PayPal APIs
+- Set up database for PayPal account storage (encrypted)
+- Configure webhook listeners for smart contract events
+- Test full PYUSD → PayPal flow on testnet
+
+**TC-15:** Envio Indexer Deployment:
 - Deploy to Envio hosted service
 - Configure event sources to point to deployed contract address
 - Test queries via Envio GraphQL playground
 
-**TC-12:** Automation Service Deployment:
+**TC-16:** Automation Service Deployment:
 - Register upkeep with Chainlink Automation or create Gelato task
 - Fund upkeep with LINK (Chainlink) or ETH (Gelato)
 - Test automation triggers on testnet before mainnet
 - Monitor automation dashboard for successful executions
 
-**TC-13:** Frontend Deployment:
+**TC-17:** Frontend Deployment:
 - Deploy to Vercel/Netlify for hackathon demo
-- Configure environment variables for production
+- Configure environment variables for production (contract addresses, backend API, PayPal config)
 
 ## 8. Success Metrics
 
@@ -446,33 +529,37 @@ The following features are explicitly **out of scope** for this version:
 - Target: Payments processed within 1 hour of becoming due
 - Measure: Time between `nextPaymentDue` timestamp and actual `PaymentProcessed` event
 
+**SM-7: PayPal Integration Success Rate**
+- Target: >95% of PYUSD payments successfully converted and sent to PayPal
+- Measure: (Successful PayPal payouts / Total PaymentProcessed events) tracked in backend logs
+
 ### UX Metrics (For Demo/Judging)
 
-**SM-7: Subscription Creation Flow Time**
-- Target: User can create subscription in <60 seconds (including wallet approvals)
+**SM-8: Subscription Creation Flow Time**
+- Target: User can create subscription in <60 seconds (including wallet and PayPal linking)
 - Measure: Time from clicking "Subscribe" to subscription appearing in dashboard
 
-**SM-8: Dashboard Load Time**
+**SM-9: Dashboard Load Time**
 - Target: Dashboard displays subscriptions within 2 seconds of page load
 - Measure: Time to first meaningful paint with subscription data
 
-**SM-9: Demo Comprehension**
-- Target: Judges understand the value proposition within 4-minute demo
-- Measure: Qualitative feedback, ability to explain use case clearly
+**SM-10: Demo Comprehension**
+- Target: Judges understand the PYUSD → PayPal value proposition within 4-minute demo
+- Measure: Qualitative feedback, ability to explain "works with ANY PayPal subscription" clearly
 
-**SM-10: UX Polish**
+**SM-11: UX Polish**
 - Target: Zero broken UI states, all loading states handled, error messages are clear
 - Measure: Manual QA checklist, demo rehearsal feedback
 
 ### Business/Hackathon Metrics
 
-**SM-11: Prize Alignment Score**
-- Target: Clearly demonstrate "most seamless consumer payment experience" for PYUSD Consumer Champion prize
+**SM-12: Prize Alignment Score**
+- Target: Clearly demonstrate "most seamless consumer payment experience" for PYUSD Consumer Champion prize by enabling ANY PayPal subscription
 - Measure: Demo script emphasizes: programmable subscriptions, set-and-forget UX, financial sovereignty (funds stay in wallet), unified dashboard, automated payments via Chainlink/Gelato
 
-**SM-12: Code Quality & Open Source**
+**SM-13: Code Quality & Open Source**
 - Target: Well-documented, clean code suitable for open-source release
-- Measure: README completeness, code comments, TypeScript types, deployment instructions
+- Measure: README completeness, code comments, TypeScript types, deployment instructions, architecture documentation
 
 ## 9. Open Questions
 

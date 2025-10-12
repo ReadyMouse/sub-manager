@@ -6,15 +6,42 @@ SubChain is a decentralized subscription management protocol that brings familia
 - Crypto users hold $150B+ in stablecoins but have no native way to manage subscriptions
 - Subscriptions management ystems like Privacy.com with million of users is fiat-only
 - Current solutions require locking funds in escrow (poor UX) or manual monthly payments (friction) or streaming micro-payments like Hyperliquid
-- On-chain payment history is fully public, exposing sensitive subscription data
 - No unified dashboard exists to view all crypto-based subscriptions in one place
 - Recurring tax-deductable charitable donations via crypto (with on-chain proof)
 - Recurring peer-to-peer transcations (rent, allowance, savings accounts, etc.)
 
 **Our Solution:**
-SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern—similar to giving a gym ACH authorization to auto-charge your bank account each month. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments when due—truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capibility to fork mainnet ETH for development. 
+SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into PayPal. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments from PYUSD -> PayPal account when due. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capibility to fork mainnet ETH for development. 
 
 **Target Audience:** Crypto-native users who hold PYUSD and want to pay for subscriptions (Netflix, Spotify, SaaS tools, etc.) without linking traditional bank accounts or credit cards.
+
+## How It Works
+
+### PayPal-Enabled Subscription Flow:
+
+User's PYUSD Wallet
+    ↓ (Smart Contract Approval)
+House Coinbase PYUSD Account
+    ↓ (Zero-fee conversion - API triggered)
+House Coinbase USD Balance
+    ↓ (Coinbase API → PayPal withdrawal)
+House PayPal Business Account
+    ↓ (PayPal Payouts API)
+User's PayPal Account
+    ↓ (User automatically pays subscription)
+Subscription Renewed ✅
+
+The system enables users to pay for any PayPal-accepting subscription using their PYUSD. No subscription data is stored on-chain - the smart contract only handles payment approvals and transfers.
+
+### Digital Peer-to-Peer Option:
+
+Renter's PYUSD
+    ↓ 
+Smart Contract
+    ↓ 
+Landlord's PYUSD 
+    ↓ 
+Rent gets paid ✅
 
 ## 🚀 Quick Start
 
@@ -37,7 +64,7 @@ The script will:
 3. Run `npm test` to verify everything works
 
 # SubChain Notes
-## Rough Idea
+## Platform Architecture
 
 ┌─────────────────────────────────────┐
 │         SubChain Platform           │
@@ -46,104 +73,25 @@ The script will:
 │  ┌──────────────────────────────┐  │
 │  │ Smart Contracts (PYUSD)      │  │
 │  │ Envio Indexer (Dashboard)    │  │
-│  │ Encrypted Metadata (Privacy) │  │
+│  │ Payment Processing           │  │
 │  └──────────────────────────────┘  │
 │                                     │
 │         Integration Layer           │
 │  ┌─────────┬─────────┬──────────┐  │
-│  │ Privacy │Bitrefill│ Coinbase │  │
-│  │  .com   │   API   │ Commerce │  │
+│  │ PayPal  │Coinbase │ Payment  │  │
+│  │ Payouts │  APIs   │ Router   │  │
 │  └─────────┴─────────┴──────────┘  │
 └─────────────────────────────────────┘
               ↓
     ┌──────────────────────┐
-    │  Any Service         │
-    │  (Netflix, Spotify,  │
-    │   Gyms, SaaS, etc.)  │
+    │  Any Service with    │
+    │   PayPal Support     │
+    │                      │
     └──────────────────────┘
-
-## Hackathon Positioning
-"Hi judges, I'm going to show you how crypto subscriptions 
-should work...
-
-[Opens SubChain.xyz]
-
-Here's our marketplace - think Bitrefill meets Netflix. 
-I can browse any subscription service...
-
-[Clicks Netflix]
-
-SubChain automatically determines the best way to pay:
-- For Netflix: Gift card API (automated)
-- For Dune Analytics: Direct integration (native)
-- For anything else: Virtual card bridge (universal)
-
-Watch me subscribe to Netflix with PYUSD...
-
-[Approves PYUSD allowance]
-[Creates subscription]
-
-Instantly indexed by Envio...
-
-[Dashboard updates in real-time]
-
-Gift card purchased via Bitrefill...
-[Show API response]
-
-Now, my browser extension detects the gift card is ready...
-[Extension icon lights up]
-
-I click 'Auto-Redeem'...
-[Puppeteer window pops up]
-
-Watch it log in and redeem automatically...
-[Shows browser automating the redemption]
-
-Done! Netflix renewed without me doing anything.
-[Shows Netflix account with updated balance]"
-
 
 ## Market 
 
-Privacy.com has proven people want unified subscription management—they have millions of users. But they're 100% fiat. We're building the crypto-native version for the 500M+ people holding stablecoins who want to pay with PYUSD instead of linking their bank account.
-
-## Integrations to Consider
-
-* Unlock Protocol 
-* Alchemy -> used for this project
-* Mintstars -> showcase the privacy aspects with encrypted label
-* Bitrefill/Coinsbee -> requires manual code entry
-* Charity that accepts crypto (TLC?) 
-
-## Privacy-Preserving Subscriptions
-
-Keep payments on-chain but encrypt subscription metadata
-
-### The Problem
-Traditional on-chain subscriptions expose:
-❌ What services you use
-❌ How much you spend
-❌ Your entire subscription history
-
-### Our Solution: Client-Side Encryption
-✅ Subscription details encrypted before hitting blockchain
-✅ Only you can decrypt with your password/key
-✅ Blockchain only sees: amounts, timing, addresses
-✅ No one can tell OnlyFans from Netflix from Spotify
-
-### Privacy Guarantees
-- Service names: PRIVATE
-- Categories: PRIVATE  
-- Payment amounts: PUBLIC (required for smart contract)
-- Payment timing: PUBLIC (required for automation)
-
-### Future: Full ZK Privacy
-With more time, we'd implement zk-SNARKs to hide amounts too.
-Technologies:
-
-* Noir (Aztec's ZK language) - beginner-friendly
-* Circom + SnarkJS - more established
-* zk-SNARKs on EVM - native support on some chains
+Privacy.com has proven people want unified subscription management—they have millions of users. But they're 100% fiat. We're building the crypto-native version for the 500M+ people holding stablecoins who want to pay with crypto instead of linking their bank account.
 
 ## Hackathon requirments
 ### Envio
@@ -191,7 +139,29 @@ Qualification Requirements
 
 Cursor + Claude AI was used to support development. 
 
-## Things I'll need to deal with later:
+## Future Considerations:
 
-- Handling of fees (user approves $15/mo to Netflix, who pays the fee)
-- ETH/SOL fees for PYUSD transcations (this is why normies hate crypto)
+- Gas fee optimization for PYUSD transactions
+- Multi-chain support for broader accessibility
+- Enhanced subscription analytics and reporting
+- Advanced payment routing optimization
+
+## Regulatory Compliance Roadmap
+
+**Current Status:** Prototype/Demo Only
+
+**Production Requirements:**
+1. Money Transmitter Licenses (via partner or direct)
+2. AML/KYC compliance program
+3. FinCEN MSB registration
+4. State-specific crypto licenses where applicable
+
+**Go-to-Market Strategy:**
+- Phase 1: Partner with Stripe Treasury/Coinbase Commerce
+- Phase 2: Obtain MTLs in top 10 states
+- Phase 3: Nationwide expansion
+
+⚠️ PROTOTYPE DEMONSTRATION
+This is a proof-of-concept for educational purposes only.
+Not operational. No real financial services provided.
+Production launch subject to regulatory approval.

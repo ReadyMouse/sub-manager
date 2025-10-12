@@ -10,12 +10,39 @@ Generated from: `prd-subchain-platform.md`
 | **2.0** Smart Contract | 18 sub-tasks | ✅ **COMPLETE** | Enhanced with user providers & flexible payment limits |
 | **3.0** Testing | 21 sub-tasks | ✅ **COMPLETE** | All tests passing with >80% coverage |
 | **4.0** Envio Indexer | 16 sub-tasks | ⏳ **Not Started** | - |
-| **5.0** Frontend Dashboard | 25 sub-tasks | ⏳ **Not Started** | - |
+| **5.0** Frontend Dashboard | 27 sub-tasks | ⏳ **Not Started** | PayPal integration + wallet connect |
 | **6.0** Payment Automation (Chainlink/Gelato) | 15 sub-tasks | ⏳ **Not Started** | Choose Chainlink or Gelato |
-| **7.0** Vendor Integrations | 10 sub-tasks | ⏳ **Not Started** | - |
-| **8.0** Deployment & Demo | 17 sub-tasks | ⏳ **Not Started** | - |
+| **7.0** PayPal Integration Backend | 12 sub-tasks | ⏳ **Not Started** | PayPal Payouts API + Coinbase conversion |
+| **8.0** Deployment & Demo | 20 sub-tasks | ⏳ **Not Started** | Includes backend deployment |
 
 **🎯 Current Focus:** Task 3.0 COMPLETE! Next: Task 4.0 (Envio Indexer)
+
+---
+
+## 🔄 Major Architecture Update
+
+**New PayPal-Enabled Flow:**
+```
+User's PYUSD Wallet
+    ↓ (Smart Contract Approval)
+House Coinbase PYUSD Account
+    ↓ (Zero-fee conversion - API triggered)
+House Coinbase USD Balance
+    ↓ (Coinbase API → PayPal withdrawal)
+House PayPal Business Account
+    ↓ (PayPal Payouts API)
+User's PayPal Account
+    ↓ (User automatically pays subscription)
+Subscription Renewed ✅
+```
+
+**What Changed:**
+- ✅ Subscriptions work with ANY PayPal-accepting service (not limited to crypto-native services)
+- ✅ No subscription metadata stored on-chain (only payment approvals)
+- ✅ Backend payment processor handles PYUSD → PayPal conversion
+- ✅ Maintains peer-to-peer PYUSD option for direct crypto payments
+
+**Key Implication:** Task 7.0 is now focused on building the PayPal integration backend rather than vendor-specific integrations.
 
 ---
 
@@ -57,29 +84,41 @@ Generated from: `prd-subchain-platform.md`
 ### Frontend
 - `frontend/src/App.tsx` - Main React application component with routing
 - `frontend/src/components/WalletConnect.tsx` - Wallet connection component (MetaMask)
-- `frontend/src/components/Marketplace.tsx` - Service marketplace listing page
+- `frontend/src/components/PayPalConnect.tsx` - PayPal account linking component
+- `frontend/src/components/Marketplace.tsx` - Service marketplace listing page (any PayPal-accepting service)
 - `frontend/src/components/SubscriptionCard.tsx` - Reusable subscription card component
-- `frontend/src/components/CreateSubscription.tsx` - Subscription creation flow with approval + create
+- `frontend/src/components/CreateSubscription.tsx` - Subscription creation flow with PYUSD approval + PayPal linking
 - `frontend/src/components/MySubscriptions.tsx` - User's active/cancelled subscriptions page
 - `frontend/src/components/PaymentHistory.tsx` - Payment history table with filters
-- `frontend/src/components/BalanceWarning.tsx` - Warning banner for insufficient balance
+- `frontend/src/components/BalanceWarning.tsx` - Warning banner for insufficient PYUSD balance
 - `frontend/src/components/AutomationStatus.tsx` - Display automation provider badge and status (optional)
 - `frontend/src/hooks/useContract.ts` - Custom hook for contract interactions
 - `frontend/src/hooks/useEnvio.ts` - Custom hook for Envio GraphQL queries
-- `frontend/src/lib/constants.ts` - Contract addresses, PYUSD address, service provider data
+- `frontend/src/hooks/usePayPal.ts` - Custom hook for PayPal integration
+- `frontend/src/lib/constants.ts` - Contract addresses, PYUSD address, PayPal config
 - `frontend/src/lib/types.ts` - TypeScript types for subscriptions, payments, etc.
 - `frontend/tailwind.config.js` - Tailwind CSS configuration
 - `frontend/vite.config.ts` - Vite bundler configuration
 - `frontend/package.json` - Frontend dependencies (React, wagmi, Apollo Client, Tailwind)
 
+### Backend (PayPal Integration)
+- `backend/server.ts` - Express server for payment processing
+- `backend/services/coinbase.ts` - Coinbase API integration for PYUSD/USD conversion
+- `backend/services/paypal.ts` - PayPal Payouts API integration
+- `backend/services/webhook.ts` - Smart contract event listeners
+- `backend/db/users.ts` - User PayPal account storage (encrypted)
+- `backend/middleware/auth.ts` - Wallet signature verification
+- `backend/.env.example` - Backend environment variables (PayPal, Coinbase keys)
+
 ### Documentation
-- `README.md` - Project overview, setup instructions, deployment guide
+- `README.md` - Project overview, PayPal integration flow, setup instructions
 - `.env.example` - Example environment variables for all components
 
 ### Notes
 - Tests are colocated with contracts in `/test/` directory
 - Run tests with `npx hardhat test`
 - Frontend uses Vite for fast development
+- Backend handles PYUSD → PayPal conversion flow
 - Envio indexer is deployed separately to Envio hosted service
 
 ## Tasks
@@ -162,29 +201,31 @@ Generated from: `prd-subchain-platform.md`
 - [ ] 5.0 Build frontend dashboard for subscription management
   - [ ] 5.1 Initialize React + TypeScript project with Vite: `npm create vite@latest frontend -- --template react-ts`
   - [ ] 5.2 Install dependencies: `wagmi`, `viem`, `@tanstack/react-query`, `@apollo/client`, `tailwindcss`, `react-router-dom`
-  - [ ] 5.3 Configure Tailwind CSS: run `npx tailwindcss init -p` and update config
-  - [ ] 5.4 Create `src/lib/constants.ts` with contract addresses, PYUSD address, ABI, Envio GraphQL endpoint
-  - [ ] 5.5 Create `src/lib/types.ts` with TypeScript interfaces for Subscription, Payment, Service
-  - [ ] 5.6 Set up wagmi config in `src/lib/wagmi.ts` with MetaMask connector (FR-14)
+  - [ ] 5.3 Configure Tailwind CSS: run `npx tailwindcss init -p` and update config with PayPal brand colors
+  - [ ] 5.4 Create `src/lib/constants.ts` with contract addresses, PYUSD address, ABI, Envio GraphQL endpoint, PayPal config
+  - [ ] 5.5 Create `src/lib/types.ts` with TypeScript interfaces for Subscription, Payment, PayPal integration
+  - [ ] 5.6 Set up wagmi config in `src/lib/wagmi.ts` with MetaMask connector
   - [ ] 5.7 Set up Apollo Client in `src/lib/apollo.ts` for Envio GraphQL queries
   - [ ] 5.8 Create `src/components/WalletConnect.tsx`: wallet connection button, show connected address and PYUSD balance
-  - [ ] 5.9 Create `src/App.tsx` with routing: Marketplace, My Subscriptions, Payment History pages
-  - [ ] 5.10 Create `src/components/Layout.tsx`: sidebar navigation, top bar with wallet connection
-  - [ ] 5.11 Build Marketplace page (FR-15): hardcode 2-3 services (Alchemy, Mintstars, Netflix) with payment type badges
-  - [ ] 5.12 Create `src/components/ServiceCard.tsx`: display service logo, name, price, billing interval, payment type badge
-  - [ ] 5.13 Build subscription creation modal (FR-19): show service details, approve PYUSD allowance button, create subscription button
-  - [ ] 5.14 Implement `useContract.ts` hook: functions to approve allowance, create subscription, cancel subscription
-  - [ ] 5.15 Implement `useEnvio.ts` hook: GraphQL queries for user subscriptions, payment history
-  - [ ] 5.16 Build "My Subscriptions" page (FR-16): fetch user subscriptions from Envio, display as grid of cards
-  - [ ] 5.17 Create `src/components/SubscriptionCard.tsx`: show service name, amount, next payment date, status badge, cancel button
-  - [ ] 5.18 Implement balance warning logic (FR-18): check if wallet balance < upcoming payment, show alert banner
-  - [ ] 5.19 Build "Payment History" page (FR-17): table with date, service, amount, status, transaction hash (Etherscan link)
-  - [ ] 5.20 Add loading states: skeleton loaders for data fetching, spinner for transactions
-  - [ ] 5.21 Add error handling: toast notifications for success/failure
-  - [ ] 5.22 Make UI mobile-responsive with Tailwind breakpoints
-  - [ ] 5.23 Add PayPal brand colors and modern fintech styling (DC-1)
-  - [ ] 5.24 (Optional) Create `src/components/AutomationStatus.tsx`: display badge showing "Automated via Chainlink" or "Automated via Gelato" on subscription cards
-  - [ ] 5.25 Deploy to Vercel: create `vercel.json`, set environment variables, deploy
+  - [ ] 5.9 Create `src/components/PayPalConnect.tsx`: PayPal account linking component for one-time setup
+  - [ ] 5.10 Create `src/App.tsx` with routing: Marketplace, My Subscriptions, Payment History, Settings pages
+  - [ ] 5.11 Create `src/components/Layout.tsx`: sidebar navigation, top bar with wallet + PayPal connection status
+  - [ ] 5.12 Build Marketplace page: showcase any PayPal-accepting subscription service (Netflix, Spotify, etc.)
+  - [ ] 5.13 Create `src/components/ServiceCard.tsx`: display service logo, name, price, billing interval, PayPal badge
+  - [ ] 5.14 Build subscription creation flow: show service details, approve PYUSD allowance, link PayPal (if not linked), create subscription
+  - [ ] 5.15 Implement `useContract.ts` hook: functions to approve allowance, create subscription, cancel subscription
+  - [ ] 5.16 Implement `useEnvio.ts` hook: GraphQL queries for user subscriptions, payment history
+  - [ ] 5.17 Implement `usePayPal.ts` hook: PayPal account linking and status checks
+  - [ ] 5.18 Build "My Subscriptions" page: fetch user subscriptions from Envio, display as grid of cards
+  - [ ] 5.19 Create `src/components/SubscriptionCard.tsx`: show service name, PYUSD amount, next payment date, status, cancel button
+  - [ ] 5.20 Implement balance warning logic: check if wallet PYUSD balance < upcoming payment, show alert banner
+  - [ ] 5.21 Build "Payment History" page: table with date, service, PYUSD amount, PayPal status, transaction hash (Etherscan link)
+  - [ ] 5.22 Add loading states: skeleton loaders for data fetching, spinner for transactions
+  - [ ] 5.23 Add error handling: toast notifications for success/failure
+  - [ ] 5.24 Make UI mobile-responsive with Tailwind breakpoints
+  - [ ] 5.25 Add PayPal brand colors and modern fintech styling emphasizing PYUSD → PayPal flow
+  - [ ] 5.26 (Optional) Create `src/components/AutomationStatus.tsx`: display badge showing "Automated via Chainlink" or "Automated via Gelato"
+  - [ ] 5.27 Deploy to Vercel: create `vercel.json`, set environment variables, deploy
 
 - [ ] 6.0 Implement payment processing automation with Chainlink or Gelato (FR-23 to FR-25)
   - [ ] 6.1 **Decision Point:** Choose automation provider (Chainlink Automation or Gelato Network)
@@ -205,17 +246,19 @@ Generated from: `prd-subchain-platform.md`
   - [ ] 6.14 Create monitoring script `scripts/checkAutomationStatus.ts`: check upkeep balance, recent executions, success rate
   - [ ] 6.15 Document automation setup in README: how to register, fund, and monitor upkeep/task
 
-- [ ] 7.0 Add vendor integrations (Direct Crypto, Gift Cards, Manual)
-  - [ ] 7.1 Add payment type enum to frontend: `DirectCrypto = 0`, `AutomatedGiftCard = 1`, `ManualEntry = 2`
-  - [ ] 7.2 Create service provider data in `constants.ts`: Alchemy (Direct), Mintstars (Direct), Netflix (Gift Card)
-  - [ ] 7.3 Add payment type badges to `ServiceCard.tsx`: color-coded labels ("Direct Crypto", "Automated Gift Card")
-  - [ ] 7.4 For Direct Crypto flow (FR-20): payments already route to service provider wallet via contract
-  - [ ] 7.5 Research Bitrefill API documentation for gift card purchases
-  - [ ] 7.6 Create `backend/bitrefill.ts` (optional): API integration to purchase gift cards with PYUSD
-  - [ ] 7.7 Add gift card display in subscription details: show purchased codes, copy button
-  - [ ] 7.8 Mock gift card flow in UI if API integration is too complex (show placeholder codes)
-  - [ ] 7.9 Document Manual Entry flow in UI: show instructions for virtual card or manual payment
-  - [ ] 7.10 Add 1-2 more services to marketplace with different payment types
+- [ ] 7.0 Implement PayPal Integration Backend (PYUSD → PayPal flow)
+  - [ ] 7.1 Set up Node.js backend service for payment processing
+  - [ ] 7.2 Install dependencies: `@paypal/payouts-sdk`, `coinbase-commerce-node`, `express`, `dotenv`
+  - [ ] 7.3 Create `backend/services/coinbase.ts`: PYUSD to USD conversion via Coinbase API
+  - [ ] 7.4 Create `backend/services/paypal.ts`: PayPal Payouts API integration
+  - [ ] 7.5 Implement endpoint `/api/process-payment`: receives PYUSD, converts to USD, sends to user's PayPal
+  - [ ] 7.6 Add user PayPal account linking flow: store encrypted PayPal email with user's wallet address
+  - [ ] 7.7 Implement webhook listener for smart contract PaymentProcessed events
+  - [ ] 7.8 Add transaction tracking: log PYUSD amount, USD amount, PayPal payout ID, timestamps
+  - [ ] 7.9 Implement error handling and retry logic for failed conversions or payouts
+  - [ ] 7.10 Add monitoring dashboard for backend payment flow status
+  - [ ] 7.11 Test full flow: PYUSD approval → smart contract → backend → Coinbase conversion → PayPal payout
+  - [ ] 7.12 Document API endpoints and integration flow in README
 
 - [ ] 8.0 Deploy to testnet/mainnet and finalize demo
   - [ ] 8.1 Deploy SubChainSubscription contract to Sepolia testnet using `scripts/deploy.ts`
@@ -231,20 +274,25 @@ Generated from: `prd-subchain-platform.md`
   - [ ] 8.7 Verify automation is working: check automation dashboard shows successful executions
   - [ ] 8.8 (Optional) Deploy to Ethereum mainnet if PYUSD mainnet demo is required
   - [ ] 8.9 (If mainnet) Register and fund mainnet automation (Chainlink with LINK or Gelato with ETH)
-  - [ ] 8.10 Create 2-3 real test subscriptions for demo purposes (with short intervals for demo)
-  - [ ] 8.11 Fix any UI bugs discovered during testing
-  - [ ] 8.12 Write comprehensive README.md: project overview, setup instructions, automation setup, deployment guide, demo video link
-  - [ ] 8.13 Record 4-minute demo video: problem statement (30s), create subscription (60s), dashboard (60s), **automated payment processing** (60s), different payment types (30s)
-  - [ ] 8.14 Write hackathon submission description highlighting PYUSD, Envio, Hardhat 3.x, and **Chainlink/Gelato automation**
-  - [ ] 8.15 Final testing checklist: all features work, automation works, no console errors, mobile responsive
-  - [ ] 8.16 Prepare demo talking points: emphasize "set and forget" UX, **fully automated payments**, financial sovereignty, unified dashboard
-  - [ ] 8.17 Submit to hackathon platform with demo video, GitHub repo, and live deployment link
+  - [ ] 8.10 Deploy backend payment processing service to cloud provider (Railway, Render, or AWS)
+  - [ ] 8.11 Configure environment variables for PayPal and Coinbase APIs
+  - [ ] 8.12 Create 2-3 real test subscriptions for demo purposes (with short intervals for demo)
+  - [ ] 8.13 Test complete flow: Create subscription → Auto payment triggers → PYUSD converts → PayPal receives funds → Subscription renewed
+  - [ ] 8.14 Fix any UI or backend bugs discovered during testing
+  - [ ] 8.15 Write comprehensive README.md: project overview, PayPal integration flow, setup instructions, deployment guide
+  - [ ] 8.16 Record 4-minute demo video: problem statement (30s), PYUSD to PayPal flow explanation (60s), create subscription with PayPal (60s), automated payment demo (60s), dashboard showing status (30s)
+  - [ ] 8.17 Write hackathon submission description highlighting: PYUSD usage, PayPal integration, any-subscription support, Envio indexing, Hardhat 3.x, automation
+  - [ ] 8.18 Final testing checklist: all features work, PayPal integration works, automation works, no console errors, mobile responsive
+  - [ ] 8.19 Prepare demo talking points: emphasize PYUSD → PayPal bridge, works with ANY PayPal subscription, "set and forget" UX, financial sovereignty
+  - [ ] 8.20 Submit to hackathon platform with demo video, GitHub repo, and live deployment link
 
 ---
 
-**Total Tasks:** 8 parent tasks, 130 sub-tasks (18 + 21 + 16 + 25 + 15 + 10 + 17 + 8)
-**Estimated Timeline:** 16 days (per PRD Phase 1-6)
-**Critical Path:** Tasks 1→2→3 must be completed in order; Task 4 (Envio) can start after 2; Task 5 (Frontend) needs 2+4; **Task 6 (Automation) needs 2+3**; Tasks 6-7 can be done after 5; Task 8 needs all previous tasks
+**Total Tasks:** 8 parent tasks, 138 sub-tasks (8 + 18 + 21 + 16 + 27 + 15 + 12 + 20)
+**Estimated Timeline:** 18 days (including PayPal integration backend)
+**Critical Path:** Tasks 1→2→3 must be completed in order; Task 4 (Envio) can start after 2; Task 5 (Frontend) needs 2+4; **Task 6 (Automation) needs 2+3**; **Task 7 (PayPal Backend) needs 2+3**; Task 8 needs all previous tasks
+
+**Key Change:** Task 7.0 now focuses on PayPal integration backend instead of vendor integrations. The new flow enables PYUSD → Coinbase conversion → PayPal Payouts → user's PayPal account, allowing subscriptions to ANY PayPal-accepting service.
 
 ---
 
