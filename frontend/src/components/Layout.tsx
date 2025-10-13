@@ -13,10 +13,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
-    { path: '/', label: 'Marketplace', icon: '🛒' },
-    { path: '/subscriptions', label: 'My Subscriptions', icon: '📋' },
-    { path: '/payments', label: 'Payment History', icon: '💰' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' },
+    { path: '/', label: 'Home' },
+    { path: '/create', label: 'Create Subscription' },
+    { path: '/subscriptions', label: 'My Subscriptions' },
+    { path: '/payments', label: 'Payment History' },
+    { path: '/settings', label: 'Settings' },
   ];
 
   const isActive = (path: string) => {
@@ -66,7 +67,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <span className="text-2xl">{item.icon}</span>
               <span className="font-medium">{item.label}</span>
             </Link>
           ))}
@@ -103,7 +103,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <span className="text-2xl">{item.icon}</span>
                   <span className="font-medium">{item.label}</span>
                 </Link>
               ))}

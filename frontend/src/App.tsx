@@ -3,7 +3,8 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from './lib/wagmi';
 import { Layout } from './components/Layout';
-import { Marketplace } from './pages/Marketplace';
+import { Home } from './pages/Home';
+import { CreateSubscription } from './pages/CreateSubscription';
 import { MySubscriptions } from './pages/MySubscriptions';
 import { PaymentHistory } from './pages/PaymentHistory';
 import { Settings } from './pages/Settings';
@@ -25,7 +26,8 @@ function App() {
         <BrowserRouter>
           <Layout>
             <Routes>
-              <Route path="/" element={<Marketplace />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/create" element={<CreateSubscription />} />
               <Route path="/subscriptions" element={<MySubscriptions />} />
               <Route path="/payments" element={<PaymentHistory />} />
               <Route path="/settings" element={<Settings />} />
