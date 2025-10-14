@@ -12,16 +12,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSelect }) =
       {/* Service Icon */}
       <div className="flex items-start justify-between mb-4">
         <div className="text-5xl">{service.logo}</div>
-        {service.paypalSupported && (
-          <div className="bg-paypal-blue text-white text-xs px-2 py-1 rounded-full">
-            PayPal
-          </div>
-        )}
       </div>
 
       {/* Service Info */}
       <div className="mb-4">
-        <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-paypal-blue transition-colors">
+        <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
           {service.name}
         </h3>
         <p className="text-sm text-gray-600 mb-2">{service.description}</p>

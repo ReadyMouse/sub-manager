@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { WalletConnect } from './WalletConnect';
-import { PayPalConnect } from './PayPalConnect';
 
 interface LayoutProps {
   children: ReactNode;
@@ -46,9 +45,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Link>
           </div>
 
-          {/* Wallet & PayPal Connection */}
+          {/* Wallet Connection */}
           <div className="flex items-center gap-3">
-            <PayPalConnect />
             <WalletConnect />
           </div>
         </div>
@@ -74,10 +72,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {/* Footer Info */}
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-gradient-to-r from-paypal-blue to-pyusd-green p-4 rounded-lg text-white text-sm">
+          <div className="bg-gradient-to-r from-blue-600 to-green-500 p-4 rounded-lg text-white text-sm">
             <p className="font-semibold mb-1">💡 How it works</p>
             <p className="text-xs opacity-90">
-              Approve PYUSD → Auto-convert → PayPal payout → Subscription paid
+              Approve PYUSD → Automatic wallet-to-wallet payments → Subscription paid
             </p>
           </div>
         </div>

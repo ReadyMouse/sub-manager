@@ -58,8 +58,6 @@ export interface User {
   subscriptionIds: string[];
   totalMonthlySpend: bigint;
   activeSubscriptionCount: number;
-  paypalEmail?: string;
-  paypalLinked: boolean;
 }
 
 // Marketplace service
@@ -71,7 +69,6 @@ export interface MarketplaceService {
   price: number;
   interval: number;
   category: string;
-  paypalSupported: boolean;
 }
 
 // Form types
@@ -81,7 +78,7 @@ export interface CreateSubscriptionForm {
   interval: number;
   endDate?: number;
   maxPayments?: number;
-  paypalEmail?: string;
+  recipientAddress: string;
 }
 
 // Balance warning
@@ -105,13 +102,6 @@ export interface ToastNotification {
 export interface ContractWriteResponse {
   hash: string;
   wait: () => Promise<void>;
-}
-
-// PayPal integration
-export interface PayPalAccount {
-  email: string;
-  verified: boolean;
-  linkedAt?: number;
 }
 
 // Envio query types
@@ -164,10 +154,5 @@ export interface ServiceCardProps {
 export interface WalletConnectProps {
   onConnect?: (address: Address) => void;
   onDisconnect?: () => void;
-}
-
-export interface PayPalConnectProps {
-  onLink?: (email: string) => void;
-  onUnlink?: () => void;
 }
 

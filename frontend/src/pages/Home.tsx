@@ -7,21 +7,21 @@ export const Home: React.FC = () => {
   return (
     <div>
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-paypal-blue to-pyusd-green rounded-2xl p-8 mb-8 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-green-500 rounded-2xl p-8 mb-8 text-white">
         <h1 className="text-4xl font-bold mb-3">
           Subscribe to Anything with Crypto
         </h1>
         <p className="text-lg opacity-90 mb-4">
-          Pay for your favorite services using PYUSD. Automatic payments via PayPal.
+          Direct wallet-to-wallet recurring payments using PYUSD. The crypto ACH for subscriptions.
         </p>
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-2xl">✓</span>
-            <span>Auto-Convert PYUSD</span>
+            <span>Direct PYUSD Payments</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">✓</span>
-            <span>PayPal Integration</span>
+            <span>Non-Custodial</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">✓</span>
@@ -30,39 +30,27 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Types Section */}
+      {/* Payment Method Section */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-          Choose Your Payment Method
+          Direct Wallet-to-Wallet Payments
         </h2>
         <p className="text-gray-600 text-center mb-8">
-          SubChain supports two flexible payment types to suit your needs
+          Automated recurring PYUSD payments with full transparency and control
         </p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          <PaymentTypeCard
-            type="paypal"
-            title="Via PayPal USD"
-            description="Use PayPal balance for seamless payments"
-            icon="💳"
-            gradient="bg-gradient-to-br from-paypal-blue to-blue-600"
-            features={[
-              'Hold PYUSD tokens in your own crypto wallet',
-              'PYUSD withdrawn as needed for payments',
-              'Integration with all PayPal-accepting services',
-              'Crypto-to-Fiat conversion handled automatically',
-            ]}
-          />
+        <div className="max-w-3xl mx-auto">
           <PaymentTypeCard
             type="pyusd"
-            title="Via PYUSD"
-            description="Pay with PYUSD stablecoin directly from your wallet"
+            title="PYUSD Direct"
+            description="Pay with PYUSD stablecoin directly from your wallet to any recipient"
             icon="🪙"
-            gradient="bg-gradient-to-br from-pyusd-green to-green-600"
+            gradient="bg-gradient-to-br from-green-500 to-green-600"
             features={[
               'Hold PYUSD tokens in your own crypto wallet',
               'Direct blockchain transactions with full transparency',
               'Maintain custody and control of your funds',
               'Programmable payments with smart contract automation',
+              'Send to any wallet address - no intermediaries',
             ]}
           />
         </div>
@@ -78,7 +66,7 @@ export const Home: React.FC = () => {
             <div className="text-5xl mb-3">1️⃣</div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
             <p className="text-gray-600">
-              Link your crypto wallet and optionally connect your PayPal account
+              Link your crypto wallet with PYUSD tokens
             </p>
           </div>
           <div className="text-center">
@@ -103,7 +91,7 @@ export const Home: React.FC = () => {
             Ready to Get Started?
           </h3>
           <p className="text-gray-600 mb-4">
-            Create a subscription for any PayPal-accepting service
+            Create a recurring payment to any wallet address
           </p>
           <button
             onClick={() => navigate('/create')}

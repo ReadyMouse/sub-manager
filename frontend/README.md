@@ -1,14 +1,13 @@
-# SubChain Frontend
+# PayPalRent Frontend
 
-Universal Crypto Subscription Manager - Pay for any PayPal-accepting service with PYUSD.
+Direct wallet-to-wallet recurring payments with PYUSD - The crypto ACH for subscriptions.
 
 ## Features
 
-- 🛒 **Marketplace**: Browse and subscribe to popular services
+- 🛒 **Create Subscriptions**: Set up recurring payments to any wallet
 - 📋 **My Subscriptions**: Manage active and cancelled subscriptions
 - 💰 **Payment History**: View all your payment transactions
 - 👛 **Wallet Integration**: MetaMask and WalletConnect support
-- 💳 **PayPal Integration**: Link PayPal for automatic payments
 - ⚡ **Real-time Updates**: Envio indexer for instant data
 - 📱 **Mobile Responsive**: Works on all devices
 
@@ -48,7 +47,6 @@ VITE_CONTRACT_ADDRESS=<your_deployed_contract_address>
 VITE_DEFAULT_CHAIN=sepolia
 VITE_SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
 VITE_ENVIO_ENDPOINT=<your_envio_graphql_endpoint>
-VITE_BACKEND_API_URL=http://localhost:3001
 ```
 
 ### Development
@@ -81,7 +79,6 @@ src/
 ├── components/       # Reusable UI components
 │   ├── Layout.tsx
 │   ├── WalletConnect.tsx
-│   ├── PayPalConnect.tsx
 │   ├── ServiceCard.tsx
 │   ├── SubscriptionCard.tsx
 │   ├── BalanceWarning.tsx
@@ -89,7 +86,7 @@ src/
 │   ├── Skeleton.tsx
 │   └── AutomationStatus.tsx
 ├── pages/           # Page components
-│   ├── Marketplace.tsx
+│   ├── Home.tsx
 │   ├── MySubscriptions.tsx
 │   ├── PaymentHistory.tsx
 │   ├── CreateSubscription.tsx
@@ -97,7 +94,6 @@ src/
 ├── hooks/           # Custom React hooks
 │   ├── useContract.ts
 │   ├── useEnvio.ts
-│   ├── usePayPal.ts
 │   └── useToast.ts
 ├── lib/             # Configuration and utilities
 │   ├── constants.ts
@@ -117,23 +113,18 @@ src/
 - Displays PYUSD balance
 - Network detection
 
-### PayPal Integration
-- Link PayPal account for automated payouts
-- One-time setup process
-- Secure email storage
-
 ### Subscription Management
 - Create subscriptions with flexible terms
+- Direct wallet-to-wallet payments
 - Set end dates or max payments
 - Cancel anytime
 - Real-time status updates
 
 ### Payment Flow
 1. User approves PYUSD allowance
-2. Links PayPal account (one-time)
-3. Creates subscription
-4. Automated payments via smart contract
-5. PYUSD → USD conversion → PayPal payout
+2. Creates subscription with recipient wallet address
+3. Automated payments via smart contract
+4. Direct PYUSD transfer to recipient wallet
 
 ## Environment Variables
 
@@ -143,8 +134,6 @@ src/
 | `VITE_DEFAULT_CHAIN` | Default network | `sepolia` |
 | `VITE_SEPOLIA_RPC_URL` | Sepolia RPC endpoint | `https://eth-sepolia.g.alchemy.com/v2/...` |
 | `VITE_ENVIO_ENDPOINT` | Envio GraphQL endpoint | `https://indexer.envio.dev/...` |
-| `VITE_BACKEND_API_URL` | Backend API URL | `http://localhost:3001` |
-| `VITE_PAYPAL_CLIENT_ID` | PayPal OAuth client ID | `your_client_id` |
 | `VITE_WALLET_CONNECT_PROJECT_ID` | WalletConnect project ID | `your_project_id` |
 
 ## Deployment

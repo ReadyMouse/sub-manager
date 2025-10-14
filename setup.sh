@@ -4,7 +4,7 @@
 # SubChain Setup Script
 # ============================================================================
 # This script sets up the complete development environment including:
-# - Node.js dependencies (root + backend)
+# - Node.js dependencies
 # - Environment configuration files
 # - Smart contract compilation
 # - TypeChain type generation
@@ -57,16 +57,16 @@ echo -e "${GREEN}✅ Root dependencies installed${NC}"
 echo ""
 
 # ============================================================================
-# 3. Install Backend Dependencies
+# 3. Install Frontend Dependencies
 # ============================================================================
-echo -e "${BLUE}📦 Installing backend dependencies...${NC}"
-if [ -d "backend" ]; then
-    cd backend
+echo -e "${BLUE}📦 Installing frontend dependencies...${NC}"
+if [ -d "frontend" ]; then
+    cd frontend
     npm install
     cd ..
-    echo -e "${GREEN}✅ Backend dependencies installed${NC}"
+    echo -e "${GREEN}✅ Frontend dependencies installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  Backend directory not found - skipping${NC}"
+    echo -e "${YELLOW}⚠️  Frontend directory not found - skipping${NC}"
 fi
 echo ""
 
@@ -95,15 +95,6 @@ EOF
     echo -e "${GREEN}✅ Created .env - Please update with your keys${NC}"
 else
     echo -e "${GREEN}✅ .env already exists${NC}"
-fi
-
-# Backend .env
-if [ -f "backend/.env.example" ] && [ ! -f "backend/.env" ]; then
-    echo -e "${YELLOW}Creating backend/.env file...${NC}"
-    cp backend/.env.example backend/.env
-    echo -e "${GREEN}✅ Created backend/.env - Please update with your keys${NC}"
-elif [ -f "backend/.env" ]; then
-    echo -e "${GREEN}✅ backend/.env already exists${NC}"
 fi
 
 echo ""
@@ -142,18 +133,6 @@ else
 fi
 echo ""
 
-# ============================================================================
-# 8. Optional: Install ngrok for webhook testing
-# ============================================================================
-echo -e "${BLUE}🔧 Checking for ngrok...${NC}"
-if ! command -v ngrok &> /dev/null; then
-    echo -e "${YELLOW}⚠️  ngrok not installed${NC}"
-    echo -e "${YELLOW}   To install: brew install ngrok (macOS)${NC}"
-    echo -e "${YELLOW}   (Optional but useful for local webhook testing)${NC}"
-else
-    echo -e "${GREEN}✅ ngrok installed${NC}"
-fi
-echo ""
 
 # ============================================================================
 # Summary
@@ -166,7 +145,6 @@ echo -e "${BLUE}📋 Next Steps:${NC}"
 echo ""
 echo "1. Update configuration files:"
 echo "   - Edit .env with your Alchemy API key and private key"
-echo "   - Edit backend/.env with your Coinbase and Envio credentials"
 echo ""
 echo "2. Run tests:"
 echo "   npm test"
@@ -176,7 +154,7 @@ echo "   npx hardhat node           # Terminal 1"
 echo "   npx hardhat run scripts/deploy.ts --network localhost"
 echo ""
 echo "4. Start services:"
-echo "   ./launch.sh               # Starts all services"
+echo "   ./launch.sh               # Starts Hardhat + Frontend"
 echo ""
 echo "5. Deploy Envio indexer:"
 echo "   envio init"

@@ -8,10 +8,7 @@
     "test:verbose": "hardhat test --verbose",
     "compile": "hardhat compile",
     "explore": "hardhat run scripts/check-pyusd.ts",
-    "clean": "hardhat clean",
-    "backend:start": "ts-node backend/index.ts",
-    "backend:webhook": "ts-node backend/webhookServer.ts",
-    "backend:test": "hardhat run scripts/test-viauserpaypal.ts --network localhost"
+    "clean": "hardhat clean"
   },
   "keywords": [],
   "author": "",

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { useSubChainContract, usePYUSD, usePYUSDAllowance } from '../hooks/useContract';
-import { usePayPal } from '../hooks/usePayPal';
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
@@ -17,27 +16,17 @@ export const CreateSubscription: React.FC = () => {
     address,
     CONTRACTS.SubChainSubscription as Address
   );
-  const { account, isLinked, linkAccount, isPending: isLinkingPayPal } = usePayPal(address);
   const toast = useToast();
 
   const [isApproved, setIsApproved] = useState(false);
-  const [paymentType, setPaymentType] = useState<'paypal' | 'crypto'>('paypal');
   const [formData, setFormData] = useState({
     serviceProviderId: '',
     amount: '',
     interval: PAYMENT_INTERVALS.MONTHLY,
     endDate: '',
     maxPayments: '',
-    paypalEmail: '',
     recipientAddress: '',
   });
-
-  // Check if PayPal is already linked
-  useEffect(() => {
-    if (isLinked && account?.email) {
-      setFormData(prev => ({ ...prev, paypalEmail: account.email || '' }));
-    }
-  }, [isLinked, account]);
 
   // Handle approve success
   useEffect(() => {
@@ -57,20 +46,6 @@ export const CreateSubscription: React.FC = () => {
       }, 2000);
     }
   }, [isCreateSuccess, navigate, toast]);
-
-  const handleLinkPayPal = async () => {
-    if (!formData.paypalEmail) {
-      toast.error('Error', 'Please enter your PayPal email');
-      return;
-    }
-
-    const success = await linkAccount(formData.paypalEmail);
-    if (success) {
-      toast.success('Success', 'PayPal account linked');
-    } else {
-      toast.error('Error', 'Failed to link PayPal account');
-    }
-  };
 
   const handleApprove = async () => {
     if (!formData.amount) {
@@ -96,15 +71,9 @@ export const CreateSubscription: React.FC = () => {
       return;
     }
 
-    // Check if PayPal is linked (only for PayPal payment type)
-    if (paymentType === 'paypal' && !isLinked) {
-      toast.error('Error', 'Please link your PayPal account first');
-      return;
-    }
-
-    // Check if recipient address is provided (only for crypto payment type)
-    if (paymentType === 'crypto' && !formData.recipientAddress) {
-      toast.error('Error', 'Please enter the recipient crypto address');
+    // Check if recipient address is provided
+    if (!formData.recipientAddress) {
+      toast.error('Error', 'Please enter the recipient wallet address');
       return;
     }
 
@@ -255,131 +224,31 @@ export const CreateSubscription: React.FC = () => {
           </div>
         </div>
 
-        {/* Payment Method Section */}
+        {/* Recipient Address Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Payment Method</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Recipient Address</h2>
           <div className="space-y-4">
-            <p className="text-gray-600 text-sm mb-4">
-              Choose how you want to make subscription payments
+            <p className="text-gray-600 text-sm">
+              Enter the crypto wallet address that will receive the PYUSD payments
             </p>
-            
-            {/* Payment Type Toggle */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setPaymentType('paypal')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  paymentType === 'paypal'
-                    ? 'border-paypal-blue bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-3xl">💳</span>
-                  {paymentType === 'paypal' && <span className="text-xl">✓</span>}
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1">Via PayPal</h3>
-                <p className="text-xs text-gray-600">
-                  Auto-convert PYUSD to fiat and pay via PayPal
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentType('crypto')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  paymentType === 'crypto'
-                    ? 'border-pyusd-green bg-green-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-3xl">🪙</span>
-                  {paymentType === 'crypto' && <span className="text-xl">✓</span>}
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1">Crypto Direct</h3>
-                <p className="text-xs text-gray-600">
-                  Pay directly with PYUSD to a crypto address
-                </p>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* PayPal Integration Section */}
-        {paymentType === 'paypal' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">PayPal Integration</h2>
-          <div className="space-y-4">
-            {isLinked ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-                <span className="text-2xl">✅</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900">PayPal Account Linked</p>
-                  <p className="text-sm text-green-700">{account?.email}</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <p className="text-gray-600 text-sm">
-                  Link your PayPal account to receive automatic subscription payments converted from PYUSD
-                </p>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    PayPal Email <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={formData.paypalEmail}
-                      onChange={e => setFormData({ ...formData, paypalEmail: e.target.value })}
-                      className="input flex-1"
-                      placeholder="your@email.com"
-                      disabled={isLinkingPayPal}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleLinkPayPal}
-                      disabled={isLinkingPayPal || !formData.paypalEmail}
-                      className="btn-primary whitespace-nowrap"
-                    >
-                      {isLinkingPayPal ? 'Linking...' : 'Link PayPal'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-        )}
-
-        {/* Crypto Direct Section */}
-        {paymentType === 'crypto' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recipient Address</h2>
-            <div className="space-y-4">
-              <p className="text-gray-600 text-sm">
-                Enter the crypto wallet address that will receive the PYUSD payments
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Recipient Wallet Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.recipientAddress}
+                onChange={e => setFormData({ ...formData, recipientAddress: e.target.value })}
+                className="input"
+                placeholder="0x..."
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                The wallet address of the service provider or recipient
               </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Recipient Wallet Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.recipientAddress}
-                  onChange={e => setFormData({ ...formData, recipientAddress: e.target.value })}
-                  className="input"
-                  placeholder="0x..."
-                  required={paymentType === 'crypto'}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  The wallet address of the service provider or recipient
-                </p>
-              </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* PYUSD Approval Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -425,7 +294,7 @@ export const CreateSubscription: React.FC = () => {
         </div>
 
         {/* Summary Section */}
-        <div className="bg-gradient-to-br from-paypal-blue to-blue-600 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-blue-600 to-green-500 rounded-xl p-6 text-white">
           <h2 className="text-xl font-bold mb-4">Subscription Summary</h2>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -469,20 +338,8 @@ export const CreateSubscription: React.FC = () => {
                 <span className="font-semibold">{formData.maxPayments}</span>
               </div>
             )}
-            <div className="flex justify-between pt-2 mt-2 border-t border-white border-opacity-30">
-              <span className="opacity-90">Payment Method:</span>
-              <span className="font-semibold">
-                {paymentType === 'paypal' ? '💳 PayPal' : '🪙 Crypto Direct'}
-              </span>
-            </div>
-            {paymentType === 'paypal' && (
-              <div className="flex justify-between">
-                <span className="opacity-90">PayPal Email:</span>
-                <span className="font-semibold">{formData.paypalEmail || account?.email || '—'}</span>
-              </div>
-            )}
-            {paymentType === 'crypto' && formData.recipientAddress && (
-              <div className="flex justify-between">
+            {formData.recipientAddress && (
+              <div className="flex justify-between pt-2 mt-2 border-t border-white border-opacity-30">
                 <span className="opacity-90">Recipient:</span>
                 <span className="font-semibold text-xs break-all">
                   {formData.recipientAddress.slice(0, 6)}...{formData.recipientAddress.slice(-4)}
@@ -506,8 +363,7 @@ export const CreateSubscription: React.FC = () => {
             disabled={
               isCreating || 
               !isApproved || 
-              (paymentType === 'paypal' && !isLinked) ||
-              (paymentType === 'crypto' && !formData.recipientAddress)
+              !formData.recipientAddress
             }
             className="btn-primary flex-1"
           >
@@ -521,12 +377,7 @@ export const CreateSubscription: React.FC = () => {
             Please approve PYUSD before creating the subscription
           </p>
         )}
-        {paymentType === 'paypal' && !isLinked && isApproved && (
-          <p className="text-sm text-gray-500 text-center">
-            Please link your PayPal account before creating the subscription
-          </p>
-        )}
-        {paymentType === 'crypto' && !formData.recipientAddress && isApproved && (
+        {!formData.recipientAddress && isApproved && (
           <p className="text-sm text-gray-500 text-center">
             Please enter the recipient wallet address before creating the subscription
           </p>

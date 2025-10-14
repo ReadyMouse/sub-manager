@@ -3,10 +3,9 @@
 # ============================================================================
 # SubChain Launch Script
 # ============================================================================
-# This script launches all SubChain services:
+# This script launches SubChain services:
 # - Local Hardhat blockchain (optional)
-# - Backend webhook server (Envio + Coinbase integration)
-# - Frontend (when ready)
+# - Frontend application
 # ============================================================================
 
 set -e  # Exit on error
@@ -45,8 +44,7 @@ echo "==========================================================================
 echo ""
 echo "This script will start the following services:"
 echo "  1. Local Hardhat blockchain (optional)"
-echo "  2. Backend webhook server (Envio + Coinbase)"
-echo "  3. Frontend (if available)"
+echo "  2. Frontend application"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo "============================================================================"
@@ -56,48 +54,29 @@ echo ""
 # Configuration
 # ============================================================================
 
-# Check if .env files exist (skip check if only starting frontend)
-if [ "$START_BACKEND" = true ] && [ ! -f backend/.env ]; then
-    echo -e "${RED}❌ backend/.env not found!${NC}"
-    echo -e "${YELLOW}   Run ./setup.sh first to create configuration files${NC}"
-    exit 1
-fi
-
 # Ask user what to start
 echo -e "${CYAN}What would you like to start?${NC}"
 echo ""
-echo "  1) Everything (Hardhat + Backend + Frontend)"
-echo "  2) Backend only (connects to existing network)"
-echo "  3) Hardhat + Backend (for local development)"
-echo "  4) Backend + Frontend (no local blockchain)"
-echo "  5) Frontend only (for UI testing)"
+echo "  1) Everything (Hardhat + Frontend)"
+echo "  2) Frontend only (connects to existing network)"
+echo "  3) Hardhat only (for testing)"
 echo ""
-read -p "Enter choice [1-5]: " CHOICE
+read -p "Enter choice [1-3]: " CHOICE
 echo ""
 
 START_HARDHAT=false
-START_BACKEND=false
 START_FRONTEND=false
 
 case $CHOICE in
     1)
         START_HARDHAT=true
-        START_BACKEND=true
         START_FRONTEND=true
         ;;
     2)
-        START_BACKEND=true
+        START_FRONTEND=true
         ;;
     3)
         START_HARDHAT=true
-        START_BACKEND=true
-        ;;
-    4)
-        START_BACKEND=true
-        START_FRONTEND=true
-        ;;
-    5)
-        START_FRONTEND=true
         ;;
     *)
         echo -e "${RED}Invalid choice. Exiting.${NC}"
@@ -121,7 +100,7 @@ mkdir -p logs
 # 1. Start Hardhat Blockchain (Optional)
 # ============================================================================
 if [ "$START_HARDHAT" = true ]; then
-    echo -e "${BLUE}[1/3] Starting Hardhat local blockchain...${NC}"
+    echo -e "${BLUE}[1/2] Starting Hardhat local blockchain...${NC}"
     echo -e "${YELLOW}       Logs: logs/hardhat.log${NC}"
     
     npx hardhat node > logs/hardhat.log 2>&1 &
@@ -150,44 +129,11 @@ if [ "$START_HARDHAT" = true ]; then
 fi
 
 # ============================================================================
-# 2. Start Backend Webhook Server (Envio + Coinbase)
-# ============================================================================
-if [ "$START_BACKEND" = true ]; then
-    echo -e "${BLUE}[2/3] Starting backend webhook server...${NC}"
-    echo -e "${YELLOW}       Logs: logs/backend.log${NC}"
-    
-    cd backend
-    npm run start > ../logs/backend.log 2>&1 &
-    BACKEND_PID=$!
-    cd ..
-    
-    # Wait for backend to start
-    echo -n "       Waiting for backend to start"
-    sleep 2
-    for i in {1..15}; do
-        if grep -q "ENVIO WEBHOOK SERVER LISTENING" logs/backend.log 2>/dev/null; then
-            echo ""
-            echo -e "${GREEN}       ✅ Backend server running (PID: $BACKEND_PID)${NC}"
-            
-            # Extract port from backend logs
-            PORT=$(grep "Server:" logs/backend.log | grep -o ":[0-9]*" | grep -o "[0-9]*" || echo "3000")
-            echo -e "${CYAN}       📍 http://localhost:${PORT}${NC}"
-            echo -e "${CYAN}       📍 Health check: http://localhost:${PORT}/health${NC}"
-            break
-        fi
-        echo -n "."
-        sleep 1
-    done
-    echo ""
-    echo ""
-fi
-
-# ============================================================================
-# 3. Start Frontend (Optional)
+# 2. Start Frontend
 # ============================================================================
 if [ "$START_FRONTEND" = true ]; then
     if [ -d "frontend" ]; then
-        echo -e "${BLUE}[3/3] Starting frontend...${NC}"
+        echo -e "${BLUE}[2/2] Starting frontend...${NC}"
         echo -e "${YELLOW}       Logs: logs/frontend.log${NC}"
         
         cd frontend
@@ -213,7 +159,7 @@ if [ "$START_FRONTEND" = true ]; then
         done
         echo ""
     else
-        echo -e "${YELLOW}[3/3] Frontend directory not found - skipping${NC}"
+        echo -e "${YELLOW}[2/2] Frontend directory not found - skipping${NC}"
     fi
     echo ""
 fi
@@ -234,21 +180,6 @@ if [ "$START_HARDHAT" = true ]; then
     echo ""
 fi
 
-if [ "$START_BACKEND" = true ]; then
-    echo -e "${MAGENTA}🔌 Backend Webhook Server:${NC}"
-    echo -e "   URL: http://localhost:${PORT:-3000}"
-    echo -e "   Health: http://localhost:${PORT:-3000}/health"
-    echo -e "   Logs: logs/backend.log"
-    echo -e "   PID: $BACKEND_PID"
-    echo ""
-    echo -e "   ${CYAN}Webhook Endpoints:${NC}"
-    echo -e "   • POST /webhook/payment-processed"
-    echo -e "   • POST /webhook/payment-failed"
-    echo -e "   • POST /webhook/subscription-cancelled"
-    echo -e "   • POST /webhook/subscription-created"
-    echo ""
-fi
-
 if [ "$START_FRONTEND" = true ] && [ -d "frontend" ]; then
     echo -e "${MAGENTA}🎨 Frontend Dashboard:${NC}"
     echo -e "   URL: http://localhost:${FRONTEND_PORT:-5173}"
@@ -256,10 +187,10 @@ if [ "$START_FRONTEND" = true ] && [ -d "frontend" ]; then
     echo -e "   PID: $FRONTEND_PID"
     echo ""
     echo -e "   ${CYAN}Features:${NC}"
-    echo -e "   • 🛒 Marketplace - Browse subscription services"
+    echo -e "   • 🛒 Create Subscription - Set up recurring payments"
     echo -e "   • 📋 My Subscriptions - Manage your subscriptions"
     echo -e "   • 💰 Payment History - View transactions"
-    echo -e "   • ⚙️ Settings - Configure wallet & PayPal"
+    echo -e "   • ⚙️ Settings - Configure wallet & view automation"
     echo ""
 fi
 
@@ -279,28 +210,15 @@ if [ "$START_HARDHAT" = true ]; then
     echo -e "${BLUE}Run tests:${NC}"
     echo "  npm test"
     echo ""
-fi
-
-if [ "$START_BACKEND" = true ]; then
-    echo -e "${BLUE}Test payment flow:${NC}"
-    echo "  npm run backend:test"
-    echo ""
     
-    echo -e "${BLUE}Check backend health:${NC}"
-    echo "  curl http://localhost:${PORT:-3000}/health"
-    echo ""
-    
-    echo -e "${BLUE}Expose backend with ngrok (for Envio webhooks):${NC}"
-    echo "  ngrok http ${PORT:-3000}"
+    echo -e "${BLUE}Explore PYUSD:${NC}"
+    echo "  npm run explore"
     echo ""
 fi
 
 echo -e "${BLUE}View logs:${NC}"
 if [ "$START_HARDHAT" = true ]; then
     echo "  tail -f logs/hardhat.log   # Hardhat blockchain"
-fi
-if [ "$START_BACKEND" = true ]; then
-    echo "  tail -f logs/backend.log   # Backend server"
 fi
 if [ "$START_FRONTEND" = true ]; then
     echo "  tail -f logs/frontend.log  # Frontend"
@@ -323,10 +241,9 @@ echo ""
 sleep 1
 
 # Tail all available log files
-if [ -f logs/*.log ] 2>/dev/null; then
+if ls logs/*.log 1> /dev/null 2>&1; then
     tail -f logs/*.log 2>/dev/null
 else
     echo -e "${YELLOW}No log files found yet. Services are starting...${NC}"
     sleep infinity
 fi
-

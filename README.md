@@ -1,40 +1,26 @@
 # Project Overview
 
-SubChain is a decentralized subscription management protocol that brings familiar "set and forget" recurring payments to cryptocurrency. The platform solves a critical pain point in the crypto ecosystem: the inability to easily manage recurring payments.
+PayPalRent is a tool for property owners and renters to use crypto. Landlords can screen tennets by checking account balances of crypto assets, accept Paypal's PYUSD, while renter can automatically send rent payments using stablecoins. 
 
 **The Problem We're Solving:**
-- Crypto users hold $150B+ in stablecoins but have no native way to manage subscriptions
-- Subscriptions management ystems like Privacy.com with million of users is fiat-only
-- Current solutions require locking funds in escrow (poor UX) or manual monthly payments (friction) or streaming micro-payments like Hyperliquid
-- No unified dashboard exists to view all crypto-based subscriptions in one place
-- Recurring tax-deductable charitable donations via crypto (with on-chain proof)
+- The US residental rental market is $291 BILLION dollars
+- Estimates for US-based crypto assests are around $90B
+- Crypto users want to pay rent in crypto, but finding landlords who take crypto is hard 
 - Recurring peer-to-peer transcations (rent, allowance, savings accounts, etc.)
+- Many folks hear "crypto" and think scam, but Paypal is a reputable company that could easy adoption
+
+**Discussion in the Industry**: https://www.linkedin.com/posts/shuhaib_crypto-rent-the-100-billion-shift-no-activity-7348397294506975232-thtY/
 
 **Our Solution:**
-SubChain enables users to create subscriptions using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into PayPal. Money stays in the user's wallet until payment is due, preserving financial sovereignty while enabling the subscription economy. Chainlink Automation or Gelato Network monitors subscriptions and automatically triggers payments from PYUSD -> PayPal account when due. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all subscription events to provide a unified dashboard where users manage their subscriptions, view payment history, and receive balance warnings. Leveraging Hardhat's capibility to fork mainnet ETH for development. 
+zRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlor's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, faciliating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Chainlink Automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualitifcation searches to check renter's assets. This project will leverage Hardhat's capibility to fork mainnet ETH for development. 
 
-**Target Audience:** Crypto-native users who hold PYUSD and want to pay for subscriptions (Netflix, Spotify, SaaS tools, etc.) without linking traditional bank accounts or credit cards.
+**Target Audience:** Crypto-native users who want to pay rent without off-ramping to traditional bank account.
+
+**Simply:** Recurring direct peer-to-peer crypto payments: Rent, Charities, Patreon, child's allowance, etc 
 
 ## How It Works
 
-### PayPal-Enabled Subscription Flow:
-```
-User's PYUSD Wallet
-    ↓ (Smart Contract Approval)
-House Coinbase PYUSD Account
-    ↓ (Zero-fee conversion - API triggered)
-House Coinbase USD Balance
-    ↓ (Coinbase API → PayPal withdrawal)
-House PayPal Business Account
-    ↓ (PayPal Payouts API)
-User's PayPal Account
-    ↓ (User automatically pays subscription)
-Subscription Renewed 
-```
-
-The system enables users to pay for any PayPal-accepting subscription using their PYUSD. No subscription data is stored on-chain - the smart contract only handles payment approvals and transfers.
-
-### Digital Peer-to-Peer Option:
+PYUSD native Peer-to-Peer:
 ```
 Renter's PYUSD
     ↓ 
@@ -44,27 +30,6 @@ Landlord's PYUSD
     ↓ 
 Rent gets paid 
 ```
-
-### Off Shoot Flows
-```
-User's PYUSD Wallet
-    ↓ 
-Smart Contract 
-    ↓       -> Recipient PYUSD Wallet  
-House Coinbase PYUSD Account
-    ↓       -> (Future) NEAR/DEX -> Recipient Wallet 
-House Coinbase USD Balance
-    ↓ 
-House PayPal Business Account
-    ↓       -> Recipient Paypal (Charity/Patreon) 
-User's PayPal Account
-    ↓ 
-Subscription Renewed 
-```
-## Relevant Links 
-* [Charities that Directly Accept PayPal](https://www.paypal.com/fundraiser/hub)
-
-
 
 ## 🚀 Quick Start
 
@@ -89,32 +54,7 @@ The script will:
 # SubChain Notes
 ## Platform Architecture
 
-┌─────────────────────────────────────┐
-│         SubChain Platform           │
-│    (Your crypto-native core)        │
-│                                     │
-│  ┌──────────────────────────────┐  │
-│  │ Smart Contracts (PYUSD)      │  │
-│  │ Envio Indexer (Dashboard)    │  │
-│  │ Payment Processing           │  │
-│  └──────────────────────────────┘  │
-│                                     │
-│         Integration Layer           │
-│  ┌─────────┬─────────┬──────────┐  │
-│  │ PayPal  │Coinbase │ Payment  │  │
-│  │ Payouts │  APIs   │ Router   │  │
-│  └─────────┴─────────┴──────────┘  │
-└─────────────────────────────────────┘
-              ↓
-    ┌──────────────────────┐
-    │  Any Service with    │
-    │   PayPal Support     │
-    │                      │
-    └──────────────────────┘
-
-## Market 
-
-Privacy.com has proven people want unified subscription management—they have millions of users. But they're 100% fiat. We're building the crypto-native version for the 500M+ people holding stablecoins who want to pay with crypto instead of linking their bank account.
+TBD
 
 ## Hardhat testing + Coverage 
 
@@ -130,6 +70,7 @@ File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovere
 ---------------------------|----------|----------|----------|----------|----------------|
 All files                  |      100 |    91.18 |      100 |      100 |                |
 ---------------------------|----------|----------|----------|----------|----------------|
+
 
 
 ## Hackathon requirments
@@ -180,25 +121,8 @@ Cursor + Claude AI was used to support development.
 
 ## Future Considerations:
 
-- Gas fee optimization for PYUSD transactions
-- Multi-chain support for broader accessibility
-- Enhanced subscription analytics and reporting
-- Advanced payment routing optimization
-
-## Regulatory Compliance Roadmap
-
-**Current Status:** Prototype/Demo Only
-
-**Production Requirements:**
-1. Money Transmitter Licenses (via partner or direct)
-2. AML/KYC compliance program
-3. FinCEN MSB registration
-4. State-specific crypto licenses where applicable
-
-**Go-to-Market Strategy:**
-- Phase 1: Partner with Stripe Treasury/Coinbase Commerce
-- Phase 2: Obtain MTLs in top 10 states
-- Phase 3: Nationwide expansion
+- Multi-chain support for broader accessibility (renter holds ZEC -> DEX: NEAR Intents -> PYUSD -> Landlord)
+- zkProof or encryption for privacy and security
 
 ⚠️ PROTOTYPE DEMONSTRATION
 This is a proof-of-concept for educational purposes only.

@@ -20,16 +20,6 @@ export const DEFAULT_CHAIN = import.meta.env.VITE_DEFAULT_CHAIN === 'mainnet'
 export const ENVIO_GRAPHQL_ENDPOINT = 
   import.meta.env.VITE_ENVIO_ENDPOINT || 'http://localhost:8080/graphql';
 
-// PayPal configuration
-export const PAYPAL_CONFIG = {
-  clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || '',
-  environment: import.meta.env.VITE_PAYPAL_ENV || 'sandbox', // 'sandbox' or 'production'
-} as const;
-
-// Backend API endpoint
-export const BACKEND_API_URL = 
-  import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001';
-
 // PYUSD configuration
 export const PYUSD_DECIMALS = 6;
 export const PYUSD_SYMBOL = 'PYUSD';

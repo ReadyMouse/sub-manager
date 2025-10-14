@@ -1,5 +1,4 @@
 import { useAccount } from 'wagmi';
-import { usePayPal } from '../hooks/usePayPal';
 import { usePYUSDBalance } from '../hooks/useContract';
 import { formatPYUSD, shortenAddress } from '../lib/utils';
 import { PYUSD_SYMBOL, CONTRACTS } from '../lib/constants';
@@ -7,7 +6,6 @@ import { AutomationStatus } from '../components/AutomationStatus';
 
 export const Settings: React.FC = () => {
   const { address, isConnected } = useAccount();
-  const { account, isLinked } = usePayPal(address);
   const { balance } = usePYUSDBalance(address);
 
   if (!isConnected) {
@@ -46,27 +44,6 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* PayPal Integration */}
-        <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">PayPal Integration</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Status</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                isLinked ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-              }`}>
-                {isLinked ? 'Linked' : 'Not Linked'}
-              </span>
-            </div>
-            {isLinked && account && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Email</span>
-                <span className="font-medium">{account.email}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Contract Information */}
         <div className="card">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Contract</h2>
@@ -95,10 +72,10 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* About */}
-        <div className="card bg-gradient-to-r from-paypal-blue to-pyusd-green text-white">
+        <div className="card bg-gradient-to-r from-blue-600 to-green-500 text-white">
           <h2 className="text-xl font-semibold mb-2">About SubChain</h2>
           <p className="text-sm opacity-90 mb-4">
-            Universal Crypto Subscription Manager - Pay for any PayPal-accepting service with PYUSD
+            Direct wallet-to-wallet recurring payments with PYUSD - The crypto ACH for subscriptions
           </p>
           <div className="flex gap-4 text-sm">
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="opacity-90 hover:opacity-100">
