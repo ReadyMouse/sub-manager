@@ -17,8 +17,11 @@ export const useSubChainContract = () => {
     serviceProviderId: string,
     amount: string,
     interval: number,
+    serviceName: string,
     endDate?: number,
-    maxPayments?: number
+    maxPayments?: number,
+    recipientAddress?: Address,
+    recipientCurrency?: string
   ) => {
     const amountWei = parsePYUSD(amount);
     return writeContract({
@@ -26,11 +29,14 @@ export const useSubChainContract = () => {
       abi: SubChainSubscriptionABI,
       functionName: 'createSubscription',
       args: [
-        serviceProviderId,
+        BigInt(serviceProviderId),
         amountWei,
         BigInt(interval),
+        serviceName,
         BigInt(endDate || 0),
         BigInt(maxPayments || 0),
+        recipientAddress || ('' as Address),
+        recipientCurrency || '',
       ],
     });
   };
@@ -53,20 +59,10 @@ export const useSubChainContract = () => {
     });
   };
 
-  const registerUserProvider = async (providerAddress: Address) => {
-    return writeContract({
-      address: CONTRACTS.SubChainSubscription as Address,
-      abi: SubChainSubscriptionABI,
-      functionName: 'registerUserProvider',
-      args: [providerAddress],
-    });
-  };
-
   return {
     createSubscription,
     processPayment,
     cancelSubscription,
-    registerUserProvider,
     hash,
     isPending,
     isConfirming,
@@ -195,25 +191,3 @@ export const usePYUSDAllowance = (
     refetch,
   };
 };
-
-/**
- * Hook for checking provider existence
- */
-export const useProviderExists = (providerId: string | undefined) => {
-  const { data, isLoading, error } = useReadContract({
-    address: CONTRACTS.SubChainSubscription as Address,
-    abi: SubChainSubscriptionABI,
-    functionName: 'providerExists',
-    args: providerId ? [providerId] : undefined,
-    query: {
-      enabled: !!providerId,
-    },
-  });
-
-  return {
-    exists: data as boolean | undefined,
-    isLoading,
-    error,
-  };
-};
-

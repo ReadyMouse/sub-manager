@@ -27,14 +27,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Users approve PYUSD spending once, payments auto-process on billing cycle
  * - No fund locking - money stays in user wallet until payment is due
  * - Handles payment failures gracefully (auto-cancel after 3 consecutive failures)
- * - Supports multiple payment flows: ViaUserPayPal, DirectRecipientPayPal, DirectRecipientWallet
+ * - Direct crypto-to-crypto payments to recipient wallet addresses
  * - Emits events for Envio indexer to track subscription lifecycle
  * 
  * FLOW:
  * 1. User approves SubChain contract to spend PYUSD (one-time)
  * 2. User calls createSubscription() to start subscription
  * 3. Service provider/bot calls processPayment() when billing is due
- * 4. Contract pulls payment from user wallet via transferFrom()
+ * 4. Contract pulls payment from user wallet via transferFrom() and sends to recipient
  * 5. User can cancel anytime via cancelSubscription()
  */
 contract SubChainSubscription is ReentrancyGuard, Ownable {
@@ -43,34 +43,13 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     // ========================================
     
     /**
-     * @notice Provider type enum for different service provider categories
-     * @dev Three types to distinguish verified, unverified public, and private providers
-     * @dev Provider verification and management happens off-chain
-     */
-    enum ProviderType {
-        PublicVerified,    // 0: Verified provider from off-chain database (e.g., Netflix, Spotify, verified creators)
-        PublicUnverified,  // 1: Unverified public provider (e.g., GoFundMe, unverified creators)
-        Private            // 2: Private provider for personal use (e.g., landlord, child's allowance)
-    }
-    
-    /**
-     * @notice Payment type enum for different subscription payment flow methods
-     * @dev Used in Subscription struct to determine how payment should be processed
-     * @dev Based on the three money flow diagrams in README.md
-     */
-    enum PaymentType {
-        ViaUserPayPal,           // 0: PYUSD → House Coinbase → House PayPal → User's PayPal → Subscription Service
-        DirectRecipientPayPal,   // 1: PYUSD → House Coinbase → House PayPal → Recipient's PayPal (charity, Patreon, etc.)
-        DirectRecipientWallet    // 2: PYUSD → Smart Contract → Recipient's PYUSD Wallet (peer-to-peer: rent, allowance, etc.)
-    }
-    
-    /**
      * @notice Core subscription data structure
      * @dev Packed for gas optimization where possible (per TC-2 in PRD)
      * @dev Analytics fields (createdAt, lastPaymentTime) calculated from events via Envio
      * @param id Unique subscription ID (same as mapping key, included for convenience)
-     * @param subscriber User's wallet address who created the subscription
-     * @param serviceProviderId Unique ID referencing service provider in off-chain database
+     * @param senderAddress User's wallet address who created the subscription
+     * @param senderCurrency Sender currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
+     * @param senderId Unique ID referencing sender in off-chain database
      * @param amount Payment amount in PYUSD base units (6 decimals, e.g., 10 PYUSD = 10000000)
      * @param interval Billing interval in seconds (e.g., 30 days = 2592000)
      * @param nextPaymentDue Unix timestamp when next payment is due
@@ -79,16 +58,16 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param paymentCount Number of successful payments made so far
      * @param isActive Whether subscription is currently active (false = cancelled)
      * @param failedPaymentCount Consecutive failed payment attempts (auto-cancel at 3)
-     * @param paymentType Payment flow method for this subscription (stored at creation time)
-     * @param providerType Type of service provider (stored at creation time)
-     * @param recipientAddress Recipient wallet address where payments are sent (required)
      * @param serviceName Human-readable service name
-     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD, e.g., "BTC", "ETH", "USDC")
+     * @param recipientId Unique ID referencing recipient in off-chain database
+     * @param recipientAddress Recipient wallet address where payments are sent (required)
+     * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
      */
     struct Subscription {
         uint256 id;                  // 32 bytes - unique subscription ID
-        address subscriber;           // 20 bytes - user's wallet address
-        uint256 serviceProviderId;   // 32 bytes - ID referencing service provider in off-chain database
+        address senderAddress;        // 20 bytes - user's wallet address
+        string senderCurrency;       // dynamic - sender currency ticker (e.g., "PYUSD", "BTC", "ETH", "USDC")
+        uint256 senderId;            // 32 bytes - ID referencing sender in off-chain database
         uint256 amount;              // 32 bytes - payment amount in PYUSD base units
         uint256 interval;            // 32 bytes - billing interval in seconds
         uint256 nextPaymentDue;      // 32 bytes - timestamp for next payment
@@ -97,11 +76,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 paymentCount;        // 32 bytes - successful payments made
         bool isActive;               // 1 byte - subscription status
         uint8 failedPaymentCount;    // 1 byte - consecutive failures (max 3)
-        PaymentType paymentType;     // 1 byte - payment flow method (ViaUserPayPal, DirectRecipientPayPal, DirectRecipientWallet)
-        ProviderType providerType;   // 1 byte - provider type (PublicVerified, PublicUnverified, Private)
-        address recipientAddress;     // 20 bytes - recipient wallet address where payments are sent (required)
         string serviceName;          // dynamic - human-readable name
-        string recipientCurrency;    // dynamic - optional recipient currency ticker (e.g., "BTC", "ETH", "USDC")
+        uint256 recipientId;         // 32 bytes - ID referencing recipient in off-chain database
+        address recipientAddress;    // 20 bytes - recipient wallet address where payments are sent (required)
+        string recipientCurrency;    // dynamic - recipient currency ticker (e.g., "PYUSD", "BTC", "ETH", "USDC")
     }
     
     // ========================================
@@ -111,33 +89,33 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Emitted when a new subscription is created
      * @param subscriptionId Unique ID of the subscription
-     * @param subscriber User's wallet address
-     * @param serviceProviderId ID of the service provider
+     * @param senderAddress User's wallet address
+     * @param senderId ID of the sender
+     * @param recipientId ID of the recipient
      * @param amount Payment amount in PYUSD base units
      * @param interval Billing interval in seconds
      * @param nextPaymentDue Timestamp when first payment is due
      * @param endDate Timestamp when subscription ends (0 = unlimited)
      * @param maxPayments Maximum number of payments (0 = unlimited)
      * @param serviceName Human-readable service name
-     * @param paymentType Payment flow method for this subscription
-     * @param providerType Type of service provider
      * @param recipientAddress Recipient wallet address where payments are sent
-     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD)
+     * @param senderCurrency Sender currency ticker code (e.g., "PYUSD")
+     * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD")
      * @param timestamp Block timestamp when subscription was created
      */
     event SubscriptionCreated(
         uint256 indexed subscriptionId,
-        address indexed subscriber,
-        uint256 indexed serviceProviderId,
+        address indexed senderAddress,
+        uint256 indexed senderId,
+        uint256 recipientId,
         uint256 amount,
         uint256 interval,
         uint256 nextPaymentDue,
         uint256 endDate,
         uint256 maxPayments,
         string serviceName,
-        PaymentType paymentType,
-        ProviderType providerType,
         address recipientAddress,
+        string senderCurrency,
         string recipientCurrency,
         uint256 timestamp
     );
@@ -145,8 +123,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Emitted when a subscription payment is successfully processed
      * @param subscriptionId Unique ID of the subscription
-     * @param subscriber User's wallet address
-     * @param serviceProviderId ID of the service provider
+     * @param senderAddress User's wallet address
+     * @param senderId ID of the sender
+     * @param recipientId ID of the recipient
      * @param amount Payment amount transferred
      * @param paymentCount Total number of successful payments (including this one)
      * @param timestamp Block timestamp when payment was processed
@@ -154,8 +133,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      */
     event PaymentProcessed(
         uint256 indexed subscriptionId,
-        address indexed subscriber,
-        uint256 indexed serviceProviderId,
+        address indexed senderAddress,
+        uint256 indexed senderId,
+        uint256 recipientId,
         uint256 amount,
         uint256 paymentCount,
         uint256 timestamp,
@@ -165,8 +145,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Emitted when a subscription payment fails
      * @param subscriptionId Unique ID of the subscription
-     * @param subscriber User's wallet address
-     * @param serviceProviderId ID of the service provider
+     * @param senderAddress User's wallet address
+     * @param senderId ID of the sender
+     * @param recipientId ID of the recipient
      * @param amount Payment amount that failed
      * @param timestamp Block timestamp when payment failed
      * @param reason Human-readable failure reason
@@ -174,8 +155,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      */
     event PaymentFailed(
         uint256 indexed subscriptionId,
-        address indexed subscriber,
-        uint256 indexed serviceProviderId,
+        address indexed senderAddress,
+        uint256 indexed senderId,
+        uint256 recipientId,
         uint256 amount,
         uint256 timestamp,
         string reason,
@@ -185,15 +167,17 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Emitted when a subscription is cancelled
      * @param subscriptionId Unique ID of the subscription
-     * @param subscriber User's wallet address
-     * @param serviceProviderId ID of the service provider
+     * @param senderAddress User's wallet address
+     * @param senderId ID of the sender
+     * @param recipientId ID of the recipient
      * @param timestamp Block timestamp when subscription was cancelled
      * @param reason Cancellation reason ("user_cancelled", "auto_cancelled_failures", "expired")
      */
     event SubscriptionCancelled(
         uint256 indexed subscriptionId,
-        address indexed subscriber,
-        uint256 indexed serviceProviderId,
+        address indexed senderAddress,
+        uint256 indexed senderId,
+        uint256 recipientId,
         uint256 timestamp,
         string reason
     );
@@ -240,32 +224,32 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     
     /**
      * @notice Create a new subscription
-     * @param serviceProviderId ID of the service provider (reference to off-chain database)
+     * @param senderId ID of the sender (reference to off-chain database)
+     * @param recipientId ID of the recipient (reference to off-chain database)
      * @param amount Payment amount in PYUSD base units (6 decimals)
      * @param interval Billing interval in seconds (e.g., 2592000 = 30 days)
      * @param serviceName Human-readable service name (e.g., "Netflix Premium")
      * @param endDate Unix timestamp when subscription ends (0 = unlimited)
      * @param maxPayments Maximum number of payments before auto-cancel (0 = unlimited)
-     * @param paymentType Payment flow method (0=ViaUserPayPal, 1=DirectRecipientPayPal, 2=DirectRecipientWallet)
-     * @param providerType Type of service provider (0=PublicVerified, 1=PublicUnverified, 2=Private)
      * @param recipientAddress Recipient wallet address where payments should be sent
-     * @param recipientCurrency Optional recipient currency ticker code (empty string = PYUSD, e.g., "BTC", "ETH", "USDC")
+     * @param senderCurrency Sender currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
+     * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
      * @return subscriptionId The unique ID of the created subscription
      * @dev User must approve this contract to spend PYUSD before calling this function
      * @dev If both endDate and maxPayments are set, the earlier limit applies
      * @dev If maxPayments is set, endDate will be calculated as: now + (maxPayments * interval)
-     * @dev All service provider information comes from off-chain database
+     * @dev All sender and recipient information comes from off-chain database
      */
     function createSubscription(
-        uint256 serviceProviderId,
+        uint256 senderId,
+        uint256 recipientId,
         uint256 amount,
         uint256 interval,
         string calldata serviceName,
         uint256 endDate,
         uint256 maxPayments,
-        PaymentType paymentType,
-        ProviderType providerType,
         address recipientAddress,
+        string calldata senderCurrency,
         string calldata recipientCurrency
     ) external returns (uint256) {
         // ========================================
@@ -286,10 +270,13 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         require(bytes(serviceName).length > 0, "Service name cannot be empty");
         require(bytes(serviceName).length <= 100, "Service name too long");
         
-        // Validate recipient currency ticker if provided (max 10 characters for ticker symbols)
-        if (bytes(recipientCurrency).length > 0) {
-            require(bytes(recipientCurrency).length <= 10, "Recipient currency ticker too long");
-        }
+        // Validate sender currency ticker is provided (required, max 10 characters for ticker symbols)
+        require(bytes(senderCurrency).length > 0, "Sender currency is required");
+        require(bytes(senderCurrency).length <= 10, "Sender currency ticker too long");
+        
+        // Validate recipient currency ticker is provided (required, max 10 characters for ticker symbols)
+        require(bytes(recipientCurrency).length > 0, "Recipient currency is required");
+        require(bytes(recipientCurrency).length <= 10, "Recipient currency ticker too long");
         
         // Validate end date (if set, must be in future)
         if (endDate > 0) {
@@ -332,8 +319,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // All payment information is passed in from off-chain and stored in the subscription
         _subscriptions[subscriptionId] = Subscription({
             id: subscriptionId,
-            subscriber: msg.sender,
-            serviceProviderId: serviceProviderId,
+            senderAddress: msg.sender,
+            senderCurrency: senderCurrency,
+            senderId: senderId,
             amount: amount,
             interval: interval,
             nextPaymentDue: nextPaymentDue,
@@ -342,10 +330,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             paymentCount: 0,
             isActive: true,
             failedPaymentCount: 0,
-            paymentType: paymentType,
-            providerType: providerType,
-            recipientAddress: recipientAddress,
             serviceName: serviceName,
+            recipientId: recipientId,
+            recipientAddress: recipientAddress,
             recipientCurrency: recipientCurrency
         });
         
@@ -361,17 +348,17 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         
         emit SubscriptionCreated(
             sub.id,
-            sub.subscriber,
-            sub.serviceProviderId,
+            sub.senderAddress,
+            sub.senderId,
+            sub.recipientId,
             sub.amount,
             sub.interval,
             sub.nextPaymentDue,
             sub.endDate,
             sub.maxPayments,
             sub.serviceName,
-            sub.paymentType,
-            sub.providerType,
             sub.recipientAddress,
+            sub.senderCurrency,
             sub.recipientCurrency,
             block.timestamp
         );
@@ -383,11 +370,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @notice Process a payment for a subscription
      * @param subscriptionId The ID of the subscription to process payment for
      * @dev Can be called by anyone (typically Chainlink Automation or Gelato)
-     * @dev Payment handling varies by the subscription's payment flow method (stored at creation time):
-     *      - ViaUserPayPal: Transfer to House Coinbase account, off-chain process converts PYUSD → USD → User's PayPal
-     *      - DirectRecipientPayPal: Transfer to House Coinbase account, off-chain process sends directly to recipient's PayPal
-     *      - DirectRecipientWallet: Transfer directly to recipient's wallet address (peer-to-peer), payment complete on-chain
-     * @dev Payment flow method is retrieved from the subscription's paymentType field
+     * @dev Transfers PYUSD directly from sender to recipient's wallet address
      */
     function processPayment(uint256 subscriptionId) external nonReentrant {
         Subscription storage sub = _subscriptions[subscriptionId];
@@ -406,8 +389,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             sub.isActive = false;
             emit SubscriptionCancelled(
                 sub.id,
-                sub.subscriber,
-                sub.serviceProviderId,
+                sub.senderAddress,
+                sub.senderId,
+                sub.recipientId,
                 block.timestamp,
                 "expired_max_payments"
             );
@@ -420,8 +404,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             sub.isActive = false;
             emit SubscriptionCancelled(
                 sub.id,
-                sub.subscriber,
-                sub.serviceProviderId,
+                sub.senderAddress,
+                sub.senderId,
+                sub.recipientId,
                 block.timestamp,
                 "expired_end_date"
             );
@@ -437,14 +422,15 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // ========================================
         
         // Check user has sufficient balance
-        uint256 balance = pyusdToken.balanceOf(sub.subscriber);
+        uint256 balance = pyusdToken.balanceOf(sub.senderAddress);
         if (balance < sub.amount) {
             sub.failedPaymentCount++;
             
             emit PaymentFailed(
                 sub.id,
-                sub.subscriber,
-                sub.serviceProviderId,
+                sub.senderAddress,
+                sub.senderId,
+                sub.recipientId,
                 sub.amount,
                 block.timestamp,
                 "Insufficient PYUSD balance",
@@ -456,8 +442,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
                 sub.isActive = false;
                 emit SubscriptionCancelled(
                     sub.id,
-                    sub.subscriber,
-                    sub.serviceProviderId,
+                    sub.senderAddress,
+                    sub.senderId,
+                    sub.recipientId,
                     block.timestamp,
                     "auto_cancelled_failures"
                 );
@@ -467,14 +454,15 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         }
         
         // Check user has sufficient allowance
-        uint256 allowance = pyusdToken.allowance(sub.subscriber, address(this));
+        uint256 allowance = pyusdToken.allowance(sub.senderAddress, address(this));
         if (allowance < sub.amount) {
             sub.failedPaymentCount++;
             
             emit PaymentFailed(
                 sub.id,
-                sub.subscriber,
-                sub.serviceProviderId,
+                sub.senderAddress,
+                sub.senderId,
+                sub.recipientId,
                 sub.amount,
                 block.timestamp,
                 "Insufficient PYUSD allowance",
@@ -486,8 +474,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
                 sub.isActive = false;
                 emit SubscriptionCancelled(
                     sub.id,
-                    sub.subscriber,
-                    sub.serviceProviderId,
+                    sub.senderAddress,
+                    sub.senderId,
+                    sub.recipientId,
                     block.timestamp,
                     "auto_cancelled_failures"
                 );
@@ -496,11 +485,8 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             return;
         }
         
-        // Transfer PYUSD from subscriber based on payment type
-        // Note: All payment types transfer on-chain first. Off-chain processing happens based on payment flow.
-        bool success;
-        
-        success = pyusdToken.transferFrom(sub.subscriber, paymentAddress, sub.amount);
+        // Transfer PYUSD directly from sender to recipient wallet
+        bool success = pyusdToken.transferFrom(sub.senderAddress, paymentAddress, sub.amount);
         require(success, "PYUSD transfer failed");
 
         // ========================================
@@ -518,8 +504,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         
         emit PaymentProcessed(
             sub.id,
-            sub.subscriber,
-            sub.serviceProviderId,
+            sub.senderAddress,
+            sub.senderId,
+            sub.recipientId,
             sub.amount,
             sub.paymentCount,
             block.timestamp,
@@ -530,21 +517,22 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Cancel a subscription
      * @param subscriptionId The ID of the subscription to cancel
-     * @dev Only the subscriber can cancel their own subscription
+     * @dev Only the sender can cancel their own subscription
      */
     function cancelSubscription(uint256 subscriptionId) external {
         Subscription storage sub = _subscriptions[subscriptionId];
         
         require(sub.id != 0, "Subscription does not exist");
-        require(sub.subscriber == msg.sender, "Only subscriber can cancel");
+        require(sub.senderAddress == msg.sender, "Only sender can cancel");
         require(sub.isActive, "Subscription already cancelled");
         
         sub.isActive = false;
         
         emit SubscriptionCancelled(
             sub.id,
-            sub.subscriber,
-            sub.serviceProviderId,
+            sub.senderAddress,
+            sub.senderId,
+            sub.recipientId,
             block.timestamp,
             "user_cancelled"
         );

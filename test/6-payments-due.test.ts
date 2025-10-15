@@ -13,6 +13,8 @@ describe("SubChainSubscription - Payments Due", function () {
   const NETFLIX_ID = 1;
   const SPOTIFY_ID = 2;
   const ALCHEMY_ID = 3;
+  const SERVICE_PROVIDER_ID = 100;
+  const LANDLORD_ID = 101;
   
   let subChainContract: SubChainSubscription;
   let pyusdContract: IERC20Metadata;
@@ -47,16 +49,16 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should return empty array when no payments are due", async function () {
       // Create subscription with 30-day interval
       await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("10", 6),
         THIRTY_DAYS,
         "Netflix Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       // Check payments due - should be empty as first payment isn't due yet
@@ -67,16 +69,16 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should return subscription ID when payment is due", async function () {
       // Create subscription with 1-day interval
       const tx = await subChainContract.connect(user1).createSubscription(
-        SPOTIFY_ID,
+        SPOTIFY_ID, // senderId
+        LANDLORD_ID, // recipientId
         ethers.parseUnits("15", 6),
         ONE_DAY,
         "Spotify Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         landlord.address, // recipientAddress (using landlord for Spotify)
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -104,16 +106,16 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should not return cancelled subscriptions", async function () {
       // Create subscription
       const tx = await subChainContract.connect(user1).createSubscription(
-        ALCHEMY_ID,
+        ALCHEMY_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("20", 6),
         ONE_DAY,
         "Alchemy Pro",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -143,16 +145,16 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should not return subscriptions that have reached maxPayments", async function () {
       // Create subscription with maxPayments = 1
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Basic",
         0,
         1, // maxPayments = 1
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -193,16 +195,16 @@ describe("SubChainSubscription - Payments Due", function () {
       
       // Create subscription with endDate
       const tx = await subChainContract.connect(user1).createSubscription(
-        SPOTIFY_ID,
+        SPOTIFY_ID, // senderId
+        LANDLORD_ID, // recipientId
         ethers.parseUnits("15", 6),
         ONE_DAY,
         "Spotify Family",
         endDate,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         landlord.address, // recipientAddress (using landlord for Spotify)
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -234,42 +236,42 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should return all due subscriptions in order", async function () {
       // Create 3 subscriptions with different intervals
       const tx1 = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
-        SPOTIFY_ID,
+        SPOTIFY_ID, // senderId
+        LANDLORD_ID, // recipientId
         ethers.parseUnits("15", 6),
         2 * ONE_DAY, // 2 days
         "Spotify Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         landlord.address, // recipientAddress (using landlord for Spotify)
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
-        ALCHEMY_ID,
+        ALCHEMY_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("20", 6),
         3 * ONE_DAY, // 3 days
         "Alchemy Pro",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       // Get subscription IDs
@@ -323,42 +325,42 @@ describe("SubChainSubscription - Payments Due", function () {
     it("Should handle mix of due and not due subscriptions", async function () {
       // Create 3 subscriptions with different intervals
       const tx1 = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
-        SPOTIFY_ID,
+        SPOTIFY_ID, // senderId
+        LANDLORD_ID, // recipientId
         ethers.parseUnits("15", 6),
         5 * ONE_DAY, // 5 days
         "Spotify Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         landlord.address, // recipientAddress (using landlord for Spotify)
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
-        ALCHEMY_ID,
+        ALCHEMY_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         ethers.parseUnits("20", 6),
         2 * ONE_DAY, // 2 days
         "Alchemy Pro",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       // Get subscription IDs

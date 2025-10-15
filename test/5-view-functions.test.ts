@@ -12,6 +12,8 @@ describe("SubChainSubscription - View Functions", function () {
   
   const NETFLIX_ID = 1;
   const SPOTIFY_ID = 2;
+  const SERVICE_PROVIDER_ID = 100;
+  const LANDLORD_ID = 101;
   let subscriptionId: bigint;
   
   let subChainContract: SubChainSubscription;
@@ -43,16 +45,16 @@ describe("SubChainSubscription - View Functions", function () {
     
     // Create subscription
     const tx = await subChainContract.connect(user1).createSubscription(
-      NETFLIX_ID,
+      NETFLIX_ID, // senderId
+      SERVICE_PROVIDER_ID, // recipientId
       amount,
       interval,
       "Netflix Premium",
       0, // No endDate
       0, // No maxPayments
-      2, // PaymentType.DirectRecipientWallet
-      0, // ProviderType.PublicVerified
       serviceProvider.address, // recipientAddress
-      "" // recipientCurrency
+      "PYUSD", // senderCurrency
+      "PYUSD" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -73,15 +75,15 @@ describe("SubChainSubscription - View Functions", function () {
       const sub = await subChainContract.getSubscription(subscriptionId);
       
       expect(sub.id).to.equal(subscriptionId);
-      expect(sub.subscriber).to.equal(user1.address);
-      expect(sub.serviceProviderId).to.equal(NETFLIX_ID);
+      expect(sub.senderAddress).to.equal(user1.address);
+      expect(sub.senderId).to.equal(NETFLIX_ID);
+      expect(sub.recipientId).to.equal(SERVICE_PROVIDER_ID);
       expect(sub.amount).to.equal(ethers.parseUnits("10", 6));
       expect(sub.interval).to.equal(THIRTY_DAYS);
       expect(sub.isActive).to.be.true;
-      expect(sub.paymentType).to.equal(2); // DirectRecipientWallet
-      expect(sub.providerType).to.equal(0); // PublicVerified
       expect(sub.recipientAddress).to.equal(serviceProvider.address);
-      expect(sub.recipientCurrency).to.equal("");
+      expect(sub.senderCurrency).to.equal("PYUSD");
+      expect(sub.recipientCurrency).to.equal("PYUSD");
       expect(sub.failedPaymentCount).to.equal(0);
       expect(sub.paymentCount).to.equal(0);
       expect(sub.serviceName).to.equal("Netflix Premium");
@@ -92,16 +94,16 @@ describe("SubChainSubscription - View Functions", function () {
     it("Should return correct user subscriptions", async function () {
       // Create another subscription for user1
       await subChainContract.connect(user1).createSubscription(
-        SPOTIFY_ID,
+        SPOTIFY_ID, // senderId
+        LANDLORD_ID, // recipientId
         ethers.parseUnits("15", 6),
         THIRTY_DAYS,
         "Spotify Premium",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         landlord.address, // recipientAddress (using landlord for Spotify)
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const userSubs = await subChainContract.getUserSubscriptions(user1.address);

@@ -1,22 +1,38 @@
 # Project Overview
 
-PayPalRent is a tool for property owners and renters to use crypto. Landlords can screen tennets by checking account balances of crypto assets, accept Paypal's PYUSD, while renter can automatically send rent payments using stablecoins. 
+StableRent is a tool for property owners and renters to use Stablecoin digital assets. Landlords can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while renters can automatically send rent payments using stablecoins. 
 
 **The Problem We're Solving:**
-- The US residental rental market is $291 BILLION dollars
-- Estimates for US-based crypto assests are around $90B
+- The US residential rental market is $291 BILLION dollars
+- Estimates for US-based crypto assets are around $90B
 - Crypto users want to pay rent in crypto, but finding landlords who take crypto is hard 
-- Recurring peer-to-peer transcations (rent, allowance, savings accounts, etc.)
-- Many folks hear "crypto" and think scam, but Paypal is a reputable company that could easy adoption
+- Recurring peer-to-peer transactions (rent, allowance, savings accounts, etc.)
+- Many folks hear "crypto" and think scam, but Paypal is a reputable company that could ease adoption
 
 **Discussion in the Industry**: https://www.linkedin.com/posts/shuhaib_crypto-rent-the-100-billion-shift-no-activity-7348397294506975232-thtY/
 
 **Our Solution:**
-zRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlor's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, faciliating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Chainlink Automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualitifcation searches to check renter's assets. This project will leverage Hardhat's capibility to fork mainnet ETH for development. 
+StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Chainlink Automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project will leverage Hardhat's capability to fork mainnet ETH for development. 
 
 **Target Audience:** Crypto-native users who want to pay rent without off-ramping to traditional bank account.
 
-**Simply:** Recurring direct peer-to-peer crypto payments: Rent, Charities, Patreon, child's allowance, etc 
+**Simply:** Recurring direct peer-to-peer crypto payments: **Rent**, Charities, Patreon, child's allowance, etc 
+
+## Hackathon Relevance 
+
+**Why PayPal**: This isn't just catering to PayPal's bounty, PYUSD is actually a good choice for this project: 
+- Reputation of PayPal as good company will encourage adoption among crypto-skeptical users
+- PYUSD Stablecoin tied to the USD so landlord don't take on volatility risk
+- PayPal is an accepted payment source for many other services
+- PayPal provides an easy PYUSD to USD off-ramp built into the app for landlords who need USD
+
+**Why Envio**: 
+- Rapid multi-chain indexing of renter's addresses to get account balances (on-demand of landlord)
+- Tools for tracking subscriptions and on-chain events without centralized database tracking, or slow block parsing
+
+**Why Hardhat**:
+- The forking of mainnet ETH is invaluable for testing indexing of account balances
+- The simulated blockchain is game-changer for rapid development without faucets or testnets
 
 ## How It Works
 
@@ -51,14 +67,12 @@ The script will:
 2. Add it to your `.env` file
 3. Run `npm test` to verify everything works
 
-# SubChain Notes
+# StableRent Notes
 ## Platform Architecture
 
 TBD
 
 ## Hardhat testing + Coverage 
-
-Output in `coverage.json`
 
 October 12, 2025 : 1725
 ---------------------------|----------|----------|----------|----------|----------------|
@@ -71,9 +85,21 @@ File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovere
 All files                  |      100 |    91.18 |      100 |      100 |                |
 ---------------------------|----------|----------|----------|----------|----------------|
 
+October 14, 2025: 1208
+---------------------------|----------|----------|----------|----------|----------------|
+File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+---------------------------|----------|----------|----------|----------|----------------|
+ contracts/                |      100 |    91.18 |      100 |      100 |                |
+  Interfaces.sol           |      100 |      100 |      100 |      100 |                |
+  SubChainSubscription.sol |      100 |    91.18 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+All files                  |      100 |    91.18 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+
+> Istanbul reports written to ./coverage/ and ./coverage.json
 
 
-## Hackathon requirments
+## Hackathon requirements
 ### Envio
 Best Use of HyperIndex ⸺ $1,500
 Awarded to the team that best demonstrates the creative use of HyperIndex, Envio’s high-performance, multichain indexing framework. We will look for clear schema design, optimized event handling, and meaningful data querying. 
@@ -120,9 +146,17 @@ Qualification Requirements
 Cursor + Claude AI was used to support development. 
 
 ## Future Considerations:
-
+- Escrow for security deposits, and first/last month
+- Lease documents stored on IFPS or Autonomys
 - Multi-chain support for broader accessibility (renter holds ZEC -> DEX: NEAR Intents -> PYUSD -> Landlord)
 - zkProof or encryption for privacy and security
+- StablePay (peer-to-peer)
+- StableDonate (Charity focused, recurring donations)
+
+- Listing Resource: 
+- - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
+- - Land owners will to rent "I will accept crypto for this rental"
+- - For Sale Properties: renter can say "I'd pay X a month for 3 years, if someone bought this and rented it to me."
 
 ⚠️ PROTOTYPE DEMONSTRATION
 This is a proof-of-concept for educational purposes only.

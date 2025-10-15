@@ -33,13 +33,6 @@ export const PAYMENT_INTERVALS = {
   YEARLY: 31536000, // 365 days
 } as const;
 
-// Service provider types
-export const ProviderType = {
-  DirectCrypto: 0,
-  AutomatedGiftCard: 1,
-  ManualEntry: 2,
-} as const;
-
 // Popular services (for marketplace)
 export const POPULAR_SERVICES = [
   {

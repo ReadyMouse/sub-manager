@@ -131,7 +131,6 @@ export const parseEnvioSubscription = (envioSub: EnvioSubscription) => {
     endDate: envioSub.endDate ? parseInt(envioSub.endDate) : undefined,
     maxPayments: envioSub.maxPayments ? parseInt(envioSub.maxPayments) : undefined,
     paymentCount: parseInt(envioSub.paymentCount),
-    providerType: parseInt(envioSub.providerType) as 0 | 1 | 2,
   };
 };
 

@@ -14,22 +14,12 @@ export interface Subscription {
   endDate?: number;
   maxPayments?: number;
   paymentCount: number;
-  providerType: ProviderType;
 }
-
-export const ProviderType = {
-  DirectCrypto: 0,
-  AutomatedGiftCard: 1,
-  ManualEntry: 2,
-} as const;
-
-export type ProviderType = typeof ProviderType[keyof typeof ProviderType];
 
 export interface ServiceProvider {
   id: string;
   walletAddress: Address;
   name: string;
-  providerType: ProviderType;
   owner?: Address;
 }
 
@@ -118,7 +108,6 @@ export interface EnvioSubscription {
   endDate?: string;
   maxPayments?: string;
   paymentCount: string;
-  providerType: string;
 }
 
 export interface EnvioPayment {

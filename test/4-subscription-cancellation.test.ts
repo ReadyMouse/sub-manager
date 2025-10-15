@@ -11,6 +11,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
   // ========================================
   
   const NETFLIX_ID = 1;
+  const SERVICE_PROVIDER_ID = 100;
   let cancelTestSubId: bigint;
   
   let subChainContract: SubChainSubscription;
@@ -42,16 +43,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
     
     // Create subscription
     const tx = await subChainContract.connect(user1).createSubscription(
-      NETFLIX_ID,
+      NETFLIX_ID, // senderId
+      SERVICE_PROVIDER_ID, // recipientId
       amount,
       interval,
       "Netflix Cancel Test",
       0,
       0,
-      2, // PaymentType.DirectRecipientWallet
-      0, // ProviderType.PublicVerified
       serviceProvider.address, // recipientAddress
-      "" // recipientCurrency
+      "PYUSD", // senderCurrency
+      "PYUSD" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -83,7 +84,8 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         .withArgs(
           cancelTestSubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           block!.timestamp,
           "user_cancelled"
         );
@@ -106,16 +108,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Non-Owner Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -133,7 +135,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       // User2 tries to cancel user1's subscription - should fail
       await expect(
         subChainContract.connect(user2).cancelSubscription(newSubId)
-      ).to.be.revertedWith("Only subscriber can cancel");
+      ).to.be.revertedWith("Only sender can cancel");
     });
     
     it("Should revert when trying to cancel non-existent subscription", async function () {
@@ -148,16 +150,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Cancel Then Pay Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -195,16 +197,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const endDate = currentBlock!.timestamp + (5 * ONE_DAY); // 5 days from now
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix EndDate Test",
         endDate,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -231,7 +233,8 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         .withArgs(
           endDateSubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
           "expired_end_date"
         );
@@ -259,16 +262,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       // Create subscription with maxPayments = 2 and endDate far in future
       // This ensures we hit maxPayments before endDate
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix MaxPayments Test",
         endDate, // Set explicit endDate far in future
         maxPayments,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       // Get subscription state to see what endDate the contract calculated
@@ -287,16 +290,16 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       // Create subscription again with endDate = calculatedEndDate + 7 days
       // This ensures we hit maxPayments before endDate
       const tx2 = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix MaxPayments Test",
         Number(calculatedEndDate) + (7 * ONE_DAY), // Set endDate far after the contract's calculated endDate
         maxPayments,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt2 = await tx2.wait();
@@ -383,7 +386,8 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         .withArgs(
           maxPaySubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
           "expired_max_payments"
         );

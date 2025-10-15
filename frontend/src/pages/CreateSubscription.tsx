@@ -22,7 +22,7 @@ export const CreateSubscription: React.FC = () => {
   const [formData, setFormData] = useState({
     serviceProviderId: '',
     amount: '',
-    interval: PAYMENT_INTERVALS.MONTHLY,
+    interval: PAYMENT_INTERVALS.MONTHLY as number,
     endDate: '',
     maxPayments: '',
     recipientAddress: '',
@@ -91,8 +91,11 @@ export const CreateSubscription: React.FC = () => {
         formData.serviceProviderId,
         formData.amount,
         formData.interval,
+        'Custom Subscription', // serviceName - TODO: add to form
         endDate,
-        maxPayments
+        maxPayments,
+        formData.recipientAddress as Address,
+        '' // recipientCurrency - empty means PYUSD
       );
     } catch (error) {
       console.error('Create subscription failed:', error);

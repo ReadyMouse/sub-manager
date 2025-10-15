@@ -11,6 +11,7 @@ describe("SubChainSubscription - Payment Processing", function () {
   // ========================================
   
   const NETFLIX_ID = 1;
+  const SERVICE_PROVIDER_ID = 100;
   let testSubscriptionId: bigint;
   
   let subChainContract: SubChainSubscription;
@@ -42,16 +43,16 @@ describe("SubChainSubscription - Payment Processing", function () {
     
     // Create subscription
     const tx = await subChainContract.connect(user1).createSubscription(
-      NETFLIX_ID,
+      NETFLIX_ID, // senderId
+      SERVICE_PROVIDER_ID, // recipientId
       amount,
       interval,
       "Netflix Test Sub",
       0,
       0,
-      2, // PaymentType.DirectRecipientWallet
-      0, // ProviderType.PublicVerified
       serviceProvider.address, // recipientAddress
-      "" // recipientCurrency
+      "PYUSD", // senderCurrency
+      "PYUSD" // recipientCurrency
     );
     
     const receipt = await tx.wait();
@@ -107,7 +108,8 @@ describe("SubChainSubscription - Payment Processing", function () {
         .withArgs(
           testSubscriptionId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           ethers.parseUnits("50", 6),
           1, // paymentCount
           block!.timestamp,
@@ -152,16 +154,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Reset Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -215,16 +217,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Not Due Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -257,16 +259,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Inactive Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -302,16 +304,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       const interval = THIRTY_DAYS;
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Insufficient Balance Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -343,7 +345,8 @@ describe("SubChainSubscription - Payment Processing", function () {
         .withArgs(
           insuffBalanceSubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           amount,
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
           "Insufficient PYUSD balance",
@@ -369,16 +372,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Insufficient Allowance Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -429,16 +432,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Consecutive Failures Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -487,16 +490,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Auto-Cancel Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -539,7 +542,8 @@ describe("SubChainSubscription - Payment Processing", function () {
         .withArgs(
           autoCancelSubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
           "auto_cancelled_failures"
         );
@@ -563,16 +567,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Auto-Cancel Verify Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -625,16 +629,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
-        NETFLIX_ID,
+        NETFLIX_ID, // senderId
+        SERVICE_PROVIDER_ID, // recipientId
         amount,
         interval,
         "Netflix Allowance Auto-Cancel Test",
         0,
         0,
-        2, // PaymentType.DirectRecipientWallet
-        0, // ProviderType.PublicVerified
         serviceProvider.address, // recipientAddress
-        "" // recipientCurrency
+        "PYUSD", // senderCurrency
+        "PYUSD" // recipientCurrency
       );
       
       const receipt = await tx.wait();
@@ -681,7 +685,8 @@ describe("SubChainSubscription - Payment Processing", function () {
         .withArgs(
           allowanceSubId,
           user1.address,
-          NETFLIX_ID,
+          NETFLIX_ID, // senderId
+          SERVICE_PROVIDER_ID, // recipientId
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
           "auto_cancelled_failures"
         );
