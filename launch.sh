@@ -4,6 +4,7 @@
 # StableRent Launch Script
 # ============================================================================
 # This script launches StableRent services:
+# - Backend API (user management & database)
 # - Local Hardhat blockchain (optional)
 # - Frontend application
 # ============================================================================
@@ -43,8 +44,9 @@ echo "🚀 StableRent Service Launcher"
 echo "============================================================================"
 echo ""
 echo "This script will start the following services:"
-echo "  1. Local Hardhat blockchain (optional)"
-echo "  2. Frontend application"
+echo "  1. Backend API (user management & database)"
+echo "  2. Local Hardhat blockchain (optional)"
+echo "  3. Frontend application"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo "============================================================================"
@@ -57,25 +59,36 @@ echo ""
 # Ask user what to start
 echo -e "${CYAN}What would you like to start?${NC}"
 echo ""
-echo "  1) Everything (Hardhat + Frontend)"
-echo "  2) Frontend only (connects to existing network)"
-echo "  3) Hardhat only (for testing)"
+echo "  1) Everything (Backend + Hardhat + Frontend)"
+echo "  2) Backend + Frontend (development mode)"
+echo "  3) Frontend only (connects to existing backend/network)"
+echo "  4) Backend only (API server)"
+echo "  5) Hardhat only (for testing)"
 echo ""
-read -p "Enter choice [1-3]: " CHOICE
+read -p "Enter choice [1-5]: " CHOICE
 echo ""
 
+START_BACKEND=false
 START_HARDHAT=false
 START_FRONTEND=false
 
 case $CHOICE in
     1)
+        START_BACKEND=true
         START_HARDHAT=true
         START_FRONTEND=true
         ;;
     2)
+        START_BACKEND=true
         START_FRONTEND=true
         ;;
     3)
+        START_FRONTEND=true
+        ;;
+    4)
+        START_BACKEND=true
+        ;;
+    5)
         START_HARDHAT=true
         ;;
     *)
@@ -97,10 +110,50 @@ echo ""
 mkdir -p logs
 
 # ============================================================================
-# 1. Start Hardhat Blockchain (Optional)
+# 1. Start Backend API
+# ============================================================================
+if [ "$START_BACKEND" = true ]; then
+    echo -e "${BLUE}[1/3] Starting Backend API...${NC}"
+    echo -e "${YELLOW}       Logs: logs/backend.log${NC}"
+    
+    # Check if PostgreSQL is running
+    if ! pgrep -x "postgres" > /dev/null; then
+        echo -e "${YELLOW}       PostgreSQL not running, starting it...${NC}"
+        brew services start postgresql@14
+        sleep 2
+    fi
+    
+    cd backend
+    npm run dev > ../logs/backend.log 2>&1 &
+    BACKEND_PID=$!
+    cd ..
+    
+    # Wait for backend to start
+    echo -n "       Waiting for backend to start"
+    sleep 3
+    for i in {1..15}; do
+        if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+            echo ""
+            echo -e "${GREEN}       ✅ Backend API running (PID: $BACKEND_PID)${NC}"
+            echo -e "${CYAN}       📍 http://localhost:3001${NC}"
+            break
+        fi
+        echo -n "."
+        sleep 1
+    done
+    echo ""
+    echo ""
+fi
+
+# ============================================================================
+# 2. Start Hardhat Blockchain (Optional)
 # ============================================================================
 if [ "$START_HARDHAT" = true ]; then
-    echo -e "${BLUE}[1/2] Starting Hardhat local blockchain...${NC}"
+    if [ "$START_BACKEND" = true ]; then
+        echo -e "${BLUE}[2/3] Starting Hardhat local blockchain...${NC}"
+    else
+        echo -e "${BLUE}[1/2] Starting Hardhat local blockchain...${NC}"
+    fi
     echo -e "${YELLOW}       Logs: logs/hardhat.log${NC}"
     
     npx hardhat node > logs/hardhat.log 2>&1 &
@@ -120,20 +173,27 @@ if [ "$START_HARDHAT" = true ]; then
         sleep 1
     done
     echo ""
-    echo ""
     
     # Show available accounts
     echo -e "${CYAN}       Available test accounts:${NC}"
-    grep "Account #" logs/hardhat.log | head -5 || true
+    grep "Account #" logs/hardhat.log | head -3 2>/dev/null || echo "       (check logs/hardhat.log)"
     echo ""
 fi
 
 # ============================================================================
-# 2. Start Frontend
+# 3. Start Frontend
 # ============================================================================
 if [ "$START_FRONTEND" = true ]; then
     if [ -d "frontend" ]; then
-        echo -e "${BLUE}[2/2] Starting frontend...${NC}"
+        # Determine step number
+        STEP_NUM="1/1"
+        if [ "$START_BACKEND" = true ] && [ "$START_HARDHAT" = true ]; then
+            STEP_NUM="3/3"
+        elif [ "$START_BACKEND" = true ] || [ "$START_HARDHAT" = true ]; then
+            STEP_NUM="2/2"
+        fi
+        
+        echo -e "${BLUE}[$STEP_NUM] Starting frontend...${NC}"
         echo -e "${YELLOW}       Logs: logs/frontend.log${NC}"
         
         cd frontend
@@ -171,6 +231,21 @@ echo "==========================================================================
 echo -e "${GREEN}✅ Services Started Successfully!${NC}"
 echo "============================================================================"
 echo ""
+
+if [ "$START_BACKEND" = true ]; then
+    echo -e "${MAGENTA}🔧 Backend API:${NC}"
+    echo -e "   URL: http://localhost:3001"
+    echo -e "   Health: http://localhost:3001/health"
+    echo -e "   API Docs: http://localhost:3001/api"
+    echo -e "   Logs: logs/backend.log"
+    echo -e "   PID: $BACKEND_PID"
+    echo ""
+    echo -e "   ${CYAN}Database:${NC}"
+    echo -e "   • PostgreSQL: localhost:5432"
+    echo -e "   • Database: stablerent"
+    echo -e "   • View DB: cd backend && npx prisma studio"
+    echo ""
+fi
 
 if [ "$START_HARDHAT" = true ]; then
     echo -e "${MAGENTA}🔗 Hardhat Blockchain:${NC}"
@@ -217,6 +292,9 @@ if [ "$START_HARDHAT" = true ]; then
 fi
 
 echo -e "${BLUE}View logs:${NC}"
+if [ "$START_BACKEND" = true ]; then
+    echo "  tail -f logs/backend.log   # Backend API"
+fi
 if [ "$START_HARDHAT" = true ]; then
     echo "  tail -f logs/hardhat.log   # Hardhat blockchain"
 fi
@@ -224,6 +302,12 @@ if [ "$START_FRONTEND" = true ]; then
     echo "  tail -f logs/frontend.log  # Frontend"
 fi
 echo ""
+
+if [ "$START_BACKEND" = true ]; then
+    echo -e "${BLUE}Database management:${NC}"
+    echo "  cd backend && npx prisma studio  # Open database GUI"
+    echo ""
+fi
 
 echo "============================================================================"
 echo -e "${YELLOW}⚠️  Press Ctrl+C to stop all services${NC}"

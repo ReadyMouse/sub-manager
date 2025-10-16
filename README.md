@@ -128,12 +128,21 @@ Cursor + Claude AI was used to support development.
 - StablePay (peer-to-peer)
 - StableDonate (Charity focused, recurring donations)
 - Proxy pattern for upgradeable contracts
-- KYC for transcation over gov reporting limits ($3-5k in single)
+- KYC for transcations over gov reporting limits ($3-5k in single)
+- Limits on the allowance approval (is there a regulation limit? what's reasonable?)
+- More flexible scheduling options (every 3 weeks, first and fifteenth, etc)
+- Internal encrypted messaging system. (Propoerty owner requests of resident to see account balances, resident can approve this requests)
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
   - Land owners will to rent "I will accept crypto for this rental"
   - For Sale Properties: renter can say "I'd pay X a month for 3 years, if someone bought this and rented it to me."
+
+## Business Plan 
+
+How to take this to market? What investments on PayPal's part would be nice?
+Talk to a lawyer, what regulations come into play? 
+
 
 ⚠️ PROTOTYPE DEMONSTRATION
 This is a proof-of-concept for educational purposes only.

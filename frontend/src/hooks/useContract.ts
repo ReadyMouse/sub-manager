@@ -14,29 +14,46 @@ export const useStableRentContract = () => {
   });
 
   const createSubscription = async (
-    serviceProviderId: string,
+    senderId: string,
+    recipientId: string,
     amount: string,
     interval: number,
     serviceName: string,
     endDate?: number,
     maxPayments?: number,
     recipientAddress?: Address,
-    recipientCurrency?: string
+    senderCurrency?: string,
+    recipientCurrency?: string,
+    processorFee?: string,
+    processorFeeAddress?: Address,
+    processorFeeCurrency?: string,
+    processorFeeID?: string
   ) => {
     const amountWei = parsePYUSD(amount);
+    // Calculate processor fee (5% of amount) if not provided
+    const feeWei = processorFee 
+      ? parsePYUSD(processorFee)
+      : (amountWei * BigInt(5)) / BigInt(100);
+    
     return writeContract({
       address: CONTRACTS.StableRentSubscription as Address,
       abi: StableRentSubscriptionABI,
       functionName: 'createSubscription',
       args: [
-        BigInt(serviceProviderId),
+        BigInt(senderId || 0),
+        BigInt(recipientId || 0),
         amountWei,
         BigInt(interval),
         serviceName,
         BigInt(endDate || 0),
         BigInt(maxPayments || 0),
         recipientAddress || ('' as Address),
-        recipientCurrency || '',
+        senderCurrency || 'PYUSD',
+        recipientCurrency || 'PYUSD',
+        feeWei,
+        processorFeeAddress || CONTRACTS.StableRentSubscription as Address, // Default to contract address
+        processorFeeCurrency || 'PYUSD',
+        BigInt(processorFeeID || 0),
       ],
     });
   };

@@ -19,14 +19,187 @@ export const CreateSubscription: React.FC = () => {
   const toast = useToast();
 
   const [isApproved, setIsApproved] = useState(false);
+  const [allowanceType, setAllowanceType] = useState<'calculated' | 'custom'>('calculated');
+  const [customAllowance, setCustomAllowance] = useState('');
+  const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [formData, setFormData] = useState({
-    serviceProviderId: '',
+    serviceName: '',
+    serviceDescription: '', // Off-chain: longer description
+    senderCurrency: 'PYUSD',
     amount: '',
     interval: PAYMENT_INTERVALS.MONTHLY as number,
     endDate: '',
     maxPayments: '',
-    recipientAddress: '',
+    recipientIdentifier: '', // Email or username to look up recipient
+    recipientWalletAddress: '', // Direct wallet address input
+    recipientWalletCurrency: 'PYUSD', // Currency for direct wallet input
+    notes: '', // Off-chain: personal notes
+    tags: '', // Off-chain: comma-separated tags
   });
+
+  // Connected wallets for sender
+  const [connectedWallets, setConnectedWallets] = useState<Array<{
+    id: string;
+    walletAddress: string;
+    label: string | null;
+    currency: string; // Will be from wallet token balances in future
+    isPrimary: boolean;
+  }>>([]);
+  const [selectedWalletId, setSelectedWalletId] = useState<string>('');
+  
+  // Recipient details fetched from backend
+  const [recipientDetails, setRecipientDetails] = useState<{
+    recipientId: string;
+    recipientAddress: string;
+    recipientCurrency: string;
+    displayName?: string;
+  } | null>(null);
+  const [isLookingUpRecipient, setIsLookingUpRecipient] = useState(false);
+  const [recipientLookupError, setRecipientLookupError] = useState<string | null>(null);
+
+  // Load user's connected wallets on mount
+  useEffect(() => {
+    const loadConnectedWallets = async () => {
+      if (!address) return;
+
+      try {
+        // TODO: Replace with actual backend API call
+        // const response = await fetch('/api/wallets/connected');
+        // const data = await response.json();
+        
+        // Mock data for now - in production, fetch from backend
+        const mockWallets = [
+          {
+            id: '1',
+            walletAddress: address.toLowerCase(),
+            label: 'MetaMask',
+            currency: 'PYUSD',
+            isPrimary: true,
+          },
+          // Add more mock wallets if needed for testing
+        ];
+        
+        setConnectedWallets(mockWallets);
+        
+        // Auto-select primary wallet
+        const primaryWallet = mockWallets.find(w => w.isPrimary);
+        if (primaryWallet) {
+          setSelectedWalletId(primaryWallet.id);
+          setFormData(prev => ({ ...prev, senderCurrency: primaryWallet.currency }));
+        }
+      } catch (error) {
+        console.error('Failed to load connected wallets:', error);
+      }
+    };
+
+    loadConnectedWallets();
+  }, [address]);
+
+  // Update currency when wallet selection changes
+  const handleWalletChange = (walletId: string) => {
+    setSelectedWalletId(walletId);
+    const selectedWallet = connectedWallets.find(w => w.id === walletId);
+    if (selectedWallet) {
+      setFormData(prev => ({ ...prev, senderCurrency: selectedWallet.currency }));
+    }
+  };
+
+  // Validate wallet address based on currency
+  const validateWalletAddress = (address: string, currency: string): { isValid: boolean; error?: string } => {
+    const trimmedAddress = address.trim();
+    
+    switch (currency) {
+      case 'PYUSD':
+        // PYUSD is an ERC-20 token on Ethereum, uses standard Ethereum addresses
+        // Format: 0x followed by 40 hexadecimal characters
+        const ethereumRegex = /^0x[a-fA-F0-9]{40}$/;
+        if (!ethereumRegex.test(trimmedAddress)) {
+          return {
+            isValid: false,
+            error: 'Invalid Ethereum address format. Should be 0x followed by 40 hexadecimal characters.'
+          };
+        }
+        
+        // Optional: Check EIP-55 checksum if address has mixed case
+        // This is a basic check - in production you might want to use a library like ethers.js
+        const hasUpperCase = /[A-F]/.test(trimmedAddress.slice(2));
+        const hasLowerCase = /[a-f]/.test(trimmedAddress.slice(2));
+        if (hasUpperCase && hasLowerCase) {
+          // Mixed case detected - should validate checksum
+          // For now, we'll just warn that it should be verified
+          console.warn('Mixed case address detected - checksum should be verified');
+        }
+        
+        return { isValid: true };
+      
+      // Future currency validations
+      // case 'USDC':
+      //   // USDC on Ethereum - same as PYUSD
+      //   return validateEthereumAddress(trimmedAddress);
+      // case 'BTC':
+      //   // Bitcoin address validation (P2PKH, P2SH, Bech32)
+      //   // Different format entirely
+      //   break;
+      
+      default:
+        // Unknown currency - basic check only
+        if (trimmedAddress.length < 26) {
+          return {
+            isValid: false,
+            error: 'Wallet address appears too short.'
+          };
+        }
+        return { isValid: true };
+    }
+  };
+
+  // Look up recipient by identifier (email, username, or wallet address)
+  const lookupRecipient = async (identifier: string) => {
+    if (!identifier.trim()) {
+      setRecipientDetails(null);
+      setRecipientLookupError(null);
+      return;
+    }
+
+    setIsLookingUpRecipient(true);
+    setRecipientLookupError(null);
+
+    try {
+      // Check if identifier is a wallet address (starts with 0x and 42 chars long)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const isWalletAddress = /^0x[a-fA-F0-9]{40}$/.test(identifier.trim());
+      
+      // TODO: Replace with actual backend API call
+      // Backend should detect wallet addresses vs email/username based on format
+      // const response = await fetch(`/api/users/lookup?identifier=${encodeURIComponent(identifier)}&type=${isWalletAddress ? 'address' : 'identifier'}`);
+      // const data = await response.json();
+      
+      // Mock implementation for now
+      // In production, this will call the backend to:
+      // - If wallet address: lookup user by wallet address or use address directly
+      // - If email/username: lookup user and get their payment address
+      
+      // For now, just show an error that backend integration is needed
+      throw new Error('Backend integration pending - recipient lookup not yet implemented');
+      
+      // When backend is ready, uncomment:
+      // if (!response.ok) {
+      //   throw new Error(data.message || 'Recipient not found');
+      // }
+      // setRecipientDetails({
+      //   recipientId: data.recipientId || '0', // '0' if wallet address without account
+      //   recipientAddress: isWalletAddress ? identifier : data.paymentAddress,
+      //   recipientCurrency: data.currency || 'PYUSD', // Auto-populated from recipient's primary address or default to PYUSD
+      //   displayName: data.displayName,
+      // });
+    } catch (error) {
+      console.error('Recipient lookup failed:', error);
+      setRecipientLookupError(error instanceof Error ? error.message : 'Failed to lookup recipient');
+      setRecipientDetails(null);
+    } finally {
+      setIsLookingUpRecipient(false);
+    }
+  };
 
   // Handle approve success
   useEffect(() => {
@@ -47,6 +220,38 @@ export const CreateSubscription: React.FC = () => {
     }
   }, [isCreateSuccess, navigate, toast]);
 
+  // Calculate total allowance needed for bulk approval
+  const calculateTotalAllowance = (): { total: string; paymentCount: number } => {
+    if (!formData.amount || !formData.interval) {
+      return { total: '0', paymentCount: 0 };
+    }
+
+    const amountPerPayment = parseFloat(formData.amount) * 1.05; // Include 5% fee
+    let paymentCount = 0;
+
+    // Priority 1: If maxPayments is set, use that
+    if (formData.maxPayments && parseInt(formData.maxPayments) > 0) {
+      paymentCount = parseInt(formData.maxPayments);
+    }
+    // Priority 2: If endDate is set, calculate number of payments
+    else if (formData.endDate) {
+      const now = new Date();
+      const end = new Date(formData.endDate);
+      const diffInMs = end.getTime() - now.getTime();
+      const intervalInMs = formData.interval * 1000;
+      paymentCount = Math.ceil(diffInMs / intervalInMs);
+      // Ensure at least 1 payment
+      paymentCount = Math.max(1, paymentCount);
+    }
+    // Priority 3: Default to 12 payments (1 year for monthly, etc.)
+    else {
+      paymentCount = 12;
+    }
+
+    const totalAllowance = (amountPerPayment * paymentCount).toFixed(2);
+    return { total: totalAllowance, paymentCount };
+  };
+
   const handleApprove = async () => {
     if (!formData.amount) {
       toast.error('Error', 'Please enter an amount');
@@ -54,11 +259,29 @@ export const CreateSubscription: React.FC = () => {
     }
 
     try {
-      const amount = formData.amount;
-      await approve(CONTRACTS.StableRentSubscription as Address, amount);
+      const approvalAmount = allowanceType === 'calculated' 
+        ? calculateTotalAllowance().total 
+        : customAllowance;
+      
+      if (!approvalAmount || parseFloat(approvalAmount) <= 0) {
+        toast.error('Error', 'Please enter a valid allowance amount');
+        return;
+      }
+
+      // Check that custom allowance is at least one payment amount (with fee)
+      const minAllowance = parseFloat(formData.amount) * 1.05;
+      if (allowanceType === 'custom' && parseFloat(customAllowance) < minAllowance) {
+        toast.error(
+          'Allowance Too Low', 
+          `Custom allowance must be at least $${minAllowance.toFixed(2)} (one payment with fee)`
+        );
+        return;
+      }
+
+      await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
     } catch (error) {
       console.error('Approve failed:', error);
-      toast.error('Error', 'Failed to approve PYUSD');
+      toast.error('Error', 'Failed to approve payment');
     }
   };
 
@@ -66,15 +289,36 @@ export const CreateSubscription: React.FC = () => {
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.serviceProviderId || !formData.amount || !formData.interval) {
+    if (!formData.serviceName || !formData.amount || !formData.interval) {
       toast.error('Error', 'Please fill in all required fields');
       return;
     }
 
-    // Check if recipient address is provided
-    if (!formData.recipientAddress) {
-      toast.error('Error', 'Please enter the recipient wallet address');
+    // Check if a wallet is selected
+    if (!selectedWalletId) {
+      toast.error('Error', 'Please select a payment wallet');
       return;
+    }
+
+    // Check if recipient details are available
+    if (recipientInputType === 'lookup' && !recipientDetails) {
+      toast.error('Error', 'Please verify the recipient');
+      return;
+    }
+
+    // Check if wallet address is provided for direct wallet input
+    if (recipientInputType === 'wallet' && !formData.recipientWalletAddress.trim()) {
+      toast.error('Error', 'Please enter a wallet address');
+      return;
+    }
+
+    // Validate wallet address format if using direct wallet input
+    if (recipientInputType === 'wallet') {
+      const validation = validateWalletAddress(formData.recipientWalletAddress, formData.recipientWalletCurrency);
+      if (!validation.isValid) {
+        toast.error('Invalid Address', validation.error || 'Please enter a valid wallet address');
+        return;
+      }
     }
 
     // Check if PYUSD is approved
@@ -87,16 +331,37 @@ export const CreateSubscription: React.FC = () => {
       const endDate = formData.endDate ? Math.floor(new Date(formData.endDate).getTime() / 1000) : 0;
       const maxPayments = formData.maxPayments ? parseInt(formData.maxPayments) : 0;
 
+      // Determine recipient details based on input type
+      const finalRecipientId = recipientInputType === 'lookup' 
+        ? recipientDetails!.recipientId 
+        : '0'; // No user ID for direct wallet
+      const finalRecipientAddress = recipientInputType === 'lookup'
+        ? recipientDetails!.recipientAddress
+        : formData.recipientWalletAddress;
+      const finalRecipientCurrency = recipientInputType === 'lookup'
+        ? recipientDetails!.recipientCurrency
+        : formData.recipientWalletCurrency;
+
+      // Create subscription on-chain
       await createSubscription(
-        formData.serviceProviderId,
+        '0', // senderId - TODO: get from backend/user profile
+        finalRecipientId,
         formData.amount,
         formData.interval,
-        'Custom Subscription', // serviceName - TODO: add to form
+        formData.serviceName,
         endDate,
         maxPayments,
-        formData.recipientAddress as Address,
-        '' // recipientCurrency - empty means PYUSD
+        finalRecipientAddress as Address,
+        formData.senderCurrency,
+        finalRecipientCurrency
       );
+
+      // TODO: After successful on-chain transaction, save off-chain metadata to backend:
+      // - senderConnectedWalletId: selectedWalletId
+      // - serviceDescription: formData.serviceDescription
+      // - notes: formData.notes
+      // - tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+      // Backend endpoint: POST /api/subscriptions/{subscriptionId}/metadata
     } catch (error) {
       console.error('Create subscription failed:', error);
       toast.error('Error', 'Failed to create subscription');
@@ -113,7 +378,7 @@ export const CreateSubscription: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-brand-navy mb-2">Wallet Not Connected</h2>
-          <p className="text-gray-600 mb-6">Please connect your wallet to set up rent payments</p>
+          <p className="text-gray-600 mb-6">Please connect your wallet to set up payments</p>
           <button onClick={() => navigate('/')} className="btn-primary">
             Go Back Home
           </button>
@@ -134,9 +399,9 @@ export const CreateSubscription: React.FC = () => {
         >
           ← Back
         </button>
-        <h1 className="text-3xl font-bold text-brand-navy mb-3">Set Up Rent Payment</h1>
+        <h1 className="text-3xl font-bold text-brand-navy mb-3">Set Up Payment</h1>
         <p className="text-gray-600 text-lg">
-          Configure automated monthly rent payments using PYUSD stablecoin
+          Configure automated recurring payments using PYUSD stablecoin
         </p>
       </div>
 
@@ -147,22 +412,84 @@ export const CreateSubscription: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Description <span className="text-red-500">*</span>
+                Service Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={formData.serviceProviderId}
-                onChange={e => setFormData({ ...formData, serviceProviderId: e.target.value })}
+                value={formData.serviceName}
+                onChange={e => setFormData({ ...formData, serviceName: e.target.value })}
                 className="input"
-                placeholder="e.g., Apartment Rent, Monthly Rent"
+                placeholder="e.g., Netflix Subscription, Monthly Rent, Hosting Service"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Short name for this subscription (saved on-chain)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description (Optional)
+              </label>
+              <textarea
+                value={formData.serviceDescription}
+                onChange={e => setFormData({ ...formData, serviceDescription: e.target.value })}
+                className="input min-h-[80px] resize-y"
+                placeholder="e.g., Monthly subscription for premium Netflix plan (4K streaming, 4 screens)"
+                rows={3}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Longer description for your records (saved off-chain)
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount (PYUSD) <span className="text-red-500">*</span>
+                  Payment Wallet <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedWalletId}
+                  onChange={e => handleWalletChange(e.target.value)}
+                  className="input"
+                  required
+                >
+                  {connectedWallets.length === 0 ? (
+                    <option value="">No wallets connected</option>
+                  ) : (
+                    connectedWallets.map(wallet => (
+                      <option key={wallet.id} value={wallet.id}>
+                        {wallet.label || 'Wallet'} ({wallet.walletAddress.slice(0, 6)}...{wallet.walletAddress.slice(-4)})
+                      </option>
+                    ))
+                  )}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select which wallet to pay from
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Currency
+                </label>
+                <input
+                  type="text"
+                  value={formData.senderCurrency}
+                  className="input bg-gray-50"
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Auto-filled from selected wallet
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount (USD) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -174,8 +501,13 @@ export const CreateSubscription: React.FC = () => {
                   placeholder="15.49"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Payment amount in USD
+                </p>
+              </div>
               </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Billing Interval <span className="text-red-500">*</span>
@@ -228,38 +560,232 @@ export const CreateSubscription: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Recipient Address Section */}
-        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
-          <h2 className="text-xl font-bold text-brand-navy mb-6">Landlord Information</h2>
-          <div className="space-y-4">
-            <p className="text-gray-600 text-sm">
-              Enter your landlord's crypto wallet address that will receive the PYUSD rent payments
-            </p>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Landlord Wallet Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.recipientAddress}
-                onChange={e => setFormData({ ...formData, recipientAddress: e.target.value })}
-                className="input"
-                placeholder="0x..."
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                The PYUSD wallet address where rent payments will be sent
-              </p>
+            {/* Optional Metadata Section */}
+            <div className="pt-6 border-t border-gray-200 space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Optional Information (Off-Chain Only)</h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Personal Notes
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                  className="input min-h-[60px] resize-y"
+                  placeholder="e.g., Shared with roommate, auto-renews annually"
+                  rows={2}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Private notes for your reference only
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                  className="input"
+                  placeholder="e.g., entertainment, streaming, monthly"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Comma-separated tags to organize your subscriptions
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* PYUSD Approval Section */}
+        {/* Recipient Information Section */}
         <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
-          <h2 className="text-xl font-bold text-brand-navy mb-6">PYUSD Approval</h2>
+          <h2 className="text-xl font-bold text-brand-navy mb-6">Recipient Information</h2>
+          <div className="space-y-4">
+            <p className="text-gray-600 text-sm mb-4">
+              Choose how to specify the payment recipient
+            </p>
+
+            {/* Radio Button Options */}
+            <div className="space-y-3">
+              {/* Option 1: Lookup by Email/Username */}
+              <div className="border-2 rounded-lg p-4" style={{ borderColor: recipientInputType === 'lookup' ? '#0891b2' : '#e5e7eb' }}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="recipientInputType"
+                    value="lookup"
+                    checked={recipientInputType === 'lookup'}
+                    onChange={() => {
+                      setRecipientInputType('lookup');
+                      setRecipientDetails(null);
+                      setRecipientLookupError(null);
+                    }}
+                    className="mt-1 w-4 h-4 text-brand-teal focus:ring-brand-teal"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 mb-2">Look Up Registered User</div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">
+                          Email or Username
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={formData.recipientIdentifier}
+                            onChange={e => setFormData({ ...formData, recipientIdentifier: e.target.value })}
+                            onClick={() => setRecipientInputType('lookup')}
+                            className="input flex-1"
+                            placeholder="landlord@example.com or @username"
+                            disabled={recipientInputType !== 'lookup'}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => lookupRecipient(formData.recipientIdentifier)}
+                            disabled={recipientInputType !== 'lookup' || isLookingUpRecipient || !formData.recipientIdentifier.trim()}
+                            className="btn-secondary px-6 whitespace-nowrap"
+                          >
+                            {isLookingUpRecipient ? 'Looking up...' : 'Verify'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          We'll look up their payment address in our system
+                        </p>
+                      </div>
+
+                      {/* Recipient lookup status */}
+                      {recipientInputType === 'lookup' && recipientLookupError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-900">Recipient Not Found</p>
+                            <p className="text-xs text-red-700 mt-1">{recipientLookupError}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {recipientInputType === 'lookup' && recipientDetails && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
+                          <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-900">
+                              Recipient Verified{recipientDetails.displayName ? `: ${recipientDetails.displayName}` : ''}
+                            </p>
+                            <p className="text-xs text-green-700 mt-1 font-mono">
+                              {recipientDetails.recipientAddress.slice(0, 10)}...{recipientDetails.recipientAddress.slice(-8)}
+                            </p>
+                            <p className="text-xs text-green-700 mt-1">
+                              Currency: {recipientDetails.recipientCurrency}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Option 2: Direct Wallet Address */}
+              <div className="border-2 rounded-lg p-4" style={{ borderColor: recipientInputType === 'wallet' ? '#0891b2' : '#e5e7eb' }}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="recipientInputType"
+                    value="wallet"
+                    checked={recipientInputType === 'wallet'}
+                    onChange={() => {
+                      setRecipientInputType('wallet');
+                      setRecipientDetails(null);
+                      setRecipientLookupError(null);
+                    }}
+                    className="mt-1 w-4 h-4 text-brand-teal focus:ring-brand-teal"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 mb-2">Enter Wallet Address Directly</div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">
+                          Wallet Address
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.recipientWalletAddress}
+                          onChange={e => setFormData({ ...formData, recipientWalletAddress: e.target.value })}
+                          onClick={() => setRecipientInputType('wallet')}
+                          className="input w-full"
+                          placeholder="0x..."
+                          disabled={recipientInputType !== 'wallet'}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formData.recipientWalletCurrency === 'PYUSD' 
+                            ? 'Ethereum address format: 0x + 40 hex characters'
+                            : 'Enter the recipient\'s crypto wallet address'
+                          }
+                        </p>
+                        
+                        {/* Real-time validation feedback */}
+                        {recipientInputType === 'wallet' && formData.recipientWalletAddress && (
+                          (() => {
+                            const validation = validateWalletAddress(formData.recipientWalletAddress, formData.recipientWalletCurrency);
+                            if (!validation.isValid) {
+                              return (
+                                <div className="mt-2 flex items-start gap-1 text-xs text-red-600">
+                                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span>{validation.error}</span>
+                                </div>
+                              );
+                            } else if (formData.recipientWalletAddress.length >= 42) {
+                              return (
+                                <div className="mt-2 flex items-start gap-1 text-xs text-green-600">
+                                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  <span>Valid {formData.recipientWalletCurrency} address format</span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">
+                          Receive Currency
+                        </label>
+                        <select
+                          value={formData.recipientWalletCurrency}
+                          onChange={e => setFormData({ ...formData, recipientWalletCurrency: e.target.value })}
+                          onClick={() => setRecipientInputType('wallet')}
+                          className="input w-full"
+                          disabled={recipientInputType !== 'wallet'}
+                        >
+                          <option value="PYUSD">PYUSD</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Currency they will receive (more coming soon)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Approval Section */}
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
+          <h2 className="text-xl font-bold text-brand-navy mb-6">Payment Approval</h2>
           <div className="space-y-4">
             {isApproved ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
@@ -269,35 +795,122 @@ export const CreateSubscription: React.FC = () => {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-green-900">PYUSD Approved</p>
+                  <p className="font-semibold text-green-900">Approved</p>
                   <p className="text-sm text-green-700">
-                    The contract can now spend {formData.amount} PYUSD on your behalf
+                    {allowanceType === 'calculated' 
+                      ? `Allowance approved for ${calculateTotalAllowance().paymentCount} payments ($${calculateTotalAllowance().total} total)`
+                      : `Custom allowance of $${customAllowance} approved`
+                    }
                   </p>
                 </div>
               </div>
             ) : (
               <>
-                <p className="text-gray-600 text-sm">
-                  Approve the StableRent contract to spend PYUSD tokens on your behalf for rent payments
-                </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-blue-900">Amount to Approve:</span>
-                    <span className="font-bold text-blue-900">
-                      {formData.amount || '0'} PYUSD
-                    </span>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-2 mb-3">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900 mb-1">About Payment Approval</p>
+                      <p className="text-xs text-blue-800 leading-relaxed">
+                        This is a <strong>one-time allowance ceiling approval</strong> that allows the contract to automatically process payments on your schedule. 
+                        Payments will be extracted according to the schedule you set above. You can cancel the subscription at any time to stop all future payments. 
+                        This avoids having to approve each individual transaction every month.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-blue-700">
-                    This is a one-time approval for the subscription amount
-                  </p>
                 </div>
+
+                <div className="space-y-4">
+                  {/* Radio Button Options */}
+                  <div className="space-y-3">
+                    {/* Calculated Allowance Option */}
+                    <label className="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      style={{ borderColor: allowanceType === 'calculated' ? '#0891b2' : '#e5e7eb' }}>
+                      <input
+                        type="radio"
+                        name="allowanceType"
+                        value="calculated"
+                        checked={allowanceType === 'calculated'}
+                        onChange={() => setAllowanceType('calculated')}
+                        className="mt-1 w-4 h-4 text-brand-teal focus:ring-brand-teal"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 mb-1">Use Calculated Allowance (Recommended)</div>
+                        <div className="bg-gray-50 rounded p-2 text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Payment (with fee):</span>
+                            <span className="font-medium text-gray-900">
+                              ${formData.amount ? (parseFloat(formData.amount) * 1.05).toFixed(2) : '0.00'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Number of payments:</span>
+                            <span className="font-medium text-gray-900">
+                              {calculateTotalAllowance().paymentCount}
+                              {!formData.maxPayments && !formData.endDate && <span className="text-xs text-gray-500 ml-1">(default)</span>}
+                            </span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-gray-200">
+                            <span className="font-semibold text-gray-900">Total allowance:</span>
+                            <span className="font-bold text-brand-teal">
+                              ${calculateTotalAllowance().total}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Custom Allowance Option */}
+                    <label className="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      style={{ borderColor: allowanceType === 'custom' ? '#0891b2' : '#e5e7eb' }}>
+                      <input
+                        type="radio"
+                        name="allowanceType"
+                        value="custom"
+                        checked={allowanceType === 'custom'}
+                        onChange={() => setAllowanceType('custom')}
+                        className="mt-1 w-4 h-4 text-brand-teal focus:ring-brand-teal"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 mb-2">Custom Allowance Amount</div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min={(parseFloat(formData.amount || '0') * 1.05).toFixed(2)}
+                          value={customAllowance}
+                          onChange={e => setCustomAllowance(e.target.value)}
+                          onClick={() => setAllowanceType('custom')}
+                          className="input w-full"
+                          placeholder="Enter custom amount (USD)"
+                          disabled={allowanceType !== 'custom'}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Minimum: ${formData.amount ? (parseFloat(formData.amount) * 1.05).toFixed(2) : '0.00'} (one payment with fee)
+                        </p>
+                        {allowanceType === 'custom' && customAllowance && parseFloat(customAllowance) < (parseFloat(formData.amount || '0') * 1.05) && (
+                          <div className="mt-2 flex items-start gap-1 text-xs text-red-600">
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>
+                              Warning: This amount is too low. The transaction will fail. Minimum is ${(parseFloat(formData.amount || '0') * 1.05).toFixed(2)}.
+                    </span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
                 <button
                   type="button"
                   onClick={handleApprove}
-                  disabled={isApproving || !formData.amount}
+                  disabled={isApproving || !formData.amount || (allowanceType === 'custom' && !customAllowance)}
                   className="btn-primary w-full"
                 >
-                  {isApproving ? 'Approving...' : 'Approve PYUSD'}
+                  {isApproving ? 'Approving...' : `Approve ${allowanceType === 'calculated' ? '$' + calculateTotalAllowance().total : customAllowance ? '$' + customAllowance : 'Allowance'}`}
                 </button>
               </>
             )}
@@ -309,23 +922,53 @@ export const CreateSubscription: React.FC = () => {
           <h2 className="text-xl font-bold mb-4">Payment Summary</h2>
           <div className="space-y-2">
             <div className="flex justify-between">
+              <span className="opacity-90">Service:</span>
+              <span className="font-semibold">{formData.serviceName || '—'}</span>
+            </div>
+            {formData.serviceDescription && (
+            <div className="flex justify-between">
               <span className="opacity-90">Description:</span>
-              <span className="font-semibold">{formData.serviceProviderId || '—'}</span>
+                <span className="font-semibold text-xs text-right max-w-[60%]">
+                  {formData.serviceDescription.length > 50 
+                    ? formData.serviceDescription.substring(0, 50) + '...' 
+                    : formData.serviceDescription}
+                </span>
+              </div>
+            )}
+            {formData.tags && (
+              <div className="flex justify-between">
+                <span className="opacity-90">Tags:</span>
+                <span className="font-semibold text-xs">{formData.tags}</span>
+              </div>
+            )}
+            {selectedWalletId && (
+              <div className="flex justify-between">
+                <span className="opacity-90">Payment Wallet:</span>
+                <span className="font-semibold text-xs">
+                  {connectedWallets.find(w => w.id === selectedWalletId)?.label || 'Wallet'} (
+                  {connectedWallets.find(w => w.id === selectedWalletId)?.walletAddress.slice(0, 6)}...
+                  {connectedWallets.find(w => w.id === selectedWalletId)?.walletAddress.slice(-4)})
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="opacity-90">Payment Currency:</span>
+              <span className="font-semibold">{formData.senderCurrency}</span>
             </div>
             <div className="flex justify-between">
               <span className="opacity-90">Amount:</span>
-              <span className="font-semibold">{formData.amount || '0'} PYUSD</span>
+              <span className="font-semibold">${formData.amount || '0'}</span>
             </div>
             <div className="flex justify-between">
               <span className="opacity-90">Processing Fee (5%):</span>
               <span className="font-semibold">
-                {formData.amount ? (parseFloat(formData.amount) * 0.05).toFixed(2) : '0.00'} PYUSD
+                ${formData.amount ? (parseFloat(formData.amount) * 0.05).toFixed(2) : '0.00'}
               </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-white border-opacity-30 text-lg">
               <span className="font-bold">Total per Payment:</span>
               <span className="font-bold">
-                {formData.amount ? (parseFloat(formData.amount) * 1.05).toFixed(2) : '0.00'} PYUSD
+                ${formData.amount ? (parseFloat(formData.amount) * 1.05).toFixed(2) : '0.00'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -349,14 +992,37 @@ export const CreateSubscription: React.FC = () => {
                 <span className="font-semibold">{formData.maxPayments}</span>
               </div>
             )}
-            {formData.recipientAddress && (
+            {(recipientInputType === 'lookup' && recipientDetails) || (recipientInputType === 'wallet' && formData.recipientWalletAddress) ? (
+              <>
               <div className="flex justify-between pt-2 mt-2 border-t border-white border-opacity-30">
                 <span className="opacity-90">Recipient:</span>
+                  <span className="font-semibold">
+                    {recipientInputType === 'lookup' 
+                      ? (recipientDetails?.displayName || formData.recipientIdentifier)
+                      : 'Direct Wallet'
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-90">Recipient Address:</span>
                 <span className="font-semibold text-xs break-all">
-                  {formData.recipientAddress.slice(0, 6)}...{formData.recipientAddress.slice(-4)}
+                    {recipientInputType === 'lookup'
+                      ? `${recipientDetails!.recipientAddress.slice(0, 6)}...${recipientDetails!.recipientAddress.slice(-4)}`
+                      : `${formData.recipientWalletAddress.slice(0, 6)}...${formData.recipientWalletAddress.slice(-4)}`
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-90">Receive Currency:</span>
+                  <span className="font-semibold">
+                    {recipientInputType === 'lookup' 
+                      ? recipientDetails!.recipientCurrency
+                      : formData.recipientWalletCurrency
+                    }
                 </span>
               </div>
-            )}
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -374,23 +1040,28 @@ export const CreateSubscription: React.FC = () => {
             disabled={
               isCreating || 
               !isApproved || 
-              !formData.recipientAddress
+              (recipientInputType === 'lookup' && !recipientDetails) ||
+              (recipientInputType === 'wallet' && !formData.recipientWalletAddress) ||
+              !selectedWalletId
             }
             className="btn-primary flex-1"
           >
-            {isCreating ? 'Setting Up Payment...' : 'Set Up Rent Payment'}
+            {isCreating ? 'Setting Up Payment...' : 'Set Up Payment'}
           </button>
         </div>
 
         {/* Validation Messages */}
         {!isApproved && (
           <p className="text-sm text-gray-500 text-center">
-            Please approve PYUSD before setting up the rent payment
+            Please approve the payment before setting up the subscription
           </p>
         )}
-        {!formData.recipientAddress && isApproved && (
+        {((recipientInputType === 'lookup' && !recipientDetails) || (recipientInputType === 'wallet' && !formData.recipientWalletAddress)) && isApproved && (
           <p className="text-sm text-gray-500 text-center">
-            Please enter the landlord's wallet address before setting up the rent payment
+            {recipientInputType === 'lookup' 
+              ? 'Please verify the recipient before setting up the payment'
+              : 'Please enter a wallet address before setting up the payment'
+            }
           </p>
         )}
       </form>

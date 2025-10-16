@@ -6,7 +6,6 @@ import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { CreateSubscription } from './pages/CreateSubscription';
 import { MySubscriptions } from './pages/MySubscriptions';
-import { PaymentHistory } from './pages/PaymentHistory';
 import { Settings } from './pages/Settings';
 
 // Create a client for React Query
@@ -29,7 +28,6 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/create" element={<CreateSubscription />} />
               <Route path="/subscriptions" element={<MySubscriptions />} />
-              <Route path="/payments" element={<PaymentHistory />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Layout>

@@ -16,9 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/create', label: 'Set Up Payment' },
-    { path: '/subscriptions', label: 'My Rent Payments' },
-    { path: '/payments', label: 'Payment History' },
-    { path: '/settings', label: 'Settings' },
+    { path: '/settings', label: 'Profile' },
   ];
 
   const isActive = (path: string) => {
@@ -117,7 +115,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-brand-navy mb-4">How StableRent Works</h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                Connecting propoerty owners and residents with digital currency support for automated, transparent recurring payments.
+                Connecting property owners and residents with digital currency support for automated, transparent recurring payments.
               </p>
             </div>
             
@@ -126,7 +124,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">1</div>
                 <h3 className="text-xl font-bold text-brand-navy mb-3">Find Your Dream Property</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Sender links their PYUSD wallet, Recipiant provides a PYUSD receive address.
+                  Sender links their PYUSD wallet, Recipient provides a PYUSD receive address.
                 </p>
               </div>
               <div className="text-center">
@@ -140,7 +138,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">3</div>
                 <h3 className="text-xl font-bold text-brand-navy mb-3">Set-And-Forget</h3>
                 <p className="text-gray-600 leading-relaxed">
-                tableRent handles the payments automatically, on schedule.
+                  StableRent handles the payments automatically, on schedule.
                 </p>
               </div>
             </div>
