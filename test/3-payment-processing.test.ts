@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SubChainSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd } from "./helpers/setup";
+import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
 describe("SubChainSubscription - Payment Processing", function () {
   // ========================================
@@ -52,8 +52,12 @@ describe("SubChainSubscription - Payment Processing", function () {
       0,
       serviceProvider.address, // recipientAddress
       "PYUSD", // senderCurrency
-      "PYUSD" // recipientCurrency
-    );
+      "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      );
     
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
@@ -93,8 +97,8 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Get subscription state after payment
       const subAfter = await subChainContract.getSubscription(testSubscriptionId);
       
-      // Verify PYUSD was transferred
-      expect(user1BalanceBefore - user1BalanceAfter).to.equal(ethers.parseUnits("50", 6));
+      // Verify PYUSD was transferred (amount + processor fee from user, only amount to provider)
+      expect(user1BalanceBefore - user1BalanceAfter).to.equal(ethers.parseUnits("50", 6) + DEFAULT_PROCESSOR_FEE);
       expect(providerBalanceAfter - providerBalanceBefore).to.equal(ethers.parseUnits("50", 6));
       
       // Verify subscription state was updated
@@ -111,6 +115,8 @@ describe("SubChainSubscription - Payment Processing", function () {
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           ethers.parseUnits("50", 6),
+          DEFAULT_PROCESSOR_FEE, // processorFee
+          owner.address, // processorFeeAddress
           1, // paymentCount
           block!.timestamp,
           block!.timestamp + THIRTY_DAYS // nextPaymentDue
@@ -163,7 +169,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -226,7 +236,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -268,7 +282,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -313,7 +331,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -349,7 +371,7 @@ describe("SubChainSubscription - Payment Processing", function () {
           SERVICE_PROVIDER_ID, // recipientId
           amount,
           await ethers.provider.getBlock("latest").then(b => b!.timestamp),
-          "Insufficient PYUSD balance",
+          "Insufficient PYUSD balance (amount + fee)",
           1 // failedCount
         );
       
@@ -365,10 +387,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const amount = ethers.parseUnits("50", 6);
       const interval = THIRTY_DAYS;
       
-      // Approve exactly the amount for first payment only
+      // Ensure user1 has enough PYUSD for the test
+      await fundAccountWithPyusd(user1.address, ethers.parseUnits("100", 6));
+      
+      // Approve exactly the amount + processor fee for first payment only
       await pyusdContract.connect(user1).approve(
         await subChainContract.getAddress(),
-        amount
+        amount + DEFAULT_PROCESSOR_FEE
       );
       
       const tx = await subChainContract.connect(user1).createSubscription(
@@ -381,7 +406,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -441,7 +470,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -499,7 +532,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -576,7 +613,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -638,7 +679,11 @@ describe("SubChainSubscription - Payment Processing", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();

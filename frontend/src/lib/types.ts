@@ -14,6 +14,10 @@ export interface Subscription {
   endDate?: number;
   maxPayments?: number;
   paymentCount: number;
+  processorFee: bigint;
+  processorFeeAddress: Address;
+  processorFeeCurrency: string;
+  processorFeeID: string;
 }
 
 export interface ServiceProvider {
@@ -28,6 +32,8 @@ export interface Payment {
   id: string;
   subscriptionId: string;
   amount: bigint;
+  processorFee: bigint;
+  processorFeeAddress: Address;
   timestamp: number;
   status: PaymentStatus;
   transactionHash: string;
@@ -69,6 +75,10 @@ export interface CreateSubscriptionForm {
   endDate?: number;
   maxPayments?: number;
   recipientAddress: string;
+  processorFee: string;
+  processorFeeAddress: string;
+  processorFeeCurrency: string;
+  processorFeeID: string;
 }
 
 // Balance warning
@@ -108,12 +118,18 @@ export interface EnvioSubscription {
   endDate?: string;
   maxPayments?: string;
   paymentCount: string;
+  processorFee: string;
+  processorFeeAddress: string;
+  processorFeeCurrency: string;
+  processorFeeID: string;
 }
 
 export interface EnvioPayment {
   id: string;
   subscriptionId: string;
   amount: string;
+  processorFee: string;
+  processorFeeAddress: string;
   timestamp: string;
   status: string;
   transactionHash: string;

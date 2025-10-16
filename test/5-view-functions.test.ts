@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SubChainSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { setupTestContracts, ONE_DAY, THIRTY_DAYS } from "./helpers/setup";
+import { setupTestContracts, ONE_DAY, THIRTY_DAYS, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
 describe("SubChainSubscription - View Functions", function () {
   // ========================================
@@ -54,8 +54,12 @@ describe("SubChainSubscription - View Functions", function () {
       0, // No maxPayments
       serviceProvider.address, // recipientAddress
       "PYUSD", // senderCurrency
-      "PYUSD" // recipientCurrency
-    );
+      "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      );
     
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
@@ -103,7 +107,11 @@ describe("SubChainSubscription - View Functions", function () {
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const userSubs = await subChainContract.getUserSubscriptions(user1.address);

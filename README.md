@@ -46,6 +46,7 @@ Landlord's PYUSD
     ↓ 
 Rent gets paid 
 ```
+> Note going to try to get it working first with Renter paying gas, but gas-less transcations (paid by smart contract) may a be preferrable expansion model. 
 
 ## 🚀 Quick Start
 
@@ -96,7 +97,7 @@ File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovere
 All files                  |      100 |    91.18 |      100 |      100 |                |
 ---------------------------|----------|----------|----------|----------|----------------|
 
-> Istanbul reports written to ./coverage/ and ./coverage.json
+> Reports written to ./coverage/ and ./coverage.json
 
 
 ## Hackathon requirements
@@ -152,6 +153,7 @@ Cursor + Claude AI was used to support development.
 - zkProof or encryption for privacy and security
 - StablePay (peer-to-peer)
 - StableDonate (Charity focused, recurring donations)
+- Proxy pattern for upgradeable contracts
 
 - Listing Resource: 
 - - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"

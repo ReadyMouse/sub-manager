@@ -62,6 +62,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param recipientId Unique ID referencing recipient in off-chain database
      * @param recipientAddress Recipient wallet address where payments are sent (required)
      * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
+     * @param processorFee Fee amount in PYUSD base units collected per payment to cover gas and platform costs
+     * @param processorFeeAddress Address where processor fees are sent (typically contract owner)
+     * @param processorFeeCurrency Currency ticker for the processor fee (e.g., "PYUSD")
+     * @param processorFeeID Unique ID referencing processor fee structure in off-chain database
      */
     struct Subscription {
         uint256 id;                  // 32 bytes - unique subscription ID
@@ -80,6 +84,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 recipientId;         // 32 bytes - ID referencing recipient in off-chain database
         address recipientAddress;    // 20 bytes - recipient wallet address where payments are sent (required)
         string recipientCurrency;    // dynamic - recipient currency ticker (e.g., "PYUSD", "BTC", "ETH", "USDC")
+        uint256 processorFee;        // 32 bytes - processor fee amount in PYUSD base units
+        address processorFeeAddress; // 20 bytes - address receiving processor fees
+        string processorFeeCurrency; // dynamic - processor fee currency ticker (e.g., "PYUSD")
+        uint256 processorFeeID;      // 32 bytes - ID referencing processor fee structure in off-chain database
     }
     
     // ========================================
@@ -101,13 +109,17 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param recipientAddress Recipient wallet address where payments are sent
      * @param senderCurrency Sender currency ticker code (e.g., "PYUSD")
      * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD")
+     * @param processorFee Processor fee amount in PYUSD base units
+     * @param processorFeeAddress Address where processor fees are sent
+     * @param processorFeeCurrency Processor fee currency ticker code (e.g., "PYUSD")
+     * @param processorFeeID ID referencing processor fee structure
      * @param timestamp Block timestamp when subscription was created
      */
     event SubscriptionCreated(
         uint256 indexed subscriptionId,
-        address indexed senderAddress,
+        address senderAddress,
         uint256 indexed senderId,
-        uint256 recipientId,
+        uint256 indexed recipientId,
         uint256 amount,
         uint256 interval,
         uint256 nextPaymentDue,
@@ -117,6 +129,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         address recipientAddress,
         string senderCurrency,
         string recipientCurrency,
+        uint256 processorFee,
+        address processorFeeAddress,
+        string processorFeeCurrency,
+        uint256 processorFeeID,
         uint256 timestamp
     );
     
@@ -126,17 +142,21 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param senderAddress User's wallet address
      * @param senderId ID of the sender
      * @param recipientId ID of the recipient
-     * @param amount Payment amount transferred
+     * @param amount Payment amount transferred to recipient
+     * @param processorFee Processor fee amount transferred
+     * @param processorFeeAddress Address that received the processor fee
      * @param paymentCount Total number of successful payments (including this one)
      * @param timestamp Block timestamp when payment was processed
      * @param nextPaymentDue Timestamp when next payment is due
      */
     event PaymentProcessed(
         uint256 indexed subscriptionId,
-        address indexed senderAddress,
+        address senderAddress,
         uint256 indexed senderId,
-        uint256 recipientId,
+        uint256 indexed recipientId,
         uint256 amount,
+        uint256 processorFee,
+        address processorFeeAddress,
         uint256 paymentCount,
         uint256 timestamp,
         uint256 nextPaymentDue
@@ -155,9 +175,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      */
     event PaymentFailed(
         uint256 indexed subscriptionId,
-        address indexed senderAddress,
+        address senderAddress,
         uint256 indexed senderId,
-        uint256 recipientId,
+        uint256 indexed recipientId,
         uint256 amount,
         uint256 timestamp,
         string reason,
@@ -175,9 +195,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      */
     event SubscriptionCancelled(
         uint256 indexed subscriptionId,
-        address indexed senderAddress,
+        address senderAddress,
         uint256 indexed senderId,
-        uint256 recipientId,
+        uint256 indexed recipientId,
         uint256 timestamp,
         string reason
     );
@@ -234,8 +254,12 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
      * @param recipientAddress Recipient wallet address where payments should be sent
      * @param senderCurrency Sender currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
      * @param recipientCurrency Recipient currency ticker code (e.g., "PYUSD", "BTC", "ETH", "USDC")
+     * @param processorFee Processor fee amount in PYUSD base units (covers gas and platform costs)
+     * @param processorFeeAddress Address where processor fees should be sent
+     * @param processorFeeCurrency Processor fee currency ticker code (e.g., "PYUSD")
+     * @param processorFeeID ID referencing processor fee structure (reference to off-chain database)
      * @return subscriptionId The unique ID of the created subscription
-     * @dev User must approve this contract to spend PYUSD before calling this function
+     * @dev User must approve this contract to spend PYUSD (amount + processorFee) before calling this function
      * @dev If both endDate and maxPayments are set, the earlier limit applies
      * @dev If maxPayments is set, endDate will be calculated as: now + (maxPayments * interval)
      * @dev All sender and recipient information comes from off-chain database
@@ -250,7 +274,11 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         uint256 maxPayments,
         address recipientAddress,
         string calldata senderCurrency,
-        string calldata recipientCurrency
+        string calldata recipientCurrency,
+        uint256 processorFee,
+        address processorFeeAddress,
+        string calldata processorFeeCurrency,
+        uint256 processorFeeID
     ) external returns (uint256) {
         // ========================================
         // VALIDATION
@@ -278,6 +306,16 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         require(bytes(recipientCurrency).length > 0, "Recipient currency is required");
         require(bytes(recipientCurrency).length <= 10, "Recipient currency ticker too long");
         
+        // Validate processor fee address is provided
+        require(processorFeeAddress != address(0), "Processor fee address required");
+        
+        // Validate processor fee currency ticker is provided (required, max 10 characters for ticker symbols)
+        require(bytes(processorFeeCurrency).length > 0, "Processor fee currency is required");
+        require(bytes(processorFeeCurrency).length <= 10, "Processor fee currency ticker too long");
+        
+        // Note: processorFee amount can be 0 if the service provider chooses to not charge a fee
+        // processorFeeID can also be 0 if not tracked in off-chain database
+        
         // Validate end date (if set, must be in future)
         if (endDate > 0) {
             require(endDate > block.timestamp, "End date must be in future");
@@ -296,13 +334,16 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             }
         }
         
-        // Check user has approved sufficient PYUSD allowance for at least one payment
-        uint256 allowance = pyusdToken.allowance(msg.sender, address(this));
-        require(allowance >= amount, "Insufficient PYUSD allowance - approve contract to spend PYUSD");
+        // Calculate total payment amount including processor fee
+        uint256 totalPaymentAmount = amount + processorFee;
         
-        // Check user has sufficient PYUSD balance for first payment
+        // Check user has approved sufficient PYUSD allowance for at least one payment (including processor fee)
+        uint256 allowance = pyusdToken.allowance(msg.sender, address(this));
+        require(allowance >= totalPaymentAmount, "Insufficient PYUSD allowance - approve contract to spend PYUSD (amount + fee)");
+        
+        // Check user has sufficient PYUSD balance for first payment (including processor fee)
         uint256 balance = pyusdToken.balanceOf(msg.sender);
-        require(balance >= amount, "Insufficient PYUSD balance for first payment");
+        require(balance >= totalPaymentAmount, "Insufficient PYUSD balance for first payment (amount + fee)");
         
         // ========================================
         // CREATE SUBSCRIPTION
@@ -333,7 +374,11 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             serviceName: serviceName,
             recipientId: recipientId,
             recipientAddress: recipientAddress,
-            recipientCurrency: recipientCurrency
+            recipientCurrency: recipientCurrency,
+            processorFee: processorFee,
+            processorFeeAddress: processorFeeAddress,
+            processorFeeCurrency: processorFeeCurrency,
+            processorFeeID: processorFeeID
         });
         
         // Track subscription for user
@@ -360,6 +405,10 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             sub.recipientAddress,
             sub.senderCurrency,
             sub.recipientCurrency,
+            sub.processorFee,
+            sub.processorFeeAddress,
+            sub.processorFeeCurrency,
+            sub.processorFeeID,
             block.timestamp
         );
         
@@ -421,9 +470,12 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // PROCESS PAYMENT
         // ========================================
         
-        // Check user has sufficient balance
+        // Calculate total payment amount including processor fee
+        uint256 totalPaymentAmount = sub.amount + sub.processorFee;
+        
+        // Check user has sufficient balance (including processor fee)
         uint256 balance = pyusdToken.balanceOf(sub.senderAddress);
-        if (balance < sub.amount) {
+        if (balance < totalPaymentAmount) {
             sub.failedPaymentCount++;
             
             emit PaymentFailed(
@@ -433,7 +485,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
                 sub.recipientId,
                 sub.amount,
                 block.timestamp,
-                "Insufficient PYUSD balance",
+                "Insufficient PYUSD balance (amount + fee)",
                 sub.failedPaymentCount
             );
             
@@ -453,9 +505,9 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             return;
         }
         
-        // Check user has sufficient allowance
+        // Check user has sufficient allowance (including processor fee)
         uint256 allowance = pyusdToken.allowance(sub.senderAddress, address(this));
-        if (allowance < sub.amount) {
+        if (allowance < totalPaymentAmount) {
             sub.failedPaymentCount++;
             
             emit PaymentFailed(
@@ -465,7 +517,7 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
                 sub.recipientId,
                 sub.amount,
                 block.timestamp,
-                "Insufficient PYUSD allowance",
+                "Insufficient PYUSD allowance (amount + fee)",
                 sub.failedPaymentCount
             );
             
@@ -488,6 +540,12 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
         // Transfer PYUSD directly from sender to recipient wallet
         bool success = pyusdToken.transferFrom(sub.senderAddress, paymentAddress, sub.amount);
         require(success, "PYUSD transfer failed");
+        
+        // Transfer processor fee to processor address (if fee > 0)
+        if (sub.processorFee > 0) {
+            bool feeSuccess = pyusdToken.transferFrom(sub.senderAddress, sub.processorFeeAddress, sub.processorFee);
+            require(feeSuccess, "Processor fee transfer failed");
+        }
 
         // ========================================
         // UPDATE STATE & EMIT EVENT
@@ -508,6 +566,8 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
             sub.senderId,
             sub.recipientId,
             sub.amount,
+            sub.processorFee,
+            sub.processorFeeAddress,
             sub.paymentCount,
             block.timestamp,
             sub.nextPaymentDue

@@ -61,6 +61,10 @@ event_handlers:
       subscription.providerType = event.params.providerType
       subscription.recipientAddress = event.params.recipientAddress
       subscription.recipientCurrency = event.params.recipientCurrency
+      subscription.processorFee = event.params.processorFee
+      subscription.processorFeeAddress = event.params.processorFeeAddress
+      subscription.processorFeeCurrency = event.params.processorFeeCurrency
+      subscription.processorFeeID = event.params.processorFeeID
       subscription.createdAt = event.params.timestamp
       subscription.isActive = true
       subscription.paymentCount = 0
@@ -75,11 +79,13 @@ event_handlers:
       subscription.nextPaymentDue = event.params.nextPaymentDue
       subscription.failedPaymentCount = 0  // Reset on successful payment
       
-      // Track payment history
+      // Track payment history (including processor fee)
       payment.id = event.transactionHash + "-" + event.logIndex
       payment.subscriptionId = event.params.subscriptionId
       payment.subscriber = event.params.subscriber
       payment.amount = event.params.amount
+      payment.processorFee = event.params.processorFee
+      payment.processorFeeAddress = event.params.processorFeeAddress
       payment.timestamp = event.params.timestamp
       payment.paymentNumber = event.params.paymentCount
       payment.status = "success"
@@ -156,6 +162,10 @@ schema:
         providerType: Int!
         recipientAddress: Address!
         recipientCurrency: String!
+        processorFee: BigInt!
+        processorFeeAddress: Address!
+        processorFeeCurrency: String!
+        processorFeeID: BigInt!
         createdAt: BigInt!
         isActive: Boolean!
         paymentCount: BigInt!
@@ -171,6 +181,8 @@ schema:
         subscriptionId: BigInt!
         subscriber: Address!
         amount: BigInt!
+        processorFee: BigInt!
+        processorFeeAddress: Address!
         timestamp: BigInt!
         paymentNumber: BigInt!
         status: String!

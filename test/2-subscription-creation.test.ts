@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SubChainSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd } from "./helpers/setup";
+import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
 describe("SubChainSubscription - Subscription Creation", function () {
   // ========================================
@@ -55,7 +55,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         0, // maxPayments = 0 (unlimited)
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -91,6 +95,10 @@ describe("SubChainSubscription - Subscription Creation", function () {
           serviceProvider.address, // recipientAddress
           "PYUSD", // senderCurrency
           "PYUSD", // recipientCurrency
+          DEFAULT_PROCESSOR_FEE, // processorFee
+          owner.address, // processorFeeAddress
+          "PYUSD", // processorFeeCurrency
+          PROCESSOR_FEE_ID, // processorFeeID
           block!.timestamp
         );
     });
@@ -140,7 +148,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         0, // maxPayments = 0 (unlimited, but limited by endDate)
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -179,7 +191,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         maxPayments,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -251,7 +267,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         maxPayments,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -318,7 +338,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         0,
         landlord.address, // recipientAddress (private recipient)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -357,7 +381,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const afterSubs = await subChainContract.getUserSubscriptions(user1.address);
@@ -386,7 +414,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const user2Subs = await subChainContract.getUserSubscriptions(user2.address);
@@ -410,8 +442,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           ethers.ZeroAddress, // Invalid recipient address
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Recipient address required");
     });
     
@@ -427,8 +463,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Amount must be greater than 0");
     });
     
@@ -444,8 +484,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Interval must be at least 1 day");
     });
     
@@ -461,8 +505,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Interval must be at most 365 days");
     });
     
@@ -478,8 +526,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Service name cannot be empty");
     });
     
@@ -497,8 +549,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("Service name too long");
     });
     
@@ -516,7 +572,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          longTicker // recipientCurrency - Too long
+          longTicker, // recipientCurrency - Too long
+          DEFAULT_PROCESSOR_FEE,
+          owner.address,
+          "PYUSD",
+          PROCESSOR_FEE_ID
         )
       ).to.be.revertedWith("Recipient currency ticker too long");
     });
@@ -535,8 +595,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
       ).to.be.revertedWith("End date must be in future");
     });
     
@@ -558,9 +622,13 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
-      ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD");
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
+      ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD (amount + fee)");
     });
     
     it("Should revert if insufficient PYUSD balance", async function () {
@@ -594,9 +662,13 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
-      ).to.be.revertedWith("Insufficient PYUSD balance for first payment");
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
+      ).to.be.revertedWith("Insufficient PYUSD balance for first payment (amount + fee)");
     });
     
     it("Should revert if insufficient allowance for subscription amount", async function () {
@@ -622,9 +694,13 @@ describe("SubChainSubscription - Subscription Creation", function () {
           0,
           serviceProvider.address,
           "PYUSD", // senderCurrency
-          "PYUSD" // recipientCurrency
-        )
-      ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD");
+          "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
+      )
+      ).to.be.revertedWith("Insufficient PYUSD allowance - approve contract to spend PYUSD (amount + fee)");
     });
   });
 });

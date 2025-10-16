@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SubChainSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { setupTestContracts, ONE_DAY, THIRTY_DAYS } from "./helpers/setup";
+import { setupTestContracts, ONE_DAY, THIRTY_DAYS, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
 describe("SubChainSubscription - Payments Due", function () {
   // ========================================
@@ -58,7 +58,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       // Check payments due - should be empty as first payment isn't due yet
@@ -78,7 +82,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -115,7 +123,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -154,7 +166,11 @@ describe("SubChainSubscription - Payments Due", function () {
         1, // maxPayments = 1
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -204,7 +220,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const receipt = await tx.wait();
@@ -245,7 +265,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
@@ -258,7 +282,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
@@ -271,7 +299,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       // Get subscription IDs
@@ -334,7 +366,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const tx2 = await subChainContract.connect(user2).createSubscription(
@@ -347,7 +383,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       const tx3 = await subChainContract.connect(user1).createSubscription(
@@ -360,7 +400,11 @@ describe("SubChainSubscription - Payments Due", function () {
         0,
         serviceProvider.address, // recipientAddress
         "PYUSD", // senderCurrency
-        "PYUSD" // recipientCurrency
+        "PYUSD", // recipientCurrency
+        DEFAULT_PROCESSOR_FEE, // processorFee
+        owner.address, // processorFeeAddress
+        "PYUSD", // processorFeeCurrency
+        PROCESSOR_FEE_ID // processorFeeID
       );
       
       // Get subscription IDs

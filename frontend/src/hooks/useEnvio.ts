@@ -131,6 +131,27 @@ export const parseEnvioSubscription = (envioSub: EnvioSubscription) => {
     endDate: envioSub.endDate ? parseInt(envioSub.endDate) : undefined,
     maxPayments: envioSub.maxPayments ? parseInt(envioSub.maxPayments) : undefined,
     paymentCount: parseInt(envioSub.paymentCount),
+    processorFee: BigInt(envioSub.processorFee),
+    processorFeeAddress: envioSub.processorFeeAddress as Address,
+    processorFeeCurrency: envioSub.processorFeeCurrency,
+    processorFeeID: envioSub.processorFeeID,
+  };
+};
+
+/**
+ * Helper to convert Envio payment to typed payment
+ */
+export const parseEnvioPayment = (envioPayment: EnvioPayment) => {
+  return {
+    id: envioPayment.id,
+    subscriptionId: envioPayment.subscriptionId,
+    amount: BigInt(envioPayment.amount),
+    processorFee: BigInt(envioPayment.processorFee),
+    processorFeeAddress: envioPayment.processorFeeAddress as Address,
+    timestamp: parseInt(envioPayment.timestamp),
+    status: envioPayment.status,
+    transactionHash: envioPayment.transactionHash,
+    reason: envioPayment.reason,
   };
 };
 

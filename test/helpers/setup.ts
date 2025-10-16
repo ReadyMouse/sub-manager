@@ -14,6 +14,10 @@ export const PYUSD_WHALE = "0xCFFAd3200574698b78f32232aa9D63eABD290703";
 export const ONE_DAY = 24 * 60 * 60;
 export const THIRTY_DAYS = 30 * ONE_DAY;
 
+// Processor fee constants
+export const DEFAULT_PROCESSOR_FEE = ethers.parseUnits("0.50", 6); // $0.50 in PYUSD
+export const PROCESSOR_FEE_ID = 1; // Default processor fee ID
+
 /**
  * Fund an account with PYUSD by impersonating the whale address
  * @param recipient Address to receive PYUSD
