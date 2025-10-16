@@ -1,4 +1,4 @@
-# Project Overview
+# StableRent Overview
 
 StableRent is a tool for property owners and renters to use Stablecoin digital assets. Landlords can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while renters can automatically send rent payments using stablecoins. 
 
@@ -66,7 +66,7 @@ The script will:
 **After running setup.sh:**
 1. Get free Alchemy API key from https://www.alchemy.com/
 2. Add it to your `.env` file
-3. Run `npm test` to verify everything works
+3. Run `npx hardhat test` to verify everything works
 
 # StableRent Notes
 ## Platform Architecture
@@ -74,8 +74,12 @@ The script will:
 TBD
 
 ## Hardhat testing + Coverage 
+```bash
+npx hardhat coverage
+```
 
 October 12, 2025 : 1725
+```
 ---------------------------|----------|----------|----------|----------|----------------|
 File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 ---------------------------|----------|----------|----------|----------|----------------|
@@ -85,8 +89,10 @@ File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovere
 ---------------------------|----------|----------|----------|----------|----------------|
 All files                  |      100 |    91.18 |      100 |      100 |                |
 ---------------------------|----------|----------|----------|----------|----------------|
+```
 
 October 14, 2025: 1208
+```
 ---------------------------|----------|----------|----------|----------|----------------|
 File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 ---------------------------|----------|----------|----------|----------|----------------|
@@ -96,6 +102,20 @@ File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovere
 ---------------------------|----------|----------|----------|----------|----------------|
 All files                  |      100 |    91.18 |      100 |      100 |                |
 ---------------------------|----------|----------|----------|----------|----------------|
+```
+
+October 16, 2025: 0018
+```
+---------------------------|----------|----------|----------|----------|----------------|
+File                       |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+---------------------------|----------|----------|----------|----------|----------------|
+ contracts/                |      100 |    84.15 |      100 |      100 |                |
+  Interfaces.sol           |      100 |      100 |      100 |      100 |                |
+  SubChainSubscription.sol |      100 |    84.15 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+All files                  |      100 |    84.15 |      100 |      100 |                |
+---------------------------|----------|----------|----------|----------|----------------|
+```
 
 > Reports written to ./coverage/ and ./coverage.json
 
@@ -156,9 +176,9 @@ Cursor + Claude AI was used to support development.
 - Proxy pattern for upgradeable contracts
 
 - Listing Resource: 
-- - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
-- - Land owners will to rent "I will accept crypto for this rental"
-- - For Sale Properties: renter can say "I'd pay X a month for 3 years, if someone bought this and rented it to me."
+  - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
+  - Land owners will to rent "I will accept crypto for this rental"
+  - For Sale Properties: renter can say "I'd pay X a month for 3 years, if someone bought this and rented it to me."
 
 ⚠️ PROTOTYPE DEMONSTRATION
 This is a proof-of-concept for educational purposes only.
