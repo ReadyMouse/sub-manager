@@ -36,7 +36,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSelect }) =
           </div>
         </div>
         <button
-          className="bg-pyusd-green hover:bg-pyusd-green-dark text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+          className="bg-brand-teal hover:bg-brand-teal-dark text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 shadow-soft hover:shadow-medium"
           onClick={(e) => {
             e.stopPropagation();
             onSelect?.(service.id);

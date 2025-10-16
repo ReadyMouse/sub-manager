@@ -1,13 +1,13 @@
 # StableRent Overview
 
-StableRent is a tool for property owners and renters to use Stablecoin digital assets. Landlords can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while renters can automatically send rent payments using stablecoins. 
+StableRent is a tool for property owners and residents to use Stablecoin digital assets. Property owners can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while residents can automatically send rent payments using stablecoins. 
 
 **The Problem We're Solving:**
 - The US residential rental market is $291 BILLION dollars
 - Estimates for US-based crypto assets are around $90B
-- Crypto users want to pay rent in crypto, but finding landlords who take crypto is hard 
-- Recurring peer-to-peer transactions (rent, allowance, savings accounts, etc.)
 - Many folks hear "crypto" and think scam, but Paypal is a reputable company that could ease adoption
+- Crypto users want to pay rent in crypto, but finding property owners who take crypto is hard 
+- Recurring peer-to-peer transactions (rent, allowance, savings accounts, etc.)
 
 **Discussion in the Industry**: https://www.linkedin.com/posts/shuhaib_crypto-rent-the-100-billion-shift-no-activity-7348397294506975232-thtY/
 

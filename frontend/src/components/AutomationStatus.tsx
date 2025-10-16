@@ -18,19 +18,19 @@ export const AutomationStatus: React.FC<AutomationStatusProps> = ({ provider, is
       case 'chainlink':
         return {
           name: 'Chainlink Automation',
-          icon: '🔗',
+          icon: 'CL',
           color: 'blue',
         };
       case 'gelato':
         return {
           name: 'Gelato Network',
-          icon: '🍦',
+          icon: 'GL',
           color: 'purple',
         };
       default:
         return {
           name: 'Unknown',
-          icon: '❓',
+          icon: '?',
           color: 'gray',
         };
     }
@@ -45,7 +45,7 @@ export const AutomationStatus: React.FC<AutomationStatusProps> = ({ provider, is
         : 'bg-gray-100 text-gray-700'
     }`}>
       <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-      <span className="text-lg">{info.icon}</span>
+      <span className="text-xs font-bold px-1.5 py-0.5 bg-white/50 rounded">{info.icon}</span>
       <span className="font-medium">
         Automated via {info.name}
       </span>

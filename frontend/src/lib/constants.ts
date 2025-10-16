@@ -94,10 +94,10 @@ export const POPULAR_SERVICES = [
 // Wallet configuration
 export const WALLET_CONFIG = {
   projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || '',
-  appName: 'SubChain',
-  appDescription: 'Universal Crypto Subscription Manager',
-  appUrl: 'https://subchain.app',
-  appIcon: 'https://subchain.app/icon.png',
+  appName: 'StableRent',
+  appDescription: 'Professional Crypto Rent Payment Platform',
+  appUrl: 'https://stablerent.app',
+  appIcon: 'https://stablerent.app/icon.png',
 } as const;
 
 // Transaction settings

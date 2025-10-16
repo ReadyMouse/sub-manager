@@ -36,7 +36,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">
+          <h3 className="text-lg font-bold text-brand-navy">
             {serviceName || subscription.serviceProviderId}
           </h3>
           <p className="text-sm text-gray-500">
@@ -50,13 +50,13 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
         <div>
           <div className="text-sm text-gray-600 mb-1">Amount</div>
-          <div className="text-xl font-bold text-gray-900">
+          <div className="text-xl font-bold text-brand-navy">
             {formatPYUSD(subscription.amount)} {PYUSD_SYMBOL}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-600 mb-1">Frequency</div>
-          <div className="text-lg font-semibold text-gray-700">
+          <div className="text-lg font-semibold text-brand-navy">
             {getIntervalLabel(subscription.interval)}
           </div>
         </div>

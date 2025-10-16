@@ -107,9 +107,13 @@ export const CreateSubscription: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
-          <div className="text-5xl mb-4">🔐</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Wallet Not Connected</h2>
-          <p className="text-gray-600 mb-6">Please connect your wallet to create a subscription</p>
+          <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-brand-navy mb-2">Wallet Not Connected</h2>
+          <p className="text-gray-600 mb-6">Please connect your wallet to set up rent payments</p>
           <button onClick={() => navigate('/')} className="btn-primary">
             Go Back Home
           </button>
@@ -130,27 +134,27 @@ export const CreateSubscription: React.FC = () => {
         >
           ← Back
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Subscription</h1>
-        <p className="text-gray-600">
-          Set up automatic crypto payments for any service
+        <h1 className="text-3xl font-bold text-brand-navy mb-3">Set Up Rent Payment</h1>
+        <p className="text-gray-600 text-lg">
+          Configure automated monthly rent payments using PYUSD stablecoin
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Subscription Details Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Subscription Details</h2>
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
+          <h2 className="text-xl font-bold text-brand-navy mb-6">Payment Details</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subscription Name <span className="text-red-500">*</span>
+                Payment Description <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.serviceProviderId}
                 onChange={e => setFormData({ ...formData, serviceProviderId: e.target.value })}
                 className="input"
-                placeholder="e.g., Netflix Premium, Spotify Family, GitHub Pro"
+                placeholder="e.g., Apartment Rent, Monthly Rent"
                 required
               />
             </div>
@@ -228,15 +232,15 @@ export const CreateSubscription: React.FC = () => {
         </div>
 
         {/* Recipient Address Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recipient Address</h2>
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
+          <h2 className="text-xl font-bold text-brand-navy mb-6">Landlord Information</h2>
           <div className="space-y-4">
             <p className="text-gray-600 text-sm">
-              Enter the crypto wallet address that will receive the PYUSD payments
+              Enter your landlord's crypto wallet address that will receive the PYUSD rent payments
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recipient Wallet Address <span className="text-red-500">*</span>
+                Landlord Wallet Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -247,19 +251,23 @@ export const CreateSubscription: React.FC = () => {
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
-                The wallet address of the service provider or recipient
+                The PYUSD wallet address where rent payments will be sent
               </p>
             </div>
           </div>
         </div>
 
         {/* PYUSD Approval Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">PYUSD Approval</h2>
+        <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
+          <h2 className="text-xl font-bold text-brand-navy mb-6">PYUSD Approval</h2>
           <div className="space-y-4">
             {isApproved ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-                <span className="text-2xl">✅</span>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
                 <div className="flex-1">
                   <p className="font-semibold text-green-900">PYUSD Approved</p>
                   <p className="text-sm text-green-700">
@@ -270,7 +278,7 @@ export const CreateSubscription: React.FC = () => {
             ) : (
               <>
                 <p className="text-gray-600 text-sm">
-                  Approve the SubChain contract to spend PYUSD tokens on your behalf for subscription payments
+                  Approve the StableRent contract to spend PYUSD tokens on your behalf for rent payments
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
@@ -297,11 +305,11 @@ export const CreateSubscription: React.FC = () => {
         </div>
 
         {/* Summary Section */}
-        <div className="bg-gradient-to-br from-blue-600 to-green-500 rounded-xl p-6 text-white">
-          <h2 className="text-xl font-bold mb-4">Subscription Summary</h2>
+        <div className="bg-gradient-to-br from-brand-navy via-brand-navy-light to-brand-teal rounded-xl p-6 text-white shadow-strong">
+          <h2 className="text-xl font-bold mb-4">Payment Summary</h2>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="opacity-90">Subscription:</span>
+              <span className="opacity-90">Description:</span>
               <span className="font-semibold">{formData.serviceProviderId || '—'}</span>
             </div>
             <div className="flex justify-between">
@@ -370,19 +378,19 @@ export const CreateSubscription: React.FC = () => {
             }
             className="btn-primary flex-1"
           >
-            {isCreating ? 'Creating Subscription...' : 'Create Subscription'}
+            {isCreating ? 'Setting Up Payment...' : 'Set Up Rent Payment'}
           </button>
         </div>
 
         {/* Validation Messages */}
         {!isApproved && (
           <p className="text-sm text-gray-500 text-center">
-            Please approve PYUSD before creating the subscription
+            Please approve PYUSD before setting up the rent payment
           </p>
         )}
         {!formData.recipientAddress && isApproved && (
           <p className="text-sm text-gray-500 text-center">
-            Please enter the recipient wallet address before creating the subscription
+            Please enter the landlord's wallet address before setting up the rent payment
           </p>
         )}
       </form>

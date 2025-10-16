@@ -10,19 +10,19 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-paypal-blue hover:bg-paypal-blue-dark text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-brand-teal hover:bg-brand-teal-dark text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-soft hover:shadow-medium;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-white hover:bg-gray-50 text-brand-navy font-semibold py-3 px-6 rounded-lg transition-all duration-200 border-2 border-brand-navy/20 hover:border-brand-navy/40 shadow-soft;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-md p-6 border border-gray-200;
+    @apply bg-white rounded-xl shadow-soft hover:shadow-medium transition-shadow duration-300 p-6 border border-gray-100;
   }
   
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paypal-blue focus:border-transparent outline-none;
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/30 focus:border-brand-teal outline-none transition-all duration-200;
   }
 }
 

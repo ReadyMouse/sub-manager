@@ -1,15 +1,15 @@
-# PayPalRent Frontend
+# StableRent Frontend
 
-Direct wallet-to-wallet recurring payments with PYUSD - The crypto ACH for subscriptions.
+Professional crypto rent payment platform using PayPal's PYUSD stablecoin for automated, transparent rent transactions.
 
 ## Features
 
-- 🛒 **Create Subscriptions**: Set up recurring payments to any wallet
-- 📋 **My Subscriptions**: Manage active and cancelled subscriptions
-- 💰 **Payment History**: View all your payment transactions
-- 👛 **Wallet Integration**: MetaMask and WalletConnect support
-- ⚡ **Real-time Updates**: Envio indexer for instant data
-- 📱 **Mobile Responsive**: Works on all devices
+- **Set Up Rent Payments**: Configure automated monthly rent payments to your landlord
+- **Manage Payments**: Track active rent payment schedules
+- **Payment History**: View complete transaction history
+- **Wallet Integration**: MetaMask and WalletConnect support
+- **Real-time Updates**: Envio indexer for instant data
+- **Mobile Responsive**: Works on all devices
 
 ## Tech Stack
 
@@ -113,24 +113,24 @@ src/
 - Displays PYUSD balance
 - Network detection
 
-### Subscription Management
-- Create subscriptions with flexible terms
-- Direct wallet-to-wallet payments
+### Rent Payment Management
+- Set up automated rent payments with flexible terms
+- Direct wallet-to-wallet PYUSD transfers
 - Set end dates or max payments
 - Cancel anytime
 - Real-time status updates
 
 ### Payment Flow
-1. User approves PYUSD allowance
-2. Creates subscription with recipient wallet address
+1. Renter approves PYUSD allowance
+2. Creates rent payment schedule with landlord's wallet address
 3. Automated payments via smart contract
-4. Direct PYUSD transfer to recipient wallet
+4. Direct PYUSD transfer to landlord's wallet
 
 ## Environment Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_CONTRACT_ADDRESS` | SubChain contract address | `0x123...` |
+| `VITE_CONTRACT_ADDRESS` | StableRent contract address | `0x123...` |
 | `VITE_DEFAULT_CHAIN` | Default network | `sepolia` |
 | `VITE_SEPOLIA_RPC_URL` | Sepolia RPC endpoint | `https://eth-sepolia.g.alchemy.com/v2/...` |
 | `VITE_ENVIO_ENDPOINT` | Envio GraphQL endpoint | `https://indexer.envio.dev/...` |

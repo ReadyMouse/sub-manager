@@ -54,12 +54,16 @@ export const MySubscriptions: React.FC = () => {
   if (!isConnected) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">👛</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-brand-navy mb-2">
           Connect Your Wallet
         </h2>
         <p className="text-gray-600">
-          Connect your wallet to view and manage your subscriptions
+          Connect your wallet to view and manage your rent payments
         </p>
       </div>
     );
@@ -68,7 +72,7 @@ export const MySubscriptions: React.FC = () => {
   if (loading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">My Subscriptions</h1>
+        <h1 className="text-3xl font-bold text-brand-navy mb-6">My Rent Payments</h1>
         <SkeletonGrid count={3} />
       </div>
     );
@@ -82,12 +86,12 @@ export const MySubscriptions: React.FC = () => {
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">My Subscriptions</h1>
+        <h1 className="text-3xl font-bold text-brand-navy">My Rent Payments</h1>
         <button
           onClick={() => refetch()}
-          className="btn-secondary text-sm"
+          className="btn-secondary"
         >
-          🔄 Refresh
+          Refresh
         </button>
       </div>
 
@@ -100,15 +104,19 @@ export const MySubscriptions: React.FC = () => {
 
       {subscriptions.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📭</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            No Subscriptions Yet
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-brand-navy mb-2">
+            No Rent Payments Configured
           </h2>
           <p className="text-gray-600 mb-4">
-            Start subscribing to your favorite services with crypto
+            Set up your automated rent payment to get started
           </p>
-          <a href="/" className="btn-primary inline-block">
-            Browse Marketplace
+          <a href="/create" className="btn-primary inline-block">
+            Set Up Rent Payment
           </a>
         </div>
       ) : (
@@ -116,7 +124,7 @@ export const MySubscriptions: React.FC = () => {
           {/* Active Subscriptions */}
           {activeSubscriptions.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-xl font-semibold text-brand-navy mb-4">
                 Active ({activeSubscriptions.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,7 +145,7 @@ export const MySubscriptions: React.FC = () => {
           {/* Cancelled Subscriptions */}
           {cancelledSubscriptions.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-xl font-semibold text-brand-navy mb-4">
                 Cancelled ({cancelledSubscriptions.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
