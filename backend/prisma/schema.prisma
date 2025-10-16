@@ -108,6 +108,7 @@ model ConnectedWallet {
   // Wallet Information
   walletAddress     String   // Normalized (lowercase)
   label             String?  // e.g., "MetaMask", "Hardware Wallet"
+  currencyTicker    String   @default("PYUSD")  // e.g., "PYUSD", "ETH", "USDC"
   
   // Verification (Sign-In With Ethereum - SIWE)
   isVerified        Boolean  @default(false)
