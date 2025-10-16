@@ -54,7 +54,7 @@ export const Settings: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">StableRent Contract</span>
-              <span className="font-mono text-xs">{shortenAddress(CONTRACTS.SubChainSubscription)}</span>
+              <span className="font-mono text-xs">{shortenAddress(CONTRACTS.StableRentSubscription)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">PYUSD Token</span>

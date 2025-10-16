@@ -41,7 +41,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               />
               <div>
                 <h1 className="text-xl font-bold text-brand-navy">StableRent</h1>
-                <p className="text-xs text-brand-teal font-medium">PYUSD Rent Payments</p>
+                <p className="text-xs text-brand-teal font-medium">PYUSD Recurring Payments</p>
               </div>
             </Link>
 
@@ -99,53 +99,57 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </header>
 
-      {/* Hero Banner Image */}
-      <div className="w-full mt-16 lg:mt-20">
-        <img 
-          src={homesImage} 
-          alt="StableRent - Professional rental properties" 
-          className="w-full h-auto object-cover"
-        />
-      </div>
-
-      {/* How it Works Section */}
-      <section className="bg-white py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-brand-navy mb-4">How StableRent Works</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Simple, secure, and automated rent payments using PayPal's PYUSD stablecoin
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">1</div>
-              <h3 className="text-xl font-bold text-brand-navy mb-3">Connect Your Wallet</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Link your crypto wallet containing PYUSD tokens
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">2</div>
-              <h3 className="text-xl font-bold text-brand-navy mb-3">Set Up Rent Payment</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Configure automated rent payments to your landlord's wallet address
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">3</div>
-              <h3 className="text-xl font-bold text-brand-navy mb-3">Automatic Payments</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Rent is paid automatically each month - never miss a payment
-              </p>
-            </div>
-          </div>
+      {/* Hero Banner Image - Only show on home page */}
+      {location.pathname === '/' && (
+        <div className="w-full mt-16 lg:mt-20">
+          <img 
+            src={homesImage} 
+            alt="StableRent - Professional rental properties" 
+            className="w-full h-auto object-cover"
+          />
         </div>
-      </section>
+      )}
+
+      {/* How it Works Section - Only show on home page */}
+      {location.pathname === '/' && (
+        <section className="bg-white py-12">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-brand-navy mb-4">How StableRent Works</h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                Connecting propoerty owners and residents with digital currency support for automated, transparent recurring payments.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">1</div>
+                <h3 className="text-xl font-bold text-brand-navy mb-3">Find Your Dream Property</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Sender links their PYUSD wallet, Recipiant provides a PYUSD receive address.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">2</div>
+                <h3 className="text-xl font-bold text-brand-navy mb-3">Sign the Transaction</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Sender approves the bulk set of transcations for entire duration of the subscription.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">3</div>
+                <h3 className="text-xl font-bold text-brand-navy mb-3">Set-And-Forget</h3>
+                <p className="text-gray-600 leading-relaxed">
+                tableRent handles the payments automatically, on schedule.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Main Content */}
-      <main className="px-4 py-8">
+      <main className={`px-4 py-8 ${location.pathname !== '/' ? 'mt-16 lg:mt-20' : ''}`}>
         <div className="max-w-7xl mx-auto">
           {children}
         </div>

@@ -1,6 +1,6 @@
-# Envio Indexer Configuration for SubChain
+# Envio Indexer Configuration for StableRent
 # 
-# This configuration sets up Envio to index all SubChainSubscription events
+# This configuration sets up Envio to index all StableRentSubscription events
 # and send webhooks to the backend for automated payment processing.
 #
 # Hackathon Showcase Features:
@@ -9,8 +9,8 @@
 # - Multi-event tracking (PaymentProcessed, PaymentFailed, SubscriptionCreated, etc.)
 # - Production-ready with signature verification
 
-name: subchain-subscription-indexer
-description: "SubChain - Crypto Subscription Manager with Envio Integration"
+name: stablerent-subscription-indexer
+description: "StableRent - Crypto Subscription Manager with Envio Integration"
 
 # Network Configuration
 # Update these based on your deployment network
@@ -28,9 +28,9 @@ networks:
 
 # Contract Configuration
 contracts:
-  - name: SubChainSubscription
+  - name: StableRentSubscription
     address: ${CONTRACT_ADDRESS}
-    abi_file: ./artifacts/contracts/SubChainSubscription.sol/SubChainSubscription.json
+    abi_file: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
     network: ethereum-mainnet
     
     # Events to index

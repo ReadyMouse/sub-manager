@@ -2,11 +2,19 @@ import { formatUnits, parseUnits } from 'viem';
 import { PYUSD_DECIMALS, PAYMENT_INTERVALS } from './constants';
 
 /**
- * Format PYUSD amount from wei to human-readable string
+ * Format PYUSD amount from wei to human-readable string with dollar sign and commas
  */
 export const formatPYUSD = (amount: bigint, decimals = 2): string => {
   const formatted = formatUnits(amount, PYUSD_DECIMALS);
-  return Number(formatted).toFixed(decimals);
+  const number = Number(formatted);
+  
+  // Format with dollar sign and commas
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(number);
 };
 
 /**

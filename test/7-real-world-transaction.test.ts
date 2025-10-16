@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
-import { SubChainSubscription, IERC20Metadata } from "../typechain-types";
+import { StableRentSubscription, IERC20Metadata } from "../typechain-types";
 import { PYUSD_WHALE, fundAccountWithPyusd } from "./helpers/setup";
 import "dotenv/config";
 
@@ -39,7 +39,7 @@ import "dotenv/config";
 
 describe("🏠 Real World Transaction: Rent Payment Flow", function () {
   // Contract instances
-  let subChainContract: SubChainSubscription;
+  let stableRentContract: StableRentSubscription;
   let pyusdContract: IERC20Metadata;
   
   // Real addresses from .env
@@ -157,27 +157,27 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
     // ========================================
     
     // Check if contract address is in .env
-    const existingContractAddress = process.env.SUBCHAIN_CONTRACT_ADDRESS;
+    const existingContractAddress = process.env.STABLERENT_CONTRACT_ADDRESS;
     
     if (existingContractAddress) {
       // Connect to existing contract
       contractAddress = existingContractAddress;
-      subChainContract = await ethers.getContractAt("SubChainSubscription", contractAddress);
-      console.log("\n📝 Connected to existing SubChainSubscription:", contractAddress);
+      stableRentContract = await ethers.getContractAt("StableRentSubscription", contractAddress);
+      console.log("\n📝 Connected to existing StableRentSubscription:", contractAddress);
     } else {
       // Deploy new contract
       const [deployer] = await ethers.getSigners();
-      console.log("\n📝 Deploying new SubChainSubscription...");
+      console.log("\n📝 Deploying new StableRentSubscription...");
       console.log("  Deployer:", deployer.address);
       
-      const SubChainSubscription = await ethers.getContractFactory("SubChainSubscription");
-      subChainContract = await SubChainSubscription.deploy(deployer.address, PYUSD_ADDRESS);
-      await subChainContract.waitForDeployment();
+      const StableRentSubscription = await ethers.getContractFactory("StableRentSubscription");
+      stableRentContract = await StableRentSubscription.deploy(deployer.address, PYUSD_ADDRESS);
+      await stableRentContract.waitForDeployment();
       
-      contractAddress = await subChainContract.getAddress();
+      contractAddress = await stableRentContract.getAddress();
       console.log("  ✅ Deployed at:", contractAddress);
       console.log("\n💡 TIP: Add this to your .env file:");
-      console.log(`  SUBCHAIN_CONTRACT_ADDRESS=${contractAddress}`);
+      console.log(`  STABLERENT_CONTRACT_ADDRESS=${contractAddress}`);
     }
     
     // ========================================
@@ -214,7 +214,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
       console.log("  Processor Fee: $" + ethers.formatUnits(PROCESSOR_FEE, 6));
       
       // Create subscription
-      const tx = await subChainContract.connect(renterSigner).createSubscription(
+      const tx = await stableRentContract.connect(renterSigner).createSubscription(
         RENTER_ID,              // senderId
         LANDLORD_ID,            // recipientId
         MONTHLY_RENT,           // amount
@@ -237,7 +237,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
       const event = receipt?.logs.find(
         (log: any) => {
           try {
-            const parsed = subChainContract.interface.parseLog(log);
+            const parsed = stableRentContract.interface.parseLog(log);
             return parsed?.name === "SubscriptionCreated";
           } catch {
             return false;
@@ -249,13 +249,13 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
         throw new Error("SubscriptionCreated event not found");
       }
       
-      const parsedEvent = subChainContract.interface.parseLog(event);
+      const parsedEvent = stableRentContract.interface.parseLog(event);
       subscriptionId = parsedEvent!.args[0];
       
       console.log("  ✅ Subscription created! ID:", subscriptionId.toString());
       
       // Verify subscription details
-      const subscription = await subChainContract.getSubscription(subscriptionId);
+      const subscription = await stableRentContract.getSubscription(subscriptionId);
       
       expect(subscription.senderAddress.toLowerCase()).to.equal(renterAddress.toLowerCase());
       expect(subscription.recipientAddress.toLowerCase()).to.equal(landlordAddress.toLowerCase());
@@ -274,7 +274,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
     });
     
     it("Should be retrievable via getUserSubscriptions", async function () {
-      const userSubs = await subChainContract.getUserSubscriptions(renterAddress);
+      const userSubs = await stableRentContract.getUserSubscriptions(renterAddress);
       
       expect(userSubs.length).to.be.greaterThan(0);
       console.log("\n  📋 Renter has", userSubs.length.toString(), "subscription(s)");
@@ -286,12 +286,12 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
     
     before(async function () {
       // Get the latest subscription for this renter
-      const userSubs = await subChainContract.getUserSubscriptions(renterAddress);
+      const userSubs = await stableRentContract.getUserSubscriptions(renterAddress);
       subscriptionId = userSubs[userSubs.length - 1];
     });
     
     it("Should wait until payment is due", async function () {
-      const subscription = await subChainContract.getSubscription(subscriptionId);
+      const subscription = await stableRentContract.getSubscription(subscriptionId);
       const nextPaymentDue = subscription.nextPaymentDue;
       
       // Get current blockchain time (not JavaScript time!)
@@ -320,7 +320,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
     });
     
     it("Should show subscription in getPaymentsDue", async function () {
-      const duePayments = await subChainContract.getPaymentsDue();
+      const duePayments = await stableRentContract.getPaymentsDue();
       
       console.log("\n  📊 Payments Due:", duePayments.length.toString());
       
@@ -345,7 +345,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
       console.log("\n  🔄 Processing payment...");
       console.log("    Executed by:", processorAddress);
       console.log("    Fee will go to:", processorFeeAddress);
-      const tx = await subChainContract.connect(processorSigner).processPayment(subscriptionId);
+      const tx = await stableRentContract.connect(processorSigner).processPayment(subscriptionId);
       const receipt = await tx.wait();
       
       console.log("  ✅ Payment processed!");
@@ -376,7 +376,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
       expect(processorFeeReceived).to.equal(PROCESSOR_FEE);
       
       // Verify subscription state
-      const subscription = await subChainContract.getSubscription(subscriptionId);
+      const subscription = await stableRentContract.getSubscription(subscriptionId);
       expect(subscription.paymentCount).to.equal(1);
       expect(subscription.isActive).to.be.true;
       
@@ -390,27 +390,27 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
     
     before(async function () {
       // Get the latest subscription for this renter
-      const userSubs = await subChainContract.getUserSubscriptions(renterAddress);
+      const userSubs = await stableRentContract.getUserSubscriptions(renterAddress);
       subscriptionId = userSubs[userSubs.length - 1];
     });
     
     it("Should allow renter to cancel subscription", async function () {
       console.log("\n  🛑 Canceling subscription", subscriptionId.toString(), "...");
       
-      const tx = await subChainContract.connect(renterSigner).cancelSubscription(subscriptionId);
+      const tx = await stableRentContract.connect(renterSigner).cancelSubscription(subscriptionId);
       await tx.wait();
       
       console.log("  ✅ Subscription cancelled!");
       
       // Verify cancellation
-      const subscription = await subChainContract.getSubscription(subscriptionId);
+      const subscription = await stableRentContract.getSubscription(subscriptionId);
       expect(subscription.isActive).to.be.false;
       
       console.log("  📊 Status: Inactive ❌");
     });
     
     it("Should not appear in getPaymentsDue after cancellation", async function () {
-      const duePayments = await subChainContract.getPaymentsDue();
+      const duePayments = await stableRentContract.getPaymentsDue();
       
       const isDue = duePayments.some(id => id === subscriptionId);
       expect(isDue).to.be.false;

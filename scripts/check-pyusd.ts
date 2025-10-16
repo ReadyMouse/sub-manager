@@ -143,7 +143,7 @@ async function main() {
   console.log("\n💡 NEXT STEPS:");
   console.log("  1. Run tests with: npx hardhat test");
   console.log("  2. Deploy your own contract: npx hardhat run scripts/deploy.ts");
-  console.log("  3. For SubChain: Study the approve + transferFrom pattern in tests!");
+  console.log("  3. For StableRent: Study the approve + transferFrom pattern in tests!");
 }
 
 // ========================================

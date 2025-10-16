@@ -128,6 +128,7 @@ Cursor + Claude AI was used to support development.
 - StablePay (peer-to-peer)
 - StableDonate (Charity focused, recurring donations)
 - Proxy pattern for upgradeable contracts
+- KYC for transcation over gov reporting limits ($3-5k in single)
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"

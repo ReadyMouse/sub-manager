@@ -127,13 +127,20 @@ export interface EnvioSubscription {
 export interface EnvioPayment {
   id: string;
   subscriptionId: string;
+  subscriber: string;
+  serviceName: string;
   amount: string;
   processorFee: string;
   processorFeeAddress: string;
   timestamp: string;
+  paymentNumber: string;
   status: string;
-  transactionHash: string;
+  transactionHash?: string;
   reason?: string;
+}
+
+export interface EnvioPaymentWithDirection extends EnvioPayment {
+  direction: 'sent' | 'received';
 }
 
 // Automation status

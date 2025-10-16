@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { SubChainSubscription } from "../../typechain-types";
+import { StableRentSubscription } from "../../typechain-types";
 import { IERC20Metadata } from "../../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -50,7 +50,7 @@ export async function fundAccountWithPyusd(recipient: string, amount: bigint) {
  * @returns Contracts and signers needed for tests
  */
 export async function setupTestContracts() {
-  console.log("\n🚀 Setting up SubChainSubscription test environment...");
+  console.log("\n🚀 Setting up StableRentSubscription test environment...");
   
   // Get signers
   const [owner, user1, user2, serviceProvider, landlord] = await ethers.getSigners();
@@ -66,13 +66,13 @@ export async function setupTestContracts() {
   const pyusdContract = await ethers.getContractAt("IERC20Metadata", PYUSD_ADDRESS);
   console.log("\n💰 Connected to PYUSD:", PYUSD_ADDRESS);
   
-  // Deploy SubChainSubscription contract
-  const SubChainSubscription = await ethers.getContractFactory("SubChainSubscription");
-  const subChainContract = await SubChainSubscription.deploy(owner.address, PYUSD_ADDRESS);
-  await subChainContract.waitForDeployment();
+  // Deploy StableRentSubscription contract
+  const StableRentSubscription = await ethers.getContractFactory("StableRentSubscription");
+  const stableRentContract = await StableRentSubscription.deploy(owner.address, PYUSD_ADDRESS);
+  await stableRentContract.waitForDeployment();
   
-  const contractAddress = await subChainContract.getAddress();
-  console.log("📝 SubChainSubscription deployed:", contractAddress);
+  const contractAddress = await stableRentContract.getAddress();
+  console.log("📝 StableRentSubscription deployed:", contractAddress);
   
   // Fund test accounts with PYUSD
   console.log("\n💸 Funding test accounts with PYUSD...");
@@ -90,7 +90,7 @@ export async function setupTestContracts() {
   console.log("\n✅ Setup complete!\n");
   
   return {
-    subChainContract,
+    stableRentContract,
     pyusdContract,
     owner,
     user1,

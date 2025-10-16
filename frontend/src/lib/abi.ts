@@ -1,7 +1,7 @@
 // Auto-generated ABI file
 // Do not edit manually - run 'node update-frontend-abi.js' to update
 
-export const SubChainSubscriptionABI = [
+export const StableRentSubscriptionABI = [
   {
     "inputs": [
       {
@@ -441,7 +441,7 @@ export const SubChainSubscriptionABI = [
             "type": "string"
           }
         ],
-        "internalType": "struct SubChainSubscription.Subscription",
+        "internalType": "struct StableRentSubscription.Subscription",
         "name": "",
         "type": "tuple"
       }

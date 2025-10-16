@@ -44,12 +44,14 @@ export const PAYMENT_FIELDS = gql`
     id
     subscriptionId
     subscriber
+    serviceName
     amount
     processorFee
     processorFeeAddress
     timestamp
     paymentNumber
     status
+    transactionHash
   }
 `;
 
@@ -128,12 +130,40 @@ export const GET_SUBSCRIPTION_PAYMENTS = gql`
   }
 `;
 
-// Query: Get all payments for a user
+// Query: Get all payments for a user (sent payments)
 export const GET_USER_PAYMENTS = gql`
   ${PAYMENT_FIELDS}
   query GetUserPayments($userAddress: String!) {
     payments(
       where: { subscriber: $userAddress }
+      orderBy: timestamp
+      orderDirection: desc
+    ) {
+      ...PaymentFields
+    }
+  }
+`;
+
+// Query: Get subscriptions where user is the service provider (to find received payments)
+export const GET_USER_AS_SERVICE_PROVIDER = gql`
+  ${SUBSCRIPTION_FIELDS}
+  query GetUserAsServiceProvider($userAddress: String!) {
+    subscriptions(
+      where: { recipientAddress: $userAddress }
+      orderBy: createdAt
+      orderDirection: desc
+    ) {
+      ...SubscriptionFields
+    }
+  }
+`;
+
+// Query: Get all payments for multiple subscription IDs (for received payments)
+export const GET_PAYMENTS_BY_SUBSCRIPTION_IDS = gql`
+  ${PAYMENT_FIELDS}
+  query GetPaymentsBySubscriptionIds($subscriptionIds: [String!]!) {
+    payments(
+      where: { subscriptionId_in: $subscriptionIds }
       orderBy: timestamp
       orderDirection: desc
     ) {

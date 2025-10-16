@@ -1,7 +1,7 @@
 // Contract addresses
 export const CONTRACTS = {
   // TODO: Update with deployed contract address
-  SubChainSubscription: import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000',
+  StableRentSubscription: import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000',
   // PYUSD token address (Ethereum Mainnet)
   PYUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
 } as const;

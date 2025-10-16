@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SubChainSubscription } from "../typechain-types";
+import { StableRentSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { setupTestContracts, ONE_DAY, THIRTY_DAYS, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
-describe("SubChainSubscription - Subscription Cancellation", function () {
+describe("StableRentSubscription - Subscription Cancellation", function () {
   // ========================================
   // CONSTANTS & VARIABLES
   // ========================================
@@ -14,7 +14,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
   const SERVICE_PROVIDER_ID = 100;
   let cancelTestSubId: bigint;
   
-  let subChainContract: SubChainSubscription;
+  let stableRentContract: StableRentSubscription;
   let pyusdContract: IERC20Metadata;
   let owner: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
@@ -28,7 +28,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
   
   before(async function () {
     // Get contracts and signers
-    ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
+    ({ stableRentContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
     
     // Create a test subscription for cancellation tests
@@ -37,12 +37,12 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
     
     // Approve PYUSD
     await pyusdContract.connect(user1).approve(
-      await subChainContract.getAddress(),
+      await stableRentContract.getAddress(),
       ethers.parseUnits("10000", 6)
     );
     
     // Create subscription
-    const tx = await subChainContract.connect(user1).createSubscription(
+    const tx = await stableRentContract.connect(user1).createSubscription(
       NETFLIX_ID, // senderId
       SERVICE_PROVIDER_ID, // recipientId
       amount,
@@ -62,29 +62,29 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
       try {
-        return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+        return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
       } catch {
         return false;
       }
     });
     
-    const parsedEvent = subChainContract.interface.parseLog(event!);
+    const parsedEvent = stableRentContract.interface.parseLog(event!);
     cancelTestSubId = parsedEvent!.args[0];
   });
   
   describe("User Cancellation", function () {
     it("Should allow user to cancel their own subscription", async function () {
       // Verify subscription is active before cancellation
-      let sub = await subChainContract.getSubscription(cancelTestSubId);
+      let sub = await stableRentContract.getSubscription(cancelTestSubId);
       expect(sub.isActive).to.be.true;
       
       // Cancel subscription
-      const tx = await subChainContract.connect(user1).cancelSubscription(cancelTestSubId);
+      const tx = await stableRentContract.connect(user1).cancelSubscription(cancelTestSubId);
       const receipt = await tx.wait();
       const block = await ethers.provider.getBlock(receipt!.blockNumber);
       
       // Verify SubscriptionCancelled event was emitted
-      await expect(tx).to.emit(subChainContract, "SubscriptionCancelled")
+      await expect(tx).to.emit(stableRentContract, "SubscriptionCancelled")
         .withArgs(
           cancelTestSubId,
           user1.address,
@@ -95,14 +95,14 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         );
       
       // Verify subscription is now inactive
-      sub = await subChainContract.getSubscription(cancelTestSubId);
+      sub = await stableRentContract.getSubscription(cancelTestSubId);
       expect(sub.isActive).to.be.false;
     });
     
     it("Should revert if user tries to cancel already cancelled subscription", async function () {
       // Try to cancel the same subscription again
       await expect(
-        subChainContract.connect(user1).cancelSubscription(cancelTestSubId)
+        stableRentContract.connect(user1).cancelSubscription(cancelTestSubId)
       ).to.be.revertedWith("Subscription already cancelled");
     });
     
@@ -111,7 +111,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const amount = ethers.parseUnits("15", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -131,24 +131,24 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
       // User2 tries to cancel user1's subscription - should fail
       await expect(
-        subChainContract.connect(user2).cancelSubscription(newSubId)
+        stableRentContract.connect(user2).cancelSubscription(newSubId)
       ).to.be.revertedWith("Only sender can cancel");
     });
     
     it("Should revert when trying to cancel non-existent subscription", async function () {
       await expect(
-        subChainContract.connect(user1).cancelSubscription(99999)
+        stableRentContract.connect(user1).cancelSubscription(99999)
       ).to.be.revertedWith("Subscription does not exist");
     });
     
@@ -157,7 +157,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const amount = ethers.parseUnits("25", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -177,17 +177,17 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const payTestSubId = parsedEvent!.args[0];
       
       // Cancel it
-      await subChainContract.connect(user1).cancelSubscription(payTestSubId);
+      await stableRentContract.connect(user1).cancelSubscription(payTestSubId);
       
       // Fast-forward time so payment would be due
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
@@ -195,7 +195,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       
       // Try to process payment - should fail
       await expect(
-        subChainContract.processPayment(payTestSubId)
+        stableRentContract.processPayment(payTestSubId)
       ).to.be.revertedWith("Subscription is not active");
     });
   });
@@ -208,7 +208,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const currentBlock = await ethers.provider.getBlock("latest");
       const endDate = currentBlock!.timestamp + (5 * ONE_DAY); // 5 days from now
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -228,13 +228,13 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const endDateSubId = parsedEvent!.args[0];
       
       // Fast-forward past endDate (30 days is more than 5 days)
@@ -242,10 +242,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       await ethers.provider.send("evm_mine", []);
       
       // Try to process payment - should auto-cancel due to endDate
-      const processTx = await subChainContract.processPayment(endDateSubId);
+      const processTx = await stableRentContract.processPayment(endDateSubId);
       
       // Verify SubscriptionCancelled event was emitted
-      await expect(processTx).to.emit(subChainContract, "SubscriptionCancelled")
+      await expect(processTx).to.emit(stableRentContract, "SubscriptionCancelled")
         .withArgs(
           endDateSubId,
           user1.address,
@@ -256,7 +256,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         );
       
       // Verify subscription is inactive
-      const sub = await subChainContract.getSubscription(endDateSubId);
+      const sub = await stableRentContract.getSubscription(endDateSubId);
       expect(sub.isActive).to.be.false;
     });
     
@@ -277,7 +277,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       
       // Create subscription with maxPayments = 2 and endDate far in future
       // This ensures we hit maxPayments before endDate
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -298,18 +298,18 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const calculatedEndDate = parsedEvent!.args[6]; // endDate from event
       
       // Create subscription again with endDate = calculatedEndDate + 7 days
       // This ensures we hit maxPayments before endDate
-      const tx2 = await subChainContract.connect(user1).createSubscription(
+      const tx2 = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -329,17 +329,17 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       const receipt2 = await tx2.wait();
       const event2 = receipt2?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent2 = subChainContract.interface.parseLog(event2!);
+      const parsedEvent2 = stableRentContract.interface.parseLog(event2!);
       const maxPaySubId = parsedEvent2!.args[0];
       
       // Get subscription state to see when first payment is due
-      let sub = await subChainContract.getSubscription(maxPaySubId);
+      let sub = await stableRentContract.getSubscription(maxPaySubId);
       console.log("    Initial subscription state:");
       console.log("      nextPaymentDue:", sub.nextPaymentDue.toString());
       console.log("      paymentCount:", sub.paymentCount.toString());
@@ -351,13 +351,13 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       await ethers.provider.send("evm_mine", []);
       const block1 = await ethers.provider.getBlock("latest");
       console.log("    Attempting first payment at:", block1!.timestamp);
-      const firstPayment = await subChainContract.processPayment(maxPaySubId);
+      const firstPayment = await stableRentContract.processPayment(maxPaySubId);
       const firstReceipt = await firstPayment.wait();
       
       // Check what events were emitted
       const firstEvents = firstReceipt?.logs.map(log => {
         try {
-          const parsed = subChainContract.interface.parseLog(log);
+          const parsed = stableRentContract.interface.parseLog(log);
           return parsed?.name;
         } catch {
           return null;
@@ -365,7 +365,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       }).filter(Boolean);
       console.log("    First payment events:", firstEvents);
       
-      sub = await subChainContract.getSubscription(maxPaySubId);
+      sub = await stableRentContract.getSubscription(maxPaySubId);
       console.log("    After first payment:");
       console.log("      paymentCount:", sub.paymentCount.toString());
       console.log("      nextPaymentDue:", sub.nextPaymentDue.toString());
@@ -377,13 +377,13 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       await ethers.provider.send("evm_mine", []);
       const block2 = await ethers.provider.getBlock("latest");
       console.log("    Attempting second payment at:", block2!.timestamp);
-      const secondPayment = await subChainContract.processPayment(maxPaySubId);
+      const secondPayment = await stableRentContract.processPayment(maxPaySubId);
       const secondReceipt = await secondPayment.wait();
       
       // Check what events were emitted
       const secondEvents = secondReceipt?.logs.map(log => {
         try {
-          const parsed = subChainContract.interface.parseLog(log);
+          const parsed = stableRentContract.interface.parseLog(log);
           return parsed?.name;
         } catch {
           return null;
@@ -391,7 +391,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       }).filter(Boolean);
       console.log("    Second payment events:", secondEvents);
       
-      sub = await subChainContract.getSubscription(maxPaySubId);
+      sub = await stableRentContract.getSubscription(maxPaySubId);
       console.log("    After second payment:");
       console.log("      paymentCount:", sub.paymentCount.toString());
       console.log("      nextPaymentDue:", sub.nextPaymentDue.toString());
@@ -403,10 +403,10 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
       await ethers.provider.send("evm_mine", []);
       const block3 = await ethers.provider.getBlock("latest");
       console.log("    Attempting third payment at:", block3!.timestamp);
-      const thirdPayment = await subChainContract.processPayment(maxPaySubId);
+      const thirdPayment = await stableRentContract.processPayment(maxPaySubId);
       
       // Verify SubscriptionCancelled event was emitted with correct reason
-      await expect(thirdPayment).to.emit(subChainContract, "SubscriptionCancelled")
+      await expect(thirdPayment).to.emit(stableRentContract, "SubscriptionCancelled")
         .withArgs(
           maxPaySubId,
           user1.address,
@@ -417,7 +417,7 @@ describe("SubChainSubscription - Subscription Cancellation", function () {
         );
       
       // Verify subscription is inactive
-      sub = await subChainContract.getSubscription(maxPaySubId);
+      sub = await stableRentContract.getSubscription(maxPaySubId);
       expect(sub.isActive).to.be.false;
       expect(sub.paymentCount).to.equal(2); // Should have processed exactly 2 payments
     });

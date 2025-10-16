@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================================
-# SubChain Setup Script
+# StableRent Setup Script
 # ============================================================================
 # This script sets up the complete development environment including:
 # - Node.js dependencies
@@ -21,7 +21,7 @@ NC='\033[0m' # No Color
 
 echo ""
 echo "============================================================================"
-echo "🚀 SubChain Development Environment Setup"
+echo "🚀 StableRent Development Environment Setup"
 echo "============================================================================"
 echo ""
 
@@ -79,7 +79,7 @@ echo -e "${BLUE}⚙️  Setting up environment files...${NC}"
 if [ ! -f .env ]; then
     echo -e "${YELLOW}Creating root .env file...${NC}"
     cat > .env << 'EOF'
-# SubChain Root Configuration
+# StableRent Root Configuration
 # Used by Hardhat for deployment
 
 # Alchemy/Infura API Key for mainnet/testnet access

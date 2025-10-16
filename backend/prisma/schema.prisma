@@ -1,0 +1,419 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// USER & AUTHENTICATION
+// ========================================
+
+model User {
+  id                  String   @id @default(uuid())
+  
+  // Email/Password Auth (Optional - wallet-only users don't need this)
+  email               String?  @unique
+  passwordHash        String?
+  emailVerified       Boolean  @default(false)
+  emailVerificationToken String?
+  
+  // Wallet Auth (Optional - for wallet-only or hybrid users)
+  // Note: Use ConnectedWallet model for multiple verified wallets
+  primaryWalletId     String?  @unique  // Primary wallet for wallet-only users
+  
+  // Profile Information
+  displayName         String
+  firstName           String?
+  lastName            String?
+  phoneNumber         String?
+  
+  // User Type & Verification
+  userType            UserType @default(REGULAR)
+  isVerified          Boolean  @default(false)
+  verificationLevel   VerificationLevel?  // Optional - can be null for unverified users
+  
+  // Account Status
+  isActive            Boolean  @default(true)
+  isSuspended         Boolean  @default(false)
+  suspensionReason    String?
+  
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  lastLoginAt         DateTime?
+  
+  // Password Reset
+  resetPasswordToken  String?
+  resetPasswordExpiry DateTime?
+  
+  // Relationships
+  sentSubscriptions      Subscription[] @relation("SubscriptionSender")
+  receivedSubscriptions  Subscription[] @relation("SubscriptionRecipient")
+  notifications          Notification[]
+  preferences            UserPreferences?
+  sessions               Session[]
+  connectedWallets       ConnectedWallet[]      // Verified wallets (for sending)
+  primaryWallet          ConnectedWallet? @relation("UserPrimaryWallet", fields: [primaryWalletId], references: [id])
+  paymentAddresses       PaymentAddress[]       // Receive-only addresses
+  
+  @@index([email])
+  @@index([primaryWalletId])
+}
+
+enum UserType {
+  REGULAR           // Regular user
+  ADMIN             // Admin user
+}
+
+enum VerificationLevel {
+  WALLET       // Wallet-only (no email/password) - most private
+  BASIC        // Email verified
+  PHONE        // Phone verified
+  IDENTITY     // ID verification (KYC)
+}
+
+// User Sessions (for JWT token management)
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token        String   @unique // JWT token or session ID
+  refreshToken String?  @unique
+  
+  ipAddress    String?
+  userAgent    String?
+  
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// Connected Wallets (Verified wallets for sending payments)
+model ConnectedWallet {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Wallet Information
+  walletAddress     String   // Normalized (lowercase)
+  label             String?  // e.g., "MetaMask", "Hardware Wallet"
+  
+  // Verification (Sign-In With Ethereum - SIWE)
+  isVerified        Boolean  @default(false)
+  verificationSignature String?  // The signature proving ownership
+  verificationMessage   String?  // The message that was signed
+  verifiedAt        DateTime?
+  
+  // Status
+  isPrimary         Boolean  @default(false)  // Primary wallet for sending
+  isActive          Boolean  @default(true)
+  
+  // Timestamps
+  connectedAt       DateTime @default(now())
+  lastUsedAt        DateTime?
+  
+  // Relationships
+  sentSubscriptions Subscription[] @relation("SubscriptionConnectedWallet")
+  primaryForUser    User?          @relation("UserPrimaryWallet")
+  
+  @@index([userId])
+  @@index([walletAddress])
+  @@unique([userId, walletAddress])
+}
+
+// User Preferences
+model UserPreferences {
+  userId                String  @id
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification Settings
+  emailNotifications    Boolean @default(true)
+  paymentReminders      Boolean @default(true)
+  lowBalanceWarnings    Boolean @default(true)
+  marketingEmails       Boolean @default(false)
+  
+  // Payment Reminder Timing (days before due)
+  reminderDaysBefore    Int     @default(3)
+  
+  // Display Preferences
+  defaultCurrency       String  @default("USD")
+  timezone              String  @default("UTC")
+  language              String  @default("en")
+  
+  // Privacy Settings
+  profilePublic         Boolean @default(false)
+  showEmail             Boolean @default(false)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Payment Addresses (for users without wallets or multiple receive addresses)
+model PaymentAddress {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Address Information
+  address           String   // Crypto wallet address or PayPal-linked address
+  currency          String   // "PYUSD", "ETH", "USDC", etc.
+  label             String?  // e.g., "Main PayPal", "Business Wallet"
+  
+  // Address Type
+  addressType       AddressType
+  
+  // Verification
+  isVerified        Boolean  @default(false)
+  verifiedAt        DateTime?
+  
+  // Status
+  isDefault         Boolean  @default(false) // Default receive address
+  isActive          Boolean  @default(true)
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  subscriptionsAsRecipient Subscription[] @relation("SubscriptionPaymentAddress")
+  
+  @@index([userId])
+  @@index([address])
+  @@unique([userId, address, currency])
+}
+
+enum AddressType {
+  WALLET            // User's own crypto wallet (MetaMask, hardware wallet, etc.)
+  CUSTODIAL         // Platform-managed wallet (PayPal, Coinbase, etc.)
+  EXCHANGE          // Exchange address (for trading)
+}
+
+// ========================================
+// SUBSCRIPTIONS & PAYMENTS
+// ========================================
+
+// Subscription (Off-chain metadata synced with blockchain)
+model Subscription {
+  id                    String   @id // Maps to on-chain subscription ID (chainId:subscriptionId)
+  chainId               Int      // Network ID (1 = mainnet, 11155111 = sepolia)
+  onChainId             String   // On-chain subscription ID
+  
+  // Sender (Payer)
+  senderId              String
+  sender                User     @relation("SubscriptionSender", fields: [senderId], references: [id])
+  senderConnectedWalletId String?
+  senderConnectedWallet ConnectedWallet? @relation("SubscriptionConnectedWallet", fields: [senderConnectedWalletId], references: [id])
+  senderWalletAddress   String   // Denormalized from blockchain
+  senderCurrency        String   @default("PYUSD")
+  
+  // Recipient (Service Provider / Landlord)
+  recipientId           String
+  recipient             User     @relation("SubscriptionRecipient", fields: [recipientId], references: [id])
+  recipientPaymentAddressId String?
+  recipientPaymentAddress   PaymentAddress? @relation("SubscriptionPaymentAddress", fields: [recipientPaymentAddressId], references: [id])
+  recipientWalletAddress String  // Actual receive address (from PaymentAddress or wallet)
+  recipientCurrency     String   @default("PYUSD")
+  
+  // Service Information
+  serviceName           String
+  serviceDescription    String?
+  
+  // Subscription Details (synced from contract)
+  amount                String   // BigInt as string (in token base units)
+  interval              Int      // Billing interval in seconds
+  nextPaymentDue        DateTime
+  endDate               DateTime?
+  maxPayments           Int?
+  paymentCount          Int      @default(0)
+  failedPaymentCount    Int      @default(0)
+  isActive              Boolean  @default(true)
+  
+  // Processor Fee Info
+  processorFee          String   @default("0")
+  processorFeeAddress   String?
+  processorFeeCurrency  String   @default("PYUSD")
+  processorFeeID        String?
+  
+  // DEX Integration (Future - for multi-token payments)
+  enableAutoSwap        Boolean  @default(false)  // If true, auto-swap sender token → PYUSD
+  maxSlippage           Float?                    // Max acceptable slippage (e.g., 0.5 = 0.5%)
+  preferredDex          String?                   // "uniswap", "sushiswap", "1inch", etc.
+  
+  // Metadata (off-chain only)
+  notes                 String?
+  tags                  String[]
+  customFields          Json?    // Flexible JSON for custom data
+  
+  // Sync Status
+  lastSyncedAt          DateTime @default(now())
+  syncStatus            SyncStatus @default(SYNCED)
+  syncError             String?
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  cancelledAt           DateTime?
+  cancellationReason    String?
+  
+  // Relationships
+  payments              Payment[]
+  
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([senderWalletAddress])
+  @@index([recipientWalletAddress])
+  @@index([chainId, onChainId])
+  @@index([isActive])
+  @@index([nextPaymentDue])
+  @@unique([chainId, onChainId])
+}
+
+enum SyncStatus {
+  SYNCED            // Successfully synced with blockchain
+  PENDING           // Waiting for blockchain confirmation
+  ERROR             // Sync error occurred
+  MANUAL            // Manually created, not yet on-chain
+}
+
+// Payment History (synced from Envio/blockchain)
+model Payment {
+  id                    String   @id // Format: txHash-logIndex
+  subscriptionId        String
+  subscription          Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  // Payment Details
+  amount                String   // BigInt as string (what recipient received)
+  processorFee          String
+  processorFeeAddress   String?
+  
+  // Transaction Info
+  transactionHash       String
+  blockNumber           Int?
+  timestamp             DateTime
+  
+  // Status
+  status                PaymentStatus
+  failureReason         String?
+  
+  // Denormalized for quick queries
+  senderAddress         String
+  recipientAddress      String
+  
+  // DEX Swap Details (Future - null if direct PYUSD payment)
+  swapExecuted          Boolean  @default(false)   // Was a token swap performed?
+  senderTokenAmount     String?                    // Amount sender paid in their token (e.g., "0.5 ETH")
+  senderToken           String?                    // Token sender paid with (e.g., "ETH", "USDC")
+  recipientTokenAmount  String?                    // Amount recipient received (e.g., "1000 PYUSD")
+  recipientToken        String?                    // Token recipient received (always "PYUSD" for now)
+  exchangeRate          String?                    // Rate at time of swap (e.g., "2000" = 1 ETH = 2000 PYUSD)
+  dexUsed               String?                    // Which DEX (e.g., "uniswap-v3", "1inch")
+  swapTransactionHash   String?                    // Separate tx hash if swap was separate transaction
+  slippageActual        Float?                     // Actual slippage experienced (e.g., 0.3 = 0.3%)
+  
+  // Metadata
+  metadata              Json?
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  
+  @@index([subscriptionId])
+  @@index([transactionHash])
+  @@index([timestamp])
+  @@index([senderAddress])
+  @@index([recipientAddress])
+  @@index([status])
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+// ========================================
+// NOTIFICATIONS
+// ========================================
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  
+  // Optional Links
+  subscriptionId String?
+  paymentId      String?
+  
+  // Flexible metadata for different notification types
+  metadata    Json?
+  
+  // Delivery
+  emailSent   Boolean  @default(false)
+  emailSentAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  readAt      DateTime?
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([type])
+}
+
+enum NotificationType {
+  PAYMENT_DUE
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  LOW_BALANCE
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
+  SUBSCRIPTION_RECEIVED      // You received a new subscription payment
+  EMAIL_VERIFICATION
+  WALLET_CONNECTED
+  PASSWORD_RESET
+  SECURITY_ALERT
+}
+
+// ========================================
+// AUDIT LOG
+// ========================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  
+  action      String   // e.g., "USER_LOGIN", "SUBSCRIPTION_CREATED"
+  entityType  String?  // e.g., "User", "Subscription"
+  entityId    String?
+  
+  // Request Info
+  ipAddress   String?
+  userAgent   String?
+  
+  // Changes
+  changes     Json?    // Store before/after values
+  
+  // Metadata
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+

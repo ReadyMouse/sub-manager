@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SubChainSubscription } from "../typechain-types";
+import { StableRentSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
-describe("SubChainSubscription - Subscription Creation", function () {
+describe("StableRentSubscription - Subscription Creation", function () {
   // ========================================
   // CONSTANTS & VARIABLES
   // ========================================
@@ -15,7 +15,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
   const LANDLORD_ID = 101; // recipientId for landlord
   let subscriptionId: bigint;
   
-  let subChainContract: SubChainSubscription;
+  let stableRentContract: StableRentSubscription;
   let pyusdContract: IERC20Metadata;
   let owner: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
@@ -29,7 +29,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
   
   before(async function () {
     // Get contracts and signers
-    ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
+    ({ stableRentContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
   });
   
@@ -40,12 +40,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
       
       // User1 approves contract to spend PYUSD
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("1000", 6) // Approve 1000 PYUSD for multiple payments
       );
       
       // Create subscription
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -68,19 +68,19 @@ describe("SubChainSubscription - Subscription Creation", function () {
       // Extract subscription ID from event
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       subscriptionId = parsedEvent!.args[0];
       
       expect(subscriptionId).to.equal(1); // First subscription
       
       // Verify event was emitted with correct parameters
-      await expect(tx).to.emit(subChainContract, "SubscriptionCreated")
+      await expect(tx).to.emit(stableRentContract, "SubscriptionCreated")
         .withArgs(
           subscriptionId,
           user1.address,
@@ -104,7 +104,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     });
     
     it("Should verify subscription data is stored correctly", async function () {
-      const sub = await subChainContract.getSubscription(subscriptionId);
+      const sub = await stableRentContract.getSubscription(subscriptionId);
       
       expect(sub.id).to.equal(subscriptionId);
       expect(sub.senderAddress).to.equal(user1.address);
@@ -124,7 +124,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     });
     
     it("Should add subscription to user's subscription list", async function () {
-      const userSubs = await subChainContract.getUserSubscriptions(user1.address);
+      const userSubs = await stableRentContract.getUserSubscriptions(user1.address);
       expect(userSubs.length).to.equal(1);
       expect(userSubs[0]).to.equal(subscriptionId);
     });
@@ -138,7 +138,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       await ethers.provider.send("evm_increaseTime", [1]);
       await ethers.provider.send("evm_mine", []);
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -158,16 +158,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
-      const sub = await subChainContract.getSubscription(newSubId);
+      const sub = await stableRentContract.getSubscription(newSubId);
       expect(sub.endDate).to.equal(endDate);
       expect(sub.maxPayments).to.equal(0);
     });
@@ -181,7 +181,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       await ethers.provider.send("evm_increaseTime", [1]);
       await ethers.provider.send("evm_mine", []);
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -201,16 +201,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
-      const sub = await subChainContract.getSubscription(newSubId);
+      const sub = await stableRentContract.getSubscription(newSubId);
       expect(sub.maxPayments).to.equal(maxPayments);
       
       // Verify endDate is set
@@ -224,16 +224,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
         await ethers.provider.send("evm_mine", []);
         
         // Process payment
-        await subChainContract.processPayment(newSubId);
+        await stableRentContract.processPayment(newSubId);
         
         // Verify payment was processed
-        const updatedSub = await subChainContract.getSubscription(newSubId);
+        const updatedSub = await stableRentContract.getSubscription(newSubId);
         paymentCount++;
         expect(updatedSub.paymentCount).to.equal(paymentCount);
       }
       
       // Verify subscription is still active
-      const finalSub = await subChainContract.getSubscription(newSubId);
+      const finalSub = await stableRentContract.getSubscription(newSubId);
       expect(finalSub.isActive).to.be.true;
     });
     
@@ -257,7 +257,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       await ethers.provider.send("evm_increaseTime", [1]);
       await ethers.provider.send("evm_mine", []);
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -277,16 +277,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
-      const sub = await subChainContract.getSubscription(newSubId);
+      const sub = await stableRentContract.getSubscription(newSubId);
       
       // Verify endDate is set
       expect(sub.endDate).to.be.gt(0);
@@ -310,16 +310,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
         await ethers.provider.send("evm_mine", []);
         
         // Process payment
-        await subChainContract.processPayment(newSubId);
+        await stableRentContract.processPayment(newSubId);
         
         // Verify payment was processed
-        const updatedSub = await subChainContract.getSubscription(newSubId);
+        const updatedSub = await stableRentContract.getSubscription(newSubId);
         paymentCount++;
         expect(updatedSub.paymentCount).to.equal(paymentCount);
       }
       
       // Verify subscription is still active
-      const finalSub = await subChainContract.getSubscription(newSubId);
+      const finalSub = await stableRentContract.getSubscription(newSubId);
       expect(finalSub.isActive).to.be.true;
       expect(sub.maxPayments).to.equal(maxPayments);
     });
@@ -328,7 +328,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const amount = ethers.parseUnits("30", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         LANDLORD_ID, // recipientId
         amount,
@@ -348,16 +348,16 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
-      const sub = await subChainContract.getSubscription(newSubId);
+      const sub = await stableRentContract.getSubscription(newSubId);
       // Verify subscription was created with landlord as recipient
       expect(sub.recipientAddress).to.equal(landlord.address);
     });
@@ -367,11 +367,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const interval = THIRTY_DAYS;
       
       // Get current subscription count
-      const beforeSubs = await subChainContract.getUserSubscriptions(user1.address);
+      const beforeSubs = await stableRentContract.getUserSubscriptions(user1.address);
       const beforeCount = beforeSubs.length;
       
       // Create another subscription to Netflix
-      await subChainContract.connect(user1).createSubscription(
+      await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -388,7 +388,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
         PROCESSOR_FEE_ID // processorFeeID
       );
       
-      const afterSubs = await subChainContract.getUserSubscriptions(user1.address);
+      const afterSubs = await stableRentContract.getUserSubscriptions(user1.address);
       
       // User1 should have one more subscription than before
       expect(afterSubs.length).to.equal(beforeCount + 1);
@@ -400,11 +400,11 @@ describe("SubChainSubscription - Subscription Creation", function () {
       
       // User2 approves and creates subscription
       await pyusdContract.connect(user2).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("1000", 6)
       );
       
-      await subChainContract.connect(user2).createSubscription(
+      await stableRentContract.connect(user2).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -421,7 +421,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
         PROCESSOR_FEE_ID // processorFeeID
       );
       
-      const user2Subs = await subChainContract.getUserSubscriptions(user2.address);
+      const user2Subs = await stableRentContract.getUserSubscriptions(user2.address);
       expect(user2Subs.length).to.equal(1);
     });
   });
@@ -432,7 +432,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     
     it("Should revert if recipient address is not provided", async function () {
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -453,7 +453,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     
     it("Should revert if amount is zero", async function () {
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           0, // Invalid amount
@@ -474,7 +474,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     
     it("Should revert if interval is less than 1 day", async function () {
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -495,7 +495,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     
     it("Should revert if interval is more than 365 days", async function () {
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -516,7 +516,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
     
     it("Should revert if service name is empty", async function () {
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -539,7 +539,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const longName = "A".repeat(101); // 101 characters
       
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -562,7 +562,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const longTicker = "A".repeat(11); // 11 characters (max is 10)
       
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -585,7 +585,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       const pastDate = Math.floor(Date.now() / 1000) - ONE_DAY; // Yesterday
       
       await expect(
-        subChainContract.connect(user1).createSubscription(
+        stableRentContract.connect(user1).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -612,7 +612,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       await fundAccountWithPyusd(newUser.address, ethers.parseUnits("1000", 6));
       
       await expect(
-        subChainContract.connect(newUser).createSubscription(
+        stableRentContract.connect(newUser).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           amount,
@@ -639,7 +639,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       
       // Approve the contract
       await pyusdContract.connect(poorUser).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("1000", 6)
       );
       
@@ -652,7 +652,7 @@ describe("SubChainSubscription - Subscription Creation", function () {
       expect(balance).to.equal(ethers.parseUnits("5", 6));
       
       await expect(
-        subChainContract.connect(poorUser).createSubscription(
+        stableRentContract.connect(poorUser).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           ethers.parseUnits("10", 6), // More than balance
@@ -679,12 +679,12 @@ describe("SubChainSubscription - Subscription Creation", function () {
       
       // Approve less than the subscription amount
       await pyusdContract.connect(underApprovedUser).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("5", 6) // Only 5 PYUSD approved
       );
       
       await expect(
-        subChainContract.connect(underApprovedUser).createSubscription(
+        stableRentContract.connect(underApprovedUser).createSubscription(
           NETFLIX_ID, // senderId
           SERVICE_PROVIDER_ID, // recipientId
           ethers.parseUnits("10", 6), // More than allowance

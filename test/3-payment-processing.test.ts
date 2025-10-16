@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SubChainSubscription } from "../typechain-types";
+import { StableRentSubscription } from "../typechain-types";
 import { IERC20Metadata } from "../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { setupTestContracts, ONE_DAY, THIRTY_DAYS, fundAccountWithPyusd, DEFAULT_PROCESSOR_FEE, PROCESSOR_FEE_ID } from "./helpers/setup";
 
-describe("SubChainSubscription - Payment Processing", function () {
+describe("StableRentSubscription - Payment Processing", function () {
   // ========================================
   // CONSTANTS & VARIABLES
   // ========================================
@@ -14,7 +14,7 @@ describe("SubChainSubscription - Payment Processing", function () {
   const SERVICE_PROVIDER_ID = 100;
   let testSubscriptionId: bigint;
   
-  let subChainContract: SubChainSubscription;
+  let stableRentContract: StableRentSubscription;
   let pyusdContract: IERC20Metadata;
   let owner: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
@@ -28,7 +28,7 @@ describe("SubChainSubscription - Payment Processing", function () {
   
   before(async function () {
     // Get contracts and signers
-    ({ subChainContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
+    ({ stableRentContract, pyusdContract, owner, user1, user2, serviceProvider, landlord } = 
       await setupTestContracts());
     
     // Create a test subscription for payment processing tests
@@ -37,12 +37,12 @@ describe("SubChainSubscription - Payment Processing", function () {
     
     // Approve PYUSD
     await pyusdContract.connect(user1).approve(
-      await subChainContract.getAddress(),
+      await stableRentContract.getAddress(),
       ethers.parseUnits("10000", 6)
     );
     
     // Create subscription
-    const tx = await subChainContract.connect(user1).createSubscription(
+    const tx = await stableRentContract.connect(user1).createSubscription(
       NETFLIX_ID, // senderId
       SERVICE_PROVIDER_ID, // recipientId
       amount,
@@ -62,13 +62,13 @@ describe("SubChainSubscription - Payment Processing", function () {
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
       try {
-        return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+        return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
       } catch {
         return false;
       }
     });
     
-    const parsedEvent = subChainContract.interface.parseLog(event!);
+    const parsedEvent = stableRentContract.interface.parseLog(event!);
     testSubscriptionId = parsedEvent!.args[0];
   });
   
@@ -83,10 +83,10 @@ describe("SubChainSubscription - Payment Processing", function () {
       const providerBalanceBefore = await pyusdContract.balanceOf(serviceProvider.address);
       
       // Get subscription state before payment
-      const subBefore = await subChainContract.getSubscription(testSubscriptionId);
+      const subBefore = await stableRentContract.getSubscription(testSubscriptionId);
       
       // Process payment
-      const tx = await subChainContract.processPayment(testSubscriptionId);
+      const tx = await stableRentContract.processPayment(testSubscriptionId);
       const receipt = await tx.wait();
       const block = await ethers.provider.getBlock(receipt!.blockNumber);
       
@@ -95,7 +95,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       const providerBalanceAfter = await pyusdContract.balanceOf(serviceProvider.address);
       
       // Get subscription state after payment
-      const subAfter = await subChainContract.getSubscription(testSubscriptionId);
+      const subAfter = await stableRentContract.getSubscription(testSubscriptionId);
       
       // Verify PYUSD was transferred (amount + processor fee from user, only amount to provider)
       expect(user1BalanceBefore - user1BalanceAfter).to.equal(ethers.parseUnits("50", 6) + DEFAULT_PROCESSOR_FEE);
@@ -108,7 +108,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       expect(subAfter.isActive).to.be.true;
       
       // Verify PaymentProcessed event was emitted
-      await expect(tx).to.emit(subChainContract, "PaymentProcessed")
+      await expect(tx).to.emit(stableRentContract, "PaymentProcessed")
         .withArgs(
           testSubscriptionId,
           user1.address,
@@ -128,12 +128,12 @@ describe("SubChainSubscription - Payment Processing", function () {
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
       await ethers.provider.send("evm_mine", []);
       
-      const subBefore = await subChainContract.getSubscription(testSubscriptionId);
+      const subBefore = await stableRentContract.getSubscription(testSubscriptionId);
       
       // Process second payment
-      await subChainContract.processPayment(testSubscriptionId);
+      await stableRentContract.processPayment(testSubscriptionId);
       
-      const subAfter = await subChainContract.getSubscription(testSubscriptionId);
+      const subAfter = await stableRentContract.getSubscription(testSubscriptionId);
       
       // Payment count should increment
       expect(subAfter.paymentCount).to.equal(2);
@@ -146,11 +146,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       await ethers.provider.send("evm_mine", []);
       
       // User2 (not the subscriber) calls processPayment - should work
-      const tx = await subChainContract.connect(user2).processPayment(testSubscriptionId);
+      const tx = await stableRentContract.connect(user2).processPayment(testSubscriptionId);
       
-      await expect(tx).to.emit(subChainContract, "PaymentProcessed");
+      await expect(tx).to.emit(stableRentContract, "PaymentProcessed");
       
-      const subAfter = await subChainContract.getSubscription(testSubscriptionId);
+      const subAfter = await stableRentContract.getSubscription(testSubscriptionId);
       expect(subAfter.paymentCount).to.equal(3);
     });
     
@@ -159,7 +159,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       const amount = ethers.parseUnits("20", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -179,13 +179,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
       // Fast-forward time
@@ -197,22 +197,22 @@ describe("SubChainSubscription - Payment Processing", function () {
       await pyusdContract.connect(user1).transfer(user2.address, user1Balance);
       
       // Try to process payment - should fail
-      await subChainContract.processPayment(newSubId);
+      await stableRentContract.processPayment(newSubId);
       
-      let sub = await subChainContract.getSubscription(newSubId);
+      let sub = await stableRentContract.getSubscription(newSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       
       // Give user1 PYUSD back
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("1000", 6)
       );
       
       // Process payment successfully
-      await subChainContract.processPayment(newSubId);
+      await stableRentContract.processPayment(newSubId);
       
-      sub = await subChainContract.getSubscription(newSubId);
+      sub = await stableRentContract.getSubscription(newSubId);
       
       // Failed payment count should be reset to 0
       expect(sub.failedPaymentCount).to.equal(0);
@@ -226,7 +226,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       const amount = ethers.parseUnits("10", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -246,24 +246,24 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const newSubId = parsedEvent!.args[0];
       
       // Try to process payment immediately (not due for 30 days)
       await expect(
-        subChainContract.processPayment(newSubId)
+        stableRentContract.processPayment(newSubId)
       ).to.be.revertedWith("Payment not due yet");
     });
     
     it("Should revert if subscription does not exist", async function () {
       await expect(
-        subChainContract.processPayment(99999)
+        stableRentContract.processPayment(99999)
       ).to.be.revertedWith("Subscription does not exist");
     });
     
@@ -272,7 +272,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       const amount = ethers.parseUnits("10", 6);
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -292,17 +292,17 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const cancelSubId = parsedEvent!.args[0];
       
       // Cancel the subscription
-      await subChainContract.connect(user1).cancelSubscription(cancelSubId);
+      await stableRentContract.connect(user1).cancelSubscription(cancelSubId);
       
       // Fast-forward time so payment would be due
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
@@ -310,7 +310,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       
       // Try to process payment on cancelled subscription
       await expect(
-        subChainContract.processPayment(cancelSubId)
+        stableRentContract.processPayment(cancelSubId)
       ).to.be.revertedWith("Subscription is not active");
     });
   });
@@ -321,7 +321,7 @@ describe("SubChainSubscription - Payment Processing", function () {
       const amount = ethers.parseUnits("100", 6); // 100 PYUSD
       const interval = THIRTY_DAYS;
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -341,13 +341,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const insuffBalanceSubId = parsedEvent!.args[0];
       
       // Fast-forward time
@@ -360,10 +360,10 @@ describe("SubChainSubscription - Payment Processing", function () {
       await pyusdContract.connect(user1).transfer(user2.address, amountToRemove);
       
       // Try to process payment - should fail gracefully
-      const paymentTx = await subChainContract.processPayment(insuffBalanceSubId);
+      const paymentTx = await stableRentContract.processPayment(insuffBalanceSubId);
       
       // Verify PaymentFailed event was emitted
-      await expect(paymentTx).to.emit(subChainContract, "PaymentFailed")
+      await expect(paymentTx).to.emit(stableRentContract, "PaymentFailed")
         .withArgs(
           insuffBalanceSubId,
           user1.address,
@@ -376,7 +376,7 @@ describe("SubChainSubscription - Payment Processing", function () {
         );
       
       // Verify subscription state
-      const sub = await subChainContract.getSubscription(insuffBalanceSubId);
+      const sub = await stableRentContract.getSubscription(insuffBalanceSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       expect(sub.paymentCount).to.equal(0);
       expect(sub.isActive).to.be.true; // Still active after first failure
@@ -392,11 +392,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       
       // Approve exactly the amount + processor fee for first payment only
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         amount + DEFAULT_PROCESSOR_FEE
       );
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -416,13 +416,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const insuffAllowanceSubId = parsedEvent!.args[0];
       
       // Fast-forward time
@@ -431,18 +431,18 @@ describe("SubChainSubscription - Payment Processing", function () {
       
       // Revoke allowance
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         0
       );
       
       // Try to process payment - should fail gracefully
-      const paymentTx = await subChainContract.processPayment(insuffAllowanceSubId);
+      const paymentTx = await stableRentContract.processPayment(insuffAllowanceSubId);
       
       // Verify PaymentFailed event was emitted
-      await expect(paymentTx).to.emit(subChainContract, "PaymentFailed");
+      await expect(paymentTx).to.emit(stableRentContract, "PaymentFailed");
       
       // Verify subscription state
-      const sub = await subChainContract.getSubscription(insuffAllowanceSubId);
+      const sub = await stableRentContract.getSubscription(insuffAllowanceSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       expect(sub.paymentCount).to.equal(0);
       expect(sub.isActive).to.be.true;
@@ -456,11 +456,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Re-fund and re-approve PYUSD (may have been depleted in previous tests)
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("10000", 6)
       );
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -480,13 +480,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const failureSubId = parsedEvent!.args[0];
       
       // Remove user's PYUSD to cause failures
@@ -496,16 +496,16 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Fast-forward and process - failure 1
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
       await ethers.provider.send("evm_mine", []);
-      await subChainContract.processPayment(failureSubId);
+      await stableRentContract.processPayment(failureSubId);
       
-      let sub = await subChainContract.getSubscription(failureSubId);
+      let sub = await stableRentContract.getSubscription(failureSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       expect(sub.isActive).to.be.true;
       
       // Process again without fixing - failure 2
-      await subChainContract.processPayment(failureSubId);
+      await stableRentContract.processPayment(failureSubId);
       
-      sub = await subChainContract.getSubscription(failureSubId);
+      sub = await stableRentContract.getSubscription(failureSubId);
       expect(sub.failedPaymentCount).to.equal(2);
       expect(sub.isActive).to.be.true;
     });
@@ -518,11 +518,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Re-fund and re-approve PYUSD (may have been depleted in previous tests)
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("10000", 6)
       );
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -542,13 +542,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const autoCancelSubId = parsedEvent!.args[0];
       
       // Remove user's PYUSD to cause failures
@@ -558,24 +558,24 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Fast-forward and process - failure 1
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
       await ethers.provider.send("evm_mine", []);
-      await subChainContract.processPayment(autoCancelSubId);
+      await stableRentContract.processPayment(autoCancelSubId);
       
-      let sub = await subChainContract.getSubscription(autoCancelSubId);
+      let sub = await stableRentContract.getSubscription(autoCancelSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       expect(sub.isActive).to.be.true;
       
       // Process again - failure 2
-      await subChainContract.processPayment(autoCancelSubId);
+      await stableRentContract.processPayment(autoCancelSubId);
       
-      sub = await subChainContract.getSubscription(autoCancelSubId);
+      sub = await stableRentContract.getSubscription(autoCancelSubId);
       expect(sub.failedPaymentCount).to.equal(2);
       expect(sub.isActive).to.be.true;
       
       // Process third time - failure 3, should auto-cancel
-      const thirdAttempt = await subChainContract.processPayment(autoCancelSubId);
+      const thirdAttempt = await stableRentContract.processPayment(autoCancelSubId);
       
       // Verify SubscriptionCancelled event was emitted with correct reason
-      await expect(thirdAttempt).to.emit(subChainContract, "SubscriptionCancelled")
+      await expect(thirdAttempt).to.emit(stableRentContract, "SubscriptionCancelled")
         .withArgs(
           autoCancelSubId,
           user1.address,
@@ -586,7 +586,7 @@ describe("SubChainSubscription - Payment Processing", function () {
         );
       
       // Verify subscription is inactive
-      sub = await subChainContract.getSubscription(autoCancelSubId);
+      sub = await stableRentContract.getSubscription(autoCancelSubId);
       expect(sub.isActive).to.be.false;
       expect(sub.failedPaymentCount).to.equal(3);
     });
@@ -599,11 +599,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Re-fund and re-approve PYUSD (may have been depleted in previous tests)
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("10000", 6)
       );
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -623,13 +623,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const verifySubId = parsedEvent!.args[0];
       
       // Remove PYUSD
@@ -640,20 +640,20 @@ describe("SubChainSubscription - Payment Processing", function () {
       await ethers.provider.send("evm_increaseTime", [THIRTY_DAYS]);
       await ethers.provider.send("evm_mine", []);
       
-      await subChainContract.processPayment(verifySubId); // Failure 1
-      await subChainContract.processPayment(verifySubId); // Failure 2
-      await subChainContract.processPayment(verifySubId); // Failure 3 & auto-cancel
+      await stableRentContract.processPayment(verifySubId); // Failure 1
+      await stableRentContract.processPayment(verifySubId); // Failure 2
+      await stableRentContract.processPayment(verifySubId); // Failure 3 & auto-cancel
       
       // Give user PYUSD back
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("1000", 6)
       );
       
       // Try to process payment on cancelled subscription - should revert
       await expect(
-        subChainContract.processPayment(verifySubId)
+        stableRentContract.processPayment(verifySubId)
       ).to.be.revertedWith("Subscription is not active");
     });
     
@@ -665,11 +665,11 @@ describe("SubChainSubscription - Payment Processing", function () {
       // Re-fund and re-approve PYUSD (may have been depleted in previous tests)
       await fundAccountWithPyusd(user1.address, ethers.parseUnits("1000", 6));
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         ethers.parseUnits("10000", 6)
       );
       
-      const tx = await subChainContract.connect(user1).createSubscription(
+      const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
         SERVICE_PROVIDER_ID, // recipientId
         amount,
@@ -689,13 +689,13 @@ describe("SubChainSubscription - Payment Processing", function () {
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => {
         try {
-          return subChainContract.interface.parseLog(log)?.name === "SubscriptionCreated";
+          return stableRentContract.interface.parseLog(log)?.name === "SubscriptionCreated";
         } catch {
           return false;
         }
       });
       
-      const parsedEvent = subChainContract.interface.parseLog(event!);
+      const parsedEvent = stableRentContract.interface.parseLog(event!);
       const allowanceSubId = parsedEvent!.args[0];
       
       // Fast-forward time
@@ -704,29 +704,29 @@ describe("SubChainSubscription - Payment Processing", function () {
       
       // Revoke allowance (user still has balance, but no allowance)
       await pyusdContract.connect(user1).approve(
-        await subChainContract.getAddress(),
+        await stableRentContract.getAddress(),
         0
       );
       
       // First payment failure due to insufficient allowance
-      await subChainContract.processPayment(allowanceSubId);
+      await stableRentContract.processPayment(allowanceSubId);
       
-      let sub = await subChainContract.getSubscription(allowanceSubId);
+      let sub = await stableRentContract.getSubscription(allowanceSubId);
       expect(sub.failedPaymentCount).to.equal(1);
       expect(sub.isActive).to.be.true;
       
       // Second payment failure
-      await subChainContract.processPayment(allowanceSubId);
+      await stableRentContract.processPayment(allowanceSubId);
       
-      sub = await subChainContract.getSubscription(allowanceSubId);
+      sub = await stableRentContract.getSubscription(allowanceSubId);
       expect(sub.failedPaymentCount).to.equal(2);
       expect(sub.isActive).to.be.true;
       
       // Third payment failure - should auto-cancel
-      const thirdAttempt = await subChainContract.processPayment(allowanceSubId);
+      const thirdAttempt = await stableRentContract.processPayment(allowanceSubId);
       
       // Verify SubscriptionCancelled event was emitted with correct reason
-      await expect(thirdAttempt).to.emit(subChainContract, "SubscriptionCancelled")
+      await expect(thirdAttempt).to.emit(stableRentContract, "SubscriptionCancelled")
         .withArgs(
           allowanceSubId,
           user1.address,
@@ -737,7 +737,7 @@ describe("SubChainSubscription - Payment Processing", function () {
         );
       
       // Verify subscription is inactive
-      sub = await subChainContract.getSubscription(allowanceSubId);
+      sub = await stableRentContract.getSubscription(allowanceSubId);
       expect(sub.isActive).to.be.false;
       expect(sub.failedPaymentCount).to.equal(3);
     });

@@ -1,13 +1,13 @@
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import type { Address } from 'viem';
 import { CONTRACTS } from '../lib/constants';
-import { SubChainSubscriptionABI, ERC20_ABI } from '../lib/abi';
+import { StableRentSubscriptionABI, ERC20_ABI } from '../lib/abi';
 import { parsePYUSD } from '../lib/utils';
 
 /**
- * Hook for interacting with SubChainSubscription contract
+ * Hook for interacting with StableRentSubscription contract
  */
-export const useSubChainContract = () => {
+export const useStableRentContract = () => {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -25,8 +25,8 @@ export const useSubChainContract = () => {
   ) => {
     const amountWei = parsePYUSD(amount);
     return writeContract({
-      address: CONTRACTS.SubChainSubscription as Address,
-      abi: SubChainSubscriptionABI,
+      address: CONTRACTS.StableRentSubscription as Address,
+      abi: StableRentSubscriptionABI,
       functionName: 'createSubscription',
       args: [
         BigInt(serviceProviderId),
@@ -43,8 +43,8 @@ export const useSubChainContract = () => {
 
   const processPayment = async (subscriptionId: bigint) => {
     return writeContract({
-      address: CONTRACTS.SubChainSubscription as Address,
-      abi: SubChainSubscriptionABI,
+      address: CONTRACTS.StableRentSubscription as Address,
+      abi: StableRentSubscriptionABI,
       functionName: 'processPayment',
       args: [subscriptionId],
     });
@@ -52,8 +52,8 @@ export const useSubChainContract = () => {
 
   const cancelSubscription = async (subscriptionId: bigint) => {
     return writeContract({
-      address: CONTRACTS.SubChainSubscription as Address,
-      abi: SubChainSubscriptionABI,
+      address: CONTRACTS.StableRentSubscription as Address,
+      abi: StableRentSubscriptionABI,
       functionName: 'cancelSubscription',
       args: [subscriptionId],
     });
@@ -76,8 +76,8 @@ export const useSubChainContract = () => {
  */
 export const useSubscription = (subscriptionId: bigint | undefined) => {
   const { data, isLoading, error, refetch } = useReadContract({
-    address: CONTRACTS.SubChainSubscription as Address,
-    abi: SubChainSubscriptionABI,
+    address: CONTRACTS.StableRentSubscription as Address,
+    abi: StableRentSubscriptionABI,
     functionName: 'getSubscription',
     args: subscriptionId !== undefined ? [subscriptionId] : undefined,
     query: {
@@ -98,8 +98,8 @@ export const useSubscription = (subscriptionId: bigint | undefined) => {
  */
 export const useUserSubscriptions = (userAddress: Address | undefined) => {
   const { data, isLoading, error, refetch } = useReadContract({
-    address: CONTRACTS.SubChainSubscription as Address,
-    abi: SubChainSubscriptionABI,
+    address: CONTRACTS.StableRentSubscription as Address,
+    abi: StableRentSubscriptionABI,
     functionName: 'getUserSubscriptions',
     args: userAddress ? [userAddress] : undefined,
     query: {

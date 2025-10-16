@@ -1,12 +1,11 @@
 import { useAccount } from 'wagmi';
-import { useEnvioUserPayments } from '../hooks/useEnvio';
+import { useEnvioAllUserPayments } from '../hooks/useEnvio';
 import { SkeletonList } from '../components/Skeleton';
 import { formatPYUSD, formatDateTime, getEtherscanLink } from '../lib/utils';
-import { PYUSD_SYMBOL } from '../lib/constants';
 
 export const PaymentHistory: React.FC = () => {
   const { address, isConnected } = useAccount();
-  const { payments, loading } = useEnvioUserPayments(address);
+  const { payments, loading } = useEnvioAllUserPayments(address);
 
   if (!isConnected) {
     return (
@@ -69,26 +68,53 @@ export const PaymentHistory: React.FC = () => {
     }
   };
 
+  const getDirectionBadge = (direction: 'sent' | 'received') => {
+    if (direction === 'sent') {
+      return (
+        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+          Sent
+        </span>
+      );
+    }
+    return (
+      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+        </svg>
+        Received
+      </span>
+    );
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-brand-navy mb-6">Payment History</h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card">
           <div className="text-sm text-gray-600 mb-1">Total Payments</div>
           <div className="text-3xl font-bold text-brand-navy">{payments.length}</div>
         </div>
         <div className="card">
-          <div className="text-sm text-gray-600 mb-1">Successful</div>
-          <div className="text-3xl font-bold text-green-600">
-            {payments.filter(p => p.status.toLowerCase() === 'success').length}
+          <div className="text-sm text-gray-600 mb-1">Sent</div>
+          <div className="text-3xl font-bold text-blue-600">
+            {payments.filter(p => p.direction === 'sent').length}
           </div>
         </div>
         <div className="card">
-          <div className="text-sm text-gray-600 mb-1">Failed</div>
-          <div className="text-3xl font-bold text-red-600">
-            {payments.filter(p => p.status.toLowerCase() === 'failed').length}
+          <div className="text-sm text-gray-600 mb-1">Received</div>
+          <div className="text-3xl font-bold text-purple-600">
+            {payments.filter(p => p.direction === 'received').length}
+          </div>
+        </div>
+        <div className="card">
+          <div className="text-sm text-gray-600 mb-1">Successful</div>
+          <div className="text-3xl font-bold text-green-600">
+            {payments.filter(p => p.status.toLowerCase() === 'success').length}
           </div>
         </div>
       </div>
@@ -103,7 +129,10 @@ export const PaymentHistory: React.FC = () => {
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subscription
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
@@ -122,24 +151,31 @@ export const PaymentHistory: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDateTime(parseInt(payment.timestamp))}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {payment.subscriptionId.slice(0, 8)}...
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getDirectionBadge(payment.direction)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                    {payment.serviceName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {formatPYUSD(BigInt(payment.amount))} {PYUSD_SYMBOL}
+                    {formatPYUSD(BigInt(payment.amount))} <span className="text-xs text-gray-500">PYUSD</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(payment.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <a
-                      href={getEtherscanLink(payment.transactionHash, 'tx')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-teal hover:text-brand-teal-dark font-medium"
-                    >
-                      {payment.transactionHash.slice(0, 10)}...
-                    </a>
+                    {payment.transactionHash ? (
+                      <a
+                        href={getEtherscanLink(payment.transactionHash, 'tx')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-teal hover:text-brand-teal-dark font-medium"
+                      >
+                        {payment.transactionHash.slice(0, 10)}...
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </td>
                 </tr>
               ))}

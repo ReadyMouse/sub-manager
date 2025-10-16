@@ -18,8 +18,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title SubChainSubscription
- * @author SubChain Team
+ * @title StableRentSubscription
+ * @author StableRent Team
  * @notice A decentralized subscription management protocol for PYUSD recurring payments
  * @dev This contract enables "set and forget" crypto subscriptions using the ERC-20 allowance pattern
  * 
@@ -31,13 +31,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Emits events for Envio indexer to track subscription lifecycle
  * 
  * FLOW:
- * 1. User approves SubChain contract to spend PYUSD (one-time)
+ * 1. User approves StableRent contract to spend PYUSD (one-time)
  * 2. User calls createSubscription() to start subscription
  * 3. Service provider/bot calls processPayment() when billing is due
  * 4. Contract pulls payment from user wallet via transferFrom() and sends to recipient
  * 5. User can cancel anytime via cancelSubscription()
  */
-contract SubChainSubscription is ReentrancyGuard, Ownable {
+contract StableRentSubscription is ReentrancyGuard, Ownable {
     // ========================================
     // ENUMS & STRUCTS
     // ========================================
@@ -656,3 +656,4 @@ contract SubChainSubscription is ReentrancyGuard, Ownable {
  * Coding Fortune Cookie: 
  * May your children grieve your death and never the reverse.
  */
+

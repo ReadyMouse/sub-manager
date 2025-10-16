@@ -1,6 +1,6 @@
 import { useAccount } from 'wagmi';
 import { useEnvioUserSubscriptions, parseEnvioSubscription } from '../hooks/useEnvio';
-import { useSubChainContract } from '../hooks/useContract';
+import { useStableRentContract } from '../hooks/useContract';
 import { SubscriptionCard } from '../components/SubscriptionCard';
 import { BalanceWarning } from '../components/BalanceWarning';
 import { SkeletonGrid } from '../components/Skeleton';
@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 export const MySubscriptions: React.FC = () => {
   const { address, isConnected } = useAccount();
   const { subscriptions, loading, refetch } = useEnvioUserSubscriptions(address);
-  const { cancelSubscription } = useSubChainContract();
+  const { cancelSubscription } = useStableRentContract();
   const { balance } = usePYUSDBalance(address);
   const toast = useToast();
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
-import { useSubChainContract, usePYUSD, usePYUSDAllowance } from '../hooks/useContract';
+import { useStableRentContract, usePYUSD, usePYUSDAllowance } from '../hooks/useContract';
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
@@ -10,11 +10,11 @@ import type { Address } from 'viem';
 export const CreateSubscription: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
-  const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess } = useSubChainContract();
+  const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess } = usePYUSD();
   const { refetch: refetchAllowance } = usePYUSDAllowance(
     address,
-    CONTRACTS.SubChainSubscription as Address
+    CONTRACTS.StableRentSubscription as Address
   );
   const toast = useToast();
 
@@ -55,7 +55,7 @@ export const CreateSubscription: React.FC = () => {
 
     try {
       const amount = formData.amount;
-      await approve(CONTRACTS.SubChainSubscription as Address, amount);
+      await approve(CONTRACTS.StableRentSubscription as Address, amount);
     } catch (error) {
       console.error('Approve failed:', error);
       toast.error('Error', 'Failed to approve PYUSD');

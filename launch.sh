@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # ============================================================================
-# SubChain Launch Script
+# StableRent Launch Script
 # ============================================================================
-# This script launches SubChain services:
+# This script launches StableRent services:
 # - Local Hardhat blockchain (optional)
 # - Frontend application
 # ============================================================================
@@ -39,7 +39,7 @@ cleanup() {
 clear
 echo ""
 echo "============================================================================"
-echo "🚀 SubChain Service Launcher"
+echo "🚀 StableRent Service Launcher"
 echo "============================================================================"
 echo ""
 echo "This script will start the following services:"
