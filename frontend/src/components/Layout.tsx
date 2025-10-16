@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { WalletConnect } from './WalletConnect';
 import homesImage from '../assets/homes.png';
+import paypalLogo from '../assets/paypal_logo.png';
 
 interface LayoutProps {
   children: ReactNode;
@@ -33,9 +34,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-brand-navy to-brand-teal text-white px-3 py-2 rounded-xl font-bold text-xl shadow-medium">
-                SR
-              </div>
+              <img 
+                src={paypalLogo} 
+                alt="PayPal" 
+                className="h-8 w-auto"
+              />
               <div>
                 <h1 className="text-xl font-bold text-brand-navy">StableRent</h1>
                 <p className="text-xs text-brand-teal font-medium">PYUSD Rent Payments</p>
@@ -105,6 +108,42 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       </div>
 
+      {/* How it Works Section */}
+      <section className="bg-white py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-brand-navy mb-4">How StableRent Works</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Simple, secure, and automated rent payments using PayPal's PYUSD stablecoin
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">1</div>
+              <h3 className="text-xl font-bold text-brand-navy mb-3">Connect Your Wallet</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Link your crypto wallet containing PYUSD tokens
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">2</div>
+              <h3 className="text-xl font-bold text-brand-navy mb-3">Set Up Rent Payment</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Configure automated rent payments to your landlord's wallet address
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-brand-teal to-brand-teal-dark text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-medium">3</div>
+              <h3 className="text-xl font-bold text-brand-navy mb-3">Automatic Payments</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Rent is paid automatically each month - never miss a payment
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Main Content */}
       <main className="px-4 py-8">
         <div className="max-w-7xl mx-auto">
@@ -115,17 +154,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Footer Info */}
       <footer className="bg-gradient-to-br from-brand-navy to-brand-teal text-white mt-16">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-bold text-lg mb-3">How it works</h3>
-              <p className="text-sm opacity-95 leading-relaxed">
-                Approve PYUSD → Automatic wallet-to-wallet payments → Rent paid on time
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="font-bold text-lg mb-3">StableRent</h3>
               <p className="text-sm opacity-95 leading-relaxed">
-                Professional crypto rent payment platform using PayPal's PYUSD stablecoin.
+                Professional crypto rent payment platform using PayPal's PYUSD stablecoin for automated, transparent rent transactions.
               </p>
             </div>
             <div>
