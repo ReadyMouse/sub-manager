@@ -79,16 +79,18 @@ event_handlers:
       subscription.nextPaymentDue = event.params.nextPaymentDue
       subscription.failedPaymentCount = 0  // Reset on successful payment
       
-      // Track payment history (including processor fee)
+      // Track payment history (including processor fee and service name)
       payment.id = event.transactionHash + "-" + event.logIndex
       payment.subscriptionId = event.params.subscriptionId
       payment.subscriber = event.params.subscriber
+      payment.serviceName = subscription.serviceName  // Get from subscription
       payment.amount = event.params.amount
       payment.processorFee = event.params.processorFee
       payment.processorFeeAddress = event.params.processorFeeAddress
       payment.timestamp = event.params.timestamp
       payment.paymentNumber = event.params.paymentCount
       payment.status = "success"
+      payment.transactionHash = event.transactionHash
       
   - event: PaymentFailed
     handler: |
@@ -180,12 +182,14 @@ schema:
         id: ID!
         subscriptionId: BigInt!
         subscriber: Address!
+        serviceName: String!
         amount: BigInt!
         processorFee: BigInt!
         processorFeeAddress: Address!
         timestamp: BigInt!
         paymentNumber: BigInt!
         status: String!
+        transactionHash: String!
         
     FailedPayment:
       fields:
