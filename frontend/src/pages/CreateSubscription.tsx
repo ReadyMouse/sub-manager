@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
-import { useStableRentContract, usePYUSD, usePYUSDAllowance } from '../hooks/useContract';
+import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } from '../hooks/useContract';
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
@@ -11,11 +11,12 @@ export const CreateSubscription: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
   const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess } = useStableRentContract();
-  const { approve, isPending: isApproving, isSuccess: isApproveSuccess } = usePYUSD();
-  const { refetch: refetchAllowance } = usePYUSDAllowance(
+  const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
+  const { allowance, refetch: refetchAllowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
   );
+  const { balance: pyusdBalance, refetch: refetchBalance } = usePYUSDBalance(address);
   const toast = useToast();
 
   const [isApproved, setIsApproved] = useState(false);
@@ -166,8 +167,7 @@ export const CreateSubscription: React.FC = () => {
 
     try {
       // Check if identifier is a wallet address (starts with 0x and 42 chars long)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const isWalletAddress = /^0x[a-fA-F0-9]{40}$/.test(identifier.trim());
+      // const isWalletAddress = /^0x[a-fA-F0-9]{40}$/.test(identifier.trim());
       
       // TODO: Replace with actual backend API call
       // Backend should detect wallet addresses vs email/username based on format
@@ -204,11 +204,41 @@ export const CreateSubscription: React.FC = () => {
   // Handle approve success
   useEffect(() => {
     if (isApproveSuccess) {
-      toast.success('Success', 'PYUSD allowance approved');
+      toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       refetchAllowance();
+      refetchBalance();
       setIsApproved(true);
     }
-  }, [isApproveSuccess, toast, refetchAllowance]);
+  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance]);
+
+  // Handle approve error
+  useEffect(() => {
+    if (approveError) {
+      console.error('Approve error:', approveError);
+      toast.error('Approval Failed', approveError.message || 'Failed to approve PYUSD allowance. Please try again.');
+    }
+  }, [approveError, toast]);
+
+  // Check if allowance is already sufficient
+  useEffect(() => {
+    if (allowance && formData.amount) {
+      const requiredAllowance = allowanceType === 'calculated' 
+        ? calculateTotalAllowance().total 
+        : customAllowance;
+      
+      if (requiredAllowance && parseFloat(requiredAllowance) > 0) {
+        // Convert allowance from wei (6 decimals for PYUSD) to USD
+        const allowanceInUSD = Number(allowance) / 1_000_000;
+        const requiredInUSD = parseFloat(requiredAllowance);
+        
+        if (allowanceInUSD >= requiredInUSD) {
+          setIsApproved(true);
+        } else {
+          setIsApproved(false);
+        }
+      }
+    }
+  }, [allowance, formData.amount, allowanceType, customAllowance]);
 
   // Handle create success
   useEffect(() => {
@@ -278,10 +308,25 @@ export const CreateSubscription: React.FC = () => {
         return;
       }
 
+      // Check user has sufficient PYUSD balance
+      if (pyusdBalance !== undefined) {
+        const balanceInUSD = Number(pyusdBalance) / 1_000_000;
+        const minRequired = minAllowance;
+        
+        if (balanceInUSD < minRequired) {
+          toast.error(
+            'Insufficient Balance',
+            `You need at least $${minRequired.toFixed(2)} PYUSD. Current balance: $${balanceInUSD.toFixed(2)}`
+          );
+          return;
+        }
+      }
+
+      toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
       await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
     } catch (error) {
       console.error('Approve failed:', error);
-      toast.error('Error', 'Failed to approve payment');
+      // Error is already handled by useEffect hook
     }
   };
 
@@ -787,22 +832,59 @@ export const CreateSubscription: React.FC = () => {
         <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
           <h2 className="text-xl font-bold text-brand-navy mb-6">Payment Approval</h2>
           <div className="space-y-4">
+            {/* Balance and Allowance Info */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Your PYUSD Balance:</span>
+                <span className="font-semibold text-gray-900">
+                  {pyusdBalance !== undefined 
+                    ? `$${(Number(pyusdBalance) / 1_000_000).toFixed(2)}` 
+                    : 'Loading...'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Current Allowance:</span>
+                <span className="font-semibold text-gray-900">
+                  {allowance !== undefined 
+                    ? `$${(Number(allowance) / 1_000_000).toFixed(2)}` 
+                    : 'Loading...'}
+                </span>
+              </div>
+            </div>
+
             {isApproved ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-green-900">Approved ✓</p>
+                    <p className="text-sm text-green-700">
+                      {allowanceType === 'calculated' 
+                        ? `Allowance approved for ${calculateTotalAllowance().paymentCount} payments ($${calculateTotalAllowance().total} total)`
+                        : `Custom allowance of $${customAllowance} approved`
+                      }
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900">Approved</p>
-                  <p className="text-sm text-green-700">
-                    {allowanceType === 'calculated' 
-                      ? `Allowance approved for ${calculateTotalAllowance().paymentCount} payments ($${calculateTotalAllowance().total} total)`
-                      : `Custom allowance of $${customAllowance} approved`
-                    }
-                  </p>
-                </div>
+                {approveHash && (
+                  <div className="pt-2 border-t border-green-200">
+                    <a 
+                      href={`https://etherscan.io/tx/${approveHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-700 hover:text-green-900 flex items-center gap-1"
+                    >
+                      View transaction on Etherscan
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -908,10 +990,35 @@ export const CreateSubscription: React.FC = () => {
                   type="button"
                   onClick={handleApprove}
                   disabled={isApproving || !formData.amount || (allowanceType === 'custom' && !customAllowance)}
-                  className="btn-primary w-full"
+                  className="btn-primary w-full relative"
                 >
-                  {isApproving ? 'Approving...' : `Approve ${allowanceType === 'calculated' ? '$' + calculateTotalAllowance().total : customAllowance ? '$' + customAllowance : 'Allowance'}`}
+                  {isApproving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Waiting for signature...</span>
+                    </span>
+                  ) : (
+                    `Approve ${allowanceType === 'calculated' ? '$' + calculateTotalAllowance().total : customAllowance ? '$' + customAllowance : 'Allowance'}`
+                  )}
                 </button>
+
+                {/* Wallet instruction during approval */}
+                {isApproving && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2 animate-pulse">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">Check Your Wallet</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Please confirm the transaction in your wallet to approve the PYUSD spending allowance.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

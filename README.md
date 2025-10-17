@@ -50,6 +50,26 @@ Rent gets paid
 
 ## 🚀 Quick Start
 
+### Local Development (Testing Frontend + Backend + Contracts)
+
+**One command to rule them all:**
+
+```bash
+./launch.sh
+# Choose option 1: Everything (Backend + Hardhat + Frontend)
+```
+
+This will:
+- ✅ Start local Hardhat blockchain (instant transactions, zero gas fees!)
+- ✅ **Automatically deploy contracts**
+- ✅ **Automatically configure frontend** with contract address
+- ✅ Start backend API
+- ✅ Start frontend application
+
+Then follow the setup guide: **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)**
+
+### First Time Setup
+
 Run the automated setup script to install dependencies and configure your environment:
 
 ```bash
@@ -132,6 +152,9 @@ Cursor + Claude AI was used to support development.
 - Limits on the allowance approval (is there a regulation limit? what's reasonable?)
 - More flexible scheduling options (every 3 weeks, first and fifteenth, etc)
 - Internal encrypted messaging system. (Propoerty owner requests of resident to see account balances, resident can approve this requests)
+- Gas optimizations on contract (>$100 to sign the allowance)
+- PayPal database search (ask for Username -> wallet address)
+- Signing transcation also needs to be first month (not just a sign) ETH handling
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"

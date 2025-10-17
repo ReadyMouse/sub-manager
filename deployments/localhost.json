@@ -1,0 +1,10 @@
+{
+  "network": "localhost",
+  "chainId": "1",
+  "contracts": {
+    "StableRentSubscription": "0xF8e9E6B341d897Fce3bD9FF426aBaBE4c52ce288",
+    "PYUSD": "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8"
+  },
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "timestamp": "2025-10-17T18:46:06.381Z"
+}

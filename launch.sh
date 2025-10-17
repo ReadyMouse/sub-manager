@@ -178,6 +178,35 @@ if [ "$START_HARDHAT" = true ]; then
     echo -e "${CYAN}       Available test accounts:${NC}"
     grep "Account #" logs/hardhat.log | head -3 2>/dev/null || echo "       (check logs/hardhat.log)"
     echo ""
+    
+    # Deploy contracts automatically
+    echo -e "${BLUE}       Deploying contracts to local network...${NC}"
+    sleep 2  # Give Hardhat a moment to fully initialize
+    
+    if npx hardhat run scripts/deploy.ts --network localhost > logs/deployment.log 2>&1; then
+        echo -e "${GREEN}       ✅ Contracts deployed successfully${NC}"
+        
+        # Extract contract address from deployment log
+        CONTRACT_ADDRESS=$(grep "VITE_CONTRACT_ADDRESS=" logs/deployment.log | cut -d'=' -f2)
+        
+        if [ -n "$CONTRACT_ADDRESS" ]; then
+            echo -e "${CYAN}       📍 StableRent Contract: $CONTRACT_ADDRESS${NC}"
+            
+            # Update frontend .env if it exists, otherwise create it
+            if [ -f "frontend/.env" ]; then
+                # Remove old contract address if exists
+                grep -v "VITE_CONTRACT_ADDRESS=" frontend/.env > frontend/.env.tmp
+                mv frontend/.env.tmp frontend/.env
+            fi
+            
+            # Append new contract address
+            echo "VITE_CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> frontend/.env
+            echo -e "${GREEN}       ✅ Frontend .env updated with contract address${NC}"
+        fi
+    else
+        echo -e "${YELLOW}       ⚠️  Contract deployment failed - check logs/deployment.log${NC}"
+    fi
+    echo ""
 fi
 
 # ============================================================================
@@ -250,9 +279,20 @@ fi
 if [ "$START_HARDHAT" = true ]; then
     echo -e "${MAGENTA}🔗 Hardhat Blockchain:${NC}"
     echo -e "   URL: http://localhost:8545"
+    echo -e "   Chain ID: 31337"
     echo -e "   Logs: logs/hardhat.log"
+    echo -e "   Deployment: logs/deployment.log"
     echo -e "   PID: $HARDHAT_PID"
     echo ""
+    
+    if [ -f "deployments/localhost.json" ]; then
+        echo -e "   ${CYAN}Deployed Contracts:${NC}"
+        CONTRACT_ADDR=$(cat deployments/localhost.json | grep -o '"StableRentSubscription": "[^"]*"' | cut -d'"' -f4)
+        if [ -n "$CONTRACT_ADDR" ]; then
+            echo -e "   • StableRent: $CONTRACT_ADDR"
+        fi
+        echo ""
+    fi
 fi
 
 if [ "$START_FRONTEND" = true ] && [ -d "frontend" ]; then
@@ -278,8 +318,11 @@ echo "==========================================================================
 echo ""
 
 if [ "$START_HARDHAT" = true ]; then
-    echo -e "${BLUE}Deploy contracts to local network:${NC}"
-    echo "  npx hardhat run scripts/deploy.ts --network localhost"
+    echo -e "${BLUE}Connect MetaMask to local network:${NC}"
+    echo "  Network Name: Hardhat Local"
+    echo "  RPC URL: http://localhost:8545"
+    echo "  Chain ID: 31337"
+    echo "  Import Account #0 private key (see logs/hardhat.log)"
     echo ""
     
     echo -e "${BLUE}Run tests:${NC}"
@@ -289,17 +332,22 @@ if [ "$START_HARDHAT" = true ]; then
     echo -e "${BLUE}Explore PYUSD:${NC}"
     echo "  npm run explore"
     echo ""
+    
+    echo -e "${BLUE}Redeploy contracts (if needed):${NC}"
+    echo "  npx hardhat run scripts/deploy.ts --network localhost"
+    echo ""
 fi
 
 echo -e "${BLUE}View logs:${NC}"
 if [ "$START_BACKEND" = true ]; then
-    echo "  tail -f logs/backend.log   # Backend API"
+    echo "  tail -f logs/backend.log      # Backend API"
 fi
 if [ "$START_HARDHAT" = true ]; then
-    echo "  tail -f logs/hardhat.log   # Hardhat blockchain"
+    echo "  tail -f logs/hardhat.log      # Hardhat blockchain"
+    echo "  tail -f logs/deployment.log   # Contract deployment"
 fi
 if [ "$START_FRONTEND" = true ]; then
-    echo "  tail -f logs/frontend.log  # Frontend"
+    echo "  tail -f logs/frontend.log     # Frontend"
 fi
 echo ""
 

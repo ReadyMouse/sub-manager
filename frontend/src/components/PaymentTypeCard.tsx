@@ -5,6 +5,7 @@ interface PaymentTypeCardProps {
   features: string[];
   icon: string;
   gradient: string;
+  onClick?: () => void;
 }
 
 export const PaymentTypeCard: React.FC<PaymentTypeCardProps> = ({
@@ -14,9 +15,13 @@ export const PaymentTypeCard: React.FC<PaymentTypeCardProps> = ({
   features,
   icon,
   gradient,
+  onClick,
 }) => {
   return (
-    <div className={`card hover:shadow-strong transition-all duration-300 border-2 ${type === 'paypal' ? 'border-brand-teal/30' : 'border-brand-sage/30'}`}>
+    <div 
+      onClick={onClick}
+      className={`card hover:shadow-strong transition-all duration-300 border-2 ${type === 'paypal' ? 'border-brand-teal/30' : 'border-brand-sage/30'} ${onClick ? 'cursor-pointer hover:scale-[1.02]' : ''}`}
+    >
       {/* Header with gradient */}
       <div className={`${gradient} rounded-t-xl -mt-6 -mx-6 px-6 py-8 mb-6 shadow-medium`}>
         <div className="flex items-center gap-4 mb-3">

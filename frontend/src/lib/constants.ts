@@ -1,20 +1,24 @@
 // Contract addresses
 export const CONTRACTS = {
-  // TODO: Update with deployed contract address
+  // Updated by deployment script when using local Hardhat
   StableRentSubscription: import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000',
-  // PYUSD token address (Ethereum Mainnet)
-  PYUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+  // PYUSD token address (Ethereum Mainnet & Hardhat Fork)
+  PYUSD: import.meta.env.VITE_PYUSD_ADDRESS || '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
 } as const;
 
 // Network configuration
 export const SUPPORTED_CHAINS = {
   mainnet: 1,
   sepolia: 11155111,
+  localhost: 31337,  // Hardhat local network
 } as const;
 
-export const DEFAULT_CHAIN = import.meta.env.VITE_DEFAULT_CHAIN === 'mainnet' 
-  ? SUPPORTED_CHAINS.mainnet 
-  : SUPPORTED_CHAINS.sepolia;
+export const DEFAULT_CHAIN = 
+  import.meta.env.VITE_DEFAULT_CHAIN === 'mainnet' 
+    ? SUPPORTED_CHAINS.mainnet 
+    : import.meta.env.VITE_DEFAULT_CHAIN === 'localhost'
+    ? SUPPORTED_CHAINS.localhost
+    : SUPPORTED_CHAINS.sepolia;
 
 // Envio GraphQL endpoint
 export const ENVIO_GRAPHQL_ENDPOINT = 
