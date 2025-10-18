@@ -245,6 +245,41 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/users/lookup
+   * Look up recipient by email for subscription creation
+   */
+  static async lookupRecipient(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, currency = 'PYUSD' } = req.query;
+
+      if (!email || typeof email !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'Email is required',
+        });
+        return;
+      }
+
+      const recipient = await UserService.lookupRecipientByEmail(email, currency as string);
+
+      if (!recipient) {
+        res.status(404).json({
+          success: false,
+          error: 'Recipient not found. Please check the email address.',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: recipient,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default UserController;

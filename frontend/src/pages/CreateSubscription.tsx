@@ -5,6 +5,7 @@ import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } f
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
+import { apiClient } from '../lib/api';
 import type { Address } from 'viem';
 
 export const CreateSubscription: React.FC = () => {
@@ -166,32 +167,31 @@ export const CreateSubscription: React.FC = () => {
     setRecipientLookupError(null);
 
     try {
-      // Check if identifier is a wallet address (starts with 0x and 42 chars long)
-      // const isWalletAddress = /^0x[a-fA-F0-9]{40}$/.test(identifier.trim());
+      // For now, we only support email lookup
+      // Future: support username and wallet address lookup
+      const email = identifier.trim();
       
-      // TODO: Replace with actual backend API call
-      // Backend should detect wallet addresses vs email/username based on format
-      // const response = await fetch(`/api/users/lookup?identifier=${encodeURIComponent(identifier)}&type=${isWalletAddress ? 'address' : 'identifier'}`);
-      // const data = await response.json();
-      
-      // Mock implementation for now
-      // In production, this will call the backend to:
-      // - If wallet address: lookup user by wallet address or use address directly
-      // - If email/username: lookup user and get their payment address
-      
-      // For now, just show an error that backend integration is needed
-      throw new Error('Backend integration pending - recipient lookup not yet implemented');
-      
-      // When backend is ready, uncomment:
-      // if (!response.ok) {
-      //   throw new Error(data.message || 'Recipient not found');
-      // }
-      // setRecipientDetails({
-      //   recipientId: data.recipientId || '0', // '0' if wallet address without account
-      //   recipientAddress: isWalletAddress ? identifier : data.paymentAddress,
-      //   recipientCurrency: data.currency || 'PYUSD', // Auto-populated from recipient's primary address or default to PYUSD
-      //   displayName: data.displayName,
-      // });
+      // Call the backend API to lookup recipient by email using apiClient
+      const data = await apiClient.get<{
+        success: boolean;
+        data: {
+          recipientId: string;
+          recipientAddress: string;
+          recipientCurrency: string;
+          displayName: string;
+          email: string;
+        };
+      }>(`/api/users/lookup?email=${encodeURIComponent(email)}&currency=PYUSD`);
+
+      // Set recipient details from the response
+      setRecipientDetails({
+        recipientId: data.data.recipientId,
+        recipientAddress: data.data.recipientAddress,
+        recipientCurrency: data.data.recipientCurrency,
+        displayName: data.data.displayName,
+      });
+
+      toast.success('Recipient Verified', `Found ${data.data.displayName || email}`);
     } catch (error) {
       console.error('Recipient lookup failed:', error);
       setRecipientLookupError(error instanceof Error ? error.message : 'Failed to lookup recipient');

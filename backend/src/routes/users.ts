@@ -126,5 +126,11 @@ router.delete('/me/payment-addresses/:addressId', UserController.deletePaymentAd
  */
 router.get('/wallet/:walletAddress', UserController.getUserByWallet);
 
+/**
+ * GET /api/users/lookup?email=xxx&currency=PYUSD
+ * Look up recipient by email for subscription creation
+ */
+router.get('/lookup', UserController.lookupRecipient);
+
 export default router;
 

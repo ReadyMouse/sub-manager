@@ -209,6 +209,36 @@ export class UserService {
   }
 
   /**
+   * Lookup recipient by email for subscription creation
+   * Returns user info and their default payment address
+   */
+  static async lookupRecipientByEmail(email: string, currency: string = 'PYUSD') {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    // Get their default payment address for the specified currency
+    const paymentAddress = await this.getDefaultPaymentAddress(user.id, currency);
+
+    if (!paymentAddress) {
+      throw new ValidationError(`User found but has no ${currency} payment address configured`);
+    }
+
+    return {
+      recipientId: user.id,
+      recipientAddress: paymentAddress.address,
+      recipientCurrency: paymentAddress.currency,
+      displayName: user.displayName,
+      email: user.email,
+    };
+  }
+
+  /**
    * Update payment address
    */
   static async updatePaymentAddress(userId: string, addressId: string, data: any) {
