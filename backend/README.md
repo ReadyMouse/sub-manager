@@ -166,7 +166,7 @@ The API will be available at `http://localhost:3001`
 
 ### Payment Processing
 
-1. Chainlink/Gelato processes payment on-chain
+1. Gelato Network processes payment on-chain (automated)
 2. Smart contract emits PaymentProcessed event
 3. Envio sends webhook to backend
 4. Backend creates payment record

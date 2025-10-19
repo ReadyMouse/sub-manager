@@ -17,6 +17,16 @@ import "dotenv/config";
 // Define our Hardhat configuration
 const config: HardhatUserConfig = {
   // ========================================
+  // PATHS CONFIGURATION
+  // ========================================
+  paths: {
+    // Include contracts from both the main contracts folder and gelato-automation
+    sources: "./contracts",
+    // Note: Hardhat will automatically find contracts in subdirectories
+    // But we need to ensure gelato-automation/contracts is accessible
+  },
+  
+  // ========================================
   // SOLIDITY COMPILER SETTINGS
   // ========================================
   solidity: {

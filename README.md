@@ -12,7 +12,7 @@ StableRent is a tool for property owners and residents to use Stablecoin digital
 **Discussion in the Industry**: https://www.linkedin.com/posts/shuhaib_crypto-rent-the-100-billion-shift-no-activity-7348397294506975232-thtY/
 
 **Our Solution:**
-StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Chainlink Automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project will leverage Hardhat's capability to fork mainnet ETH for development. 
+StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Gelato Network automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project will leverage Hardhat's capability to fork mainnet ETH for development. 
 
 **Target Audience:** Crypto-native users who want to pay rent without off-ramping to traditional bank account.
 
@@ -91,7 +91,41 @@ The script will:
 # StableRent Notes
 ## Platform Architecture
 
-TBD
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    StableRent System                        │
+└─────────────────────────────────────────────────────────────┘
+
+Frontend (React)                Backend (Express)
+     │                               │
+     ├─ Create Subscriptions         ├─ User Management
+     ├─ Approve PYUSD                ├─ Payment Addresses
+     ├─ View Dashboard               └─ Notifications
+     │
+     └────────────┬──────────────────────┐
+                  ↓                      ↓
+         Smart Contracts          Gelato Network
+         ├─ StableRent           ├─ Resolver (checks)
+         │  Subscription         └─ Executor (processes)
+         └─ PYUSD Token               │
+                  │                   │
+                  └───────┬───────────┘
+                          ↓
+                   Envio Indexer
+                          ↓
+                   Backend + Frontend
+                   (Event tracking)
+```
+
+### Automation with Gelato Network
+
+StableRent uses **Gelato Network** for decentralized payment automation:
+- **Gelato Resolver** checks which subscriptions are due (every 5-15 minutes)
+- **Gelato Executor** processes payments automatically when due
+- No centralized server needed - fully decentralized
+- Users pay gas via Gelato's 1Balance prepaid system
+
+📚 **Learn more**: See `gelato-automation/README.md` for complete documentation
 
 
 ## Hackathon requirements
@@ -152,7 +186,7 @@ Cursor + Claude AI was used to support development.
 - Limits on the allowance approval (is there a regulation limit? what's reasonable?)
 - More flexible scheduling options (every 3 weeks, first and fifteenth, etc)
 - Internal encrypted messaging system. (Propoerty owner requests of resident to see account balances, resident can approve this requests)
-- Gas optimizations on contract (>$100 to sign the allowance)
+- Gas optimizations on contract (>$100 to sign the allowance, switch to Base, Arbitrium, Polygon)
 - PayPal database search (ask for Username -> wallet address)
 - Signing transcation also needs to be first month (not just a sign) ETH handling
 

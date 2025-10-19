@@ -7,9 +7,15 @@
     "test": "hardhat test",
     "test:verbose": "hardhat test --verbose",
     "test:real": "hardhat test test/7-real-world-transaction.test.ts",
+    "test:gelato": "hardhat test gelato-automation/test/gelato-automation.test.ts",
+    "test:gelato:gas": "REPORT_GAS=true hardhat test gelato-automation/test/gelato-automation.test.ts",
     "compile": "hardhat compile",
     "explore": "hardhat run scripts/check-pyusd.ts",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "deploy:gelato:sepolia": "hardhat run gelato-automation/scripts/deploy-automation.ts --network sepolia",
+    "deploy:gelato:mainnet": "hardhat run gelato-automation/scripts/deploy-automation.ts --network mainnet",
+    "gelato:config:sepolia": "hardhat run gelato-automation/scripts/create-gelato-task.ts --network sepolia",
+    "gelato:config:mainnet": "hardhat run gelato-automation/scripts/create-gelato-task.ts --network mainnet"
   },
   "keywords": [],
   "author": "",

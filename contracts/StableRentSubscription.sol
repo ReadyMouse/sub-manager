@@ -418,7 +418,7 @@ contract StableRentSubscription is ReentrancyGuard, Ownable {
     /**
      * @notice Process a payment for a subscription
      * @param subscriptionId The ID of the subscription to process payment for
-     * @dev Can be called by anyone (typically Chainlink Automation or Gelato)
+     * @dev Can be called by anyone (typically Gelato Network automation)
      * @dev Transfers PYUSD directly from sender to recipient's wallet address
      */
     function processPayment(uint256 subscriptionId) external nonReentrant {
@@ -600,7 +600,7 @@ contract StableRentSubscription is ReentrancyGuard, Ownable {
     
     /**
      * @notice Get all subscription IDs that are due for payment
-     * @dev Used by Chainlink Automation or Gelato to determine which subscriptions to process
+     * @dev Used by Gelato Network automation to determine which subscriptions to process
      * @return Array of subscription IDs that are ready for payment
      */
     function getPaymentsDue() external view returns (uint256[] memory) {

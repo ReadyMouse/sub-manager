@@ -17,8 +17,8 @@ export const AutomationStatus: React.FC<AutomationStatusProps> = ({ provider, is
     switch (provider) {
       case 'chainlink':
         return {
-          name: 'Chainlink Automation',
-          icon: 'CL',
+          name: 'Gelato Network',
+          icon: 'GL',
           color: 'blue',
         };
       case 'gelato':

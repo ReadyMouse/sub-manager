@@ -1,0 +1,43 @@
+# Build artifacts
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Test coverage
+coverage/
+coverage.json
+.coverage_*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Deployment files (keep examples, ignore actual)
+config.json
+deployments/*.local.json
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
