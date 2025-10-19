@@ -88,6 +88,48 @@ The script will:
 2. Add it to your `.env` file
 3. Run `npx hardhat test` to verify everything works
 
+### Sepolia Testnet Deployment (For Hackathon Demo)
+
+**Ready to deploy to Sepolia for your demo?**
+
+```bash
+# Quick deployment
+npm run deploy:sepolia
+```
+
+📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
+🔐 **Environment setup**: [ENV_SETUP_GUIDE.md](./ENV_SETUP_GUIDE.md)  
+📊 **Current status**: [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+
+**PYUSD on Sepolia**: `0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53`
+
+**What you need**:
+- Alchemy Sepolia RPC URL (free from https://www.alchemy.com/)
+- Test wallet private key (create a NEW wallet for testing!)
+- Sepolia ETH from faucet (https://sepoliafaucet.com/)
+- PYUSD testnet tokens from faucet
+
+**Fast track to working demo**: See [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) for streamlined 75-minute path.
+
+### Backend Deployment (Optional but Recommended)
+
+**Deploy your backend to Railway in 5 minutes:**
+
+```bash
+cd backend
+railway up
+```
+
+📚 **Backend deployment guides**:
+- [backend/QUICK_DEPLOY.md](./backend/QUICK_DEPLOY.md) - 5-minute Railway setup ⚡
+- [backend/DEPLOYMENT.md](./backend/DEPLOYMENT.md) - Complete guide (Railway, Render, Vercel)
+- [backend/.env.production.example](./backend/.env.production.example) - Production environment template
+
+**Hosting options**:
+- **Railway** (recommended): Built-in PostgreSQL, $5/month free credit
+- **Render**: Free tier with auto-deploy from GitHub
+- **Vercel**: Serverless option (requires external database)
+
 # StableRent Notes
 ## Platform Architecture
 
@@ -173,6 +215,7 @@ Qualification Requirements
 ## Note
 
 Cursor + Claude AI was used to support development. 
+
 
 ## Future Considerations:
 - Escrow for security deposits, and first/last month

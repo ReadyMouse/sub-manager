@@ -90,6 +90,37 @@ const config: HardhatUserConfig = {
       // Important for contracts that check which network they're on
       chainId: 1,
     },
+    
+    // ========================================
+    // SEPOLIA TESTNET - For hackathon demo and testing
+    // ========================================
+    sepolia: {
+      // Sepolia RPC URL from environment variable
+      // Get a free API key from Alchemy or Infura
+      url: process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/demo",
+      
+      // accounts: Private key(s) for deployment
+      // IMPORTANT: NEVER commit your private key to git!
+      // Add SEPOLIA_PRIVATE_KEY to your .env file
+      accounts: process.env.SEPOLIA_PRIVATE_KEY 
+        ? [process.env.SEPOLIA_PRIVATE_KEY]
+        : [],
+      
+      // Chain ID for Sepolia testnet
+      chainId: 11155111,
+      
+      // Gas settings (optional but recommended for testnets)
+      gas: "auto",
+      gasPrice: "auto",
+    },
+    
+    // ========================================
+    // LOCALHOST - For local Hardhat node (without forking)
+    // ========================================
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+    },
   },
   
   // ========================================

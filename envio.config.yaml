@@ -15,23 +15,24 @@ description: "StableRent - Crypto Subscription Manager with Envio Integration"
 # Network Configuration
 # Update these based on your deployment network
 networks:
-  - id: 1  # Ethereum Mainnet
-    name: ethereum-mainnet
-    rpc_url: ${RPC_URL}
-    start_block: ${START_BLOCK}  # Block where your contract was deployed
+  # SEPOLIA TESTNET - For hackathon demo (ACTIVE)
+  - id: 11155111  # Sepolia
+    name: ethereum-sepolia
+    rpc_url: ${SEPOLIA_RPC_URL}
+    start_block: ${SEPOLIA_START_BLOCK}
     
-  # Uncomment for testnet deployment
-  # - id: 11155111  # Sepolia
-  #   name: ethereum-sepolia
-  #   rpc_url: ${SEPOLIA_RPC_URL}
-  #   start_block: ${SEPOLIA_START_BLOCK}
+  # MAINNET - Uncomment for production deployment
+  # - id: 1  # Ethereum Mainnet
+  #   name: ethereum-mainnet
+  #   rpc_url: ${RPC_URL}
+  #   start_block: ${START_BLOCK}
 
 # Contract Configuration
 contracts:
   - name: StableRentSubscription
     address: ${CONTRACT_ADDRESS}
     abi_file: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
-    network: ethereum-mainnet
+    network: ethereum-sepolia  # Changed to Sepolia for testnet deployment
     
     # Events to index
     events:

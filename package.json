@@ -12,10 +12,13 @@
     "compile": "hardhat compile",
     "explore": "hardhat run scripts/check-pyusd.ts",
     "clean": "hardhat clean",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:gelato:sepolia": "hardhat run gelato-automation/scripts/deploy-automation.ts --network sepolia",
     "deploy:gelato:mainnet": "hardhat run gelato-automation/scripts/deploy-automation.ts --network mainnet",
     "gelato:config:sepolia": "hardhat run gelato-automation/scripts/create-gelato-task.ts --network sepolia",
-    "gelato:config:mainnet": "hardhat run gelato-automation/scripts/create-gelato-task.ts --network mainnet"
+    "gelato:config:mainnet": "hardhat run gelato-automation/scripts/create-gelato-task.ts --network mainnet",
+    "verify:sepolia": "hardhat verify --network sepolia"
   },
   "keywords": [],
   "author": "",
