@@ -107,13 +107,11 @@ Deploying ht main subscription service contract:
 # Quick deployment
 npm run deploy:sepolia
 ```
-
 Deploying the gelato automation contracts:
 
 ```bash
 npm run deploy:gelato:sepolia
 ```
-
 
 📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
 
@@ -155,49 +153,6 @@ StableRent uses **Gelato Network** for decentralized payment automation:
 - Users pay gas via Gelato's 1Balance prepaid system
 
 📚 **Learn more**: See `gelato-automation/README.md` for complete documentation
-
-
-## Hackathon requirements
-### Envio
-Best Use of HyperIndex ⸺ $1,500
-Awarded to the team that best demonstrates the creative use of HyperIndex, Envio’s high-performance, multichain indexing framework. We will look for clear schema design, optimized event handling, and meaningful data querying. 
-
-Qualification Requirements:
-
-- Deployment to the hosted service (please reachout if you need production resources)
-- Clear usage in your application
-
-### Hardhat ⸺ $2,500
-
-Usage of a Hardhat release 3.0.0*. Usage of Hardhat 2 releases won't qualify.
-
-### Paypal
-
-🥇 Grand Prize (Best Overall Transformative Use of PYUSD) ⸺ $4,500
-Awarded to the project that most convincingly demonstrates a powerful and scalable real-world use case for PYUSD. The winner will set a new benchmark for digital payments, showing how PYUSD unlocks unique value—whether by powering global remittances, revolutionizing commerce, or creating new economic opportunities. 
-
-OR 
-
-🎖️ PYUSD Consumer Champion (Best Consumer-Focused Payments Experience) ⸺ $3,500
-This prize recognizes the project  that builds the most seamless and engaging consumer payment experience with PYUSD at its core. From streamlining cross-border settlements, to enabling microtransactions, **programmable subscriptions**, or “pay-as-you-go” economics, we want to see fresh ideas that push the boundaries of what’s possible in digital payments. Think outside the box—your solution should inspire new thinking for the entire PYUSD ecosystem.
-
-NOTE
-
-Each Project Submission will be judged by a panel of judges in accordance with the following criteria: 
-(a) Functionality: How well does this Project Submission work? What is the quality of the code? 
-(b) Payments Applicability: How effectively does the solution address real-world payment challenges? 
-(c) Novelty: How unique is this Project Submission’s concept? 
-(d) UX: How well does this Project Submission utilize PYUSD’s performance and unique proposition to create great UX for downstream users? 
-(e) Open-source: Is this Project Submission open-source? How well does the Project Submission compose with other primitives in the ecosystem? 
-(f) Business Plan: Is there a viable business that can be built in the future around this Submission? 
-
-Qualification Requirements
-
-1. Submission must clearly demonstrate utilization of PYUSD (deployed on mainnet or testnet)
-2. Project must be newly built and deployed.
-3. Include a public code repo; if private, share access credentials
-4. Submit a 2–4 minute demo video explaining and showcasing the project
-5. Project must be original
 
 ## Note
 
