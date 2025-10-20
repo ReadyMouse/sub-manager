@@ -2,7 +2,7 @@
 
 StableRent is a tool for property owners and residents to use Stablecoin digital assets. Property owners can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while residents can automatically send rent payments using stablecoins. 
 
-**DEMO Site:** https://stablerent.vercel.app/
+**🚀 LIVE DEMO:** https://stablerent.vercel.app/
 
 **The Problem We're Solving:**
 - The US residential rental market is $291 BILLION dollars
@@ -21,7 +21,6 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 **Simply:** Recurring direct peer-to-peer crypto payments: **Rent**, Charities, Patreon, child's allowance, etc 
 
 ## Hackathon Relevance 
-
 **Why PayPal**: This isn't just catering to PayPal's bounty, PYUSD is actually a good choice for this project: 
 - Reputation of PayPal as good company will encourage adoption among crypto-skeptical users
 - PYUSD Stablecoin tied to the USD so landlord don't take on volatility risk
@@ -40,43 +39,37 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 PYUSD native Peer-to-Peer:
 ```
-Renter's PYUSD
+Resident's PYUSD
     ↓ 
 Smart Contract
     ↓ 
-Landlord's PYUSD 
+Property Owner's PYUSD 
     ↓ 
 Rent gets paid 
 ```
-> Note going to try to get it working first with Renter paying gas, but gas-less transcations (paid by smart contract) may a be preferrable expansion model. 
 
-## Deployment
-```
-CONTRACT_ADDRESS_SEPOLIA=0xd91844e669a6138dc41fe1aEb0091822CC12f4d1 
-```
-Check out the [deployed contract](https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1) on Sepolia!
+## 🚀 Current Deployment Status
+### Sepolia Contract Deployment
+**🔗 Subscription Smart Contract:** [0xd91844e669a6138dc41fe1aEb0091822CC12f4d1](https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1)  
+**🔗 Gelato Executor Smart Contract:** [0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68](https://sepolia.etherscan.io/address/0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68)
+**🔗 Gelato Resolver Smart Contract:** [0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36](https://sepolia.etherscan.io/address/0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36)
 
+### Frontend Demo
+**Frontend:** [StableRent](https://stablerent.vercel.app/)
+
+### 🔄 **In Progress**
+- **Backend API:** Setting up Vercel + Supabase (free database)
+- **Full Integration:** Connecting frontend ↔ backend ↔ database
+
+### 🎯 **How to Test**
+1. Visit the live demo URL above
+2. Connect MetaMask wallet (Sepolia network)
+3. Get test PYUSD from [faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia/pyusd)
+4. Create subscription and test payments
+
+---
 
 ## 🚀 Quick Start
-
-### Local Development (Testing Frontend + Backend + Contracts)
-
-**One command to rule them all:**
-
-```bash
-./launch.sh
-# Choose option 1: Everything (Backend + Hardhat + Frontend)
-```
-
-This will:
-- ✅ Start local Hardhat blockchain (instant transactions, zero gas fees!)
-- ✅ **Automatically deploy contracts**
-- ✅ **Automatically configure frontend** with contract address
-- ✅ Start backend API
-- ✅ Start frontend application
-
-Then follow the setup guide: **[LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md)**
-
 ### First Time Setup
 
 Run the automated setup script to install dependencies and configure your environment:
@@ -97,47 +90,32 @@ The script will:
 2. Add it to your `.env` file
 3. Run `npx hardhat test` to verify everything works
 
+### Local Development (Testing Frontend + Backend + Contracts)
+
+**One command to rule them all:**
+
+```bash
+./launch.sh
+# Options available: frontend, backend, etc.
+```
+
 ### Sepolia Testnet Deployment (For Hackathon Demo)
 
-**Ready to deploy to Sepolia for your demo?**
+Deploying ht main subscription service contract:
 
 ```bash
 # Quick deployment
 npm run deploy:sepolia
 ```
 
-📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
-🔐 **Environment setup**: [ENV_SETUP_GUIDE.md](./ENV_SETUP_GUIDE.md)  
-📊 **Current status**: [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
-
-**PYUSD on Sepolia**: `0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53`
-
-**What you need**:
-- Alchemy Sepolia RPC URL (free from https://www.alchemy.com/)
-- Test wallet private key (create a NEW wallet for testing!)
-- Sepolia ETH from faucet (https://sepoliafaucet.com/)
-- PYUSD testnet tokens from faucet
-
-**Fast track to working demo**: See [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) for streamlined 75-minute path.
-
-### Backend Deployment (Optional but Recommended)
-
-**Deploy your backend to Railway in 5 minutes:**
+Deploying the gelato automation contracts:
 
 ```bash
-cd backend
-railway up
+npm run deploy:gelato:sepolia
 ```
 
-📚 **Backend deployment guides**:
-- [backend/QUICK_DEPLOY.md](./backend/QUICK_DEPLOY.md) - 5-minute Railway setup ⚡
-- [backend/DEPLOYMENT.md](./backend/DEPLOYMENT.md) - Complete guide (Railway, Render, Vercel)
-- [backend/.env.production.example](./backend/.env.production.example) - Production environment template
 
-**Hosting options**:
-- **Railway** (recommended): Built-in PostgreSQL, $5/month free credit
-- **Render**: Free tier with auto-deploy from GitHub
-- **Vercel**: Serverless option (requires external database)
+📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
 
 # StableRent Notes
 ## Platform Architecture

@@ -3,10 +3,14 @@
   "chainId": "11155111",
   "contracts": {
     "StableRentSubscription": "0xd91844e669a6138dc41fe1aEb0091822CC12f4d1",
-    "PYUSD": "0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53"
+    "PYUSD": "0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53",
+    "GelatoResolver": "0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36",
+    "GelatoExecutor": "0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68"
   },
   "deployer": "0xbA2994967b75c22DBF9833fFD0A749BD66e7F0F3",
   "timestamp": "2025-10-20T15:12:12.810Z",
   "blockNumber": 9452990,
-  "explorerUrl": "https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1"
+  "explorerUrl": "https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1",
+  "gelatoExecutorAddress": "0x2A6C106ae13B558BB9E2Ec64Bd2f1f7BEFF3A5E0",
+  "lastDeployment": "2025-10-20T16:56:13.274Z"
 }

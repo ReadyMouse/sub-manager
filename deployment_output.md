@@ -115,3 +115,33 @@ Get PYUSD testnet tokens from your faucet!
 📄 Deployment details saved to: deployments/sepolia.json
 
 ```
+AND
+```bash
+npm run deploy:gelato:sepolia
+```
+Output
+```
+======================================================================
+🎉 DEPLOYMENT COMPLETE!
+======================================================================
+
+📋 Contract Addresses:
+   Subscription Contract: 0xd91844e669a6138dc41fe1aEb0091822CC12f4d1
+   Gelato Resolver:       0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36
+   Gelato Executor:       0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68
+
+🔧 Next Steps:
+   1. Create Gelato Task at https://app.gelato.network/
+      - Target Contract:  0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68
+      - Resolver Contract:  0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36
+      - Function: processPayments(uint256[])
+   2. Fund Gelato 1Balance with ETH/MATIC for gas
+   3. Test automation with: npm run test:gelato
+   4. Monitor execution in Gelato dashboard
+
+📚 Documentation:
+   - Integration Guide: gelato-automation/docs/INTEGRATION_GUIDE.md
+   - Testing Guide: gelato-automation/docs/TESTING_GUIDE.md
+
+======================================================================
+```

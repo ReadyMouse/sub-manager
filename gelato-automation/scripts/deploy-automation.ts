@@ -46,7 +46,7 @@ async function main() {
   }
   
   // Validate subscription contract exists
-  const subscriptionContractAddress = deployments.StableRentSubscription;
+  const subscriptionContractAddress = deployments.contracts?.StableRentSubscription || deployments.StableRentSubscription;
   if (!subscriptionContractAddress) {
     throw new Error("❌ StableRentSubscription contract not deployed yet. Deploy main contract first!");
   }
@@ -136,9 +136,14 @@ async function main() {
   // SAVE DEPLOYMENT ADDRESSES
   // ========================================
   
-  deployments.GelatoResolver = resolverAddress;
-  deployments.GelatoExecutor = executorAddress;
-  deployments.GelatoExecutorAddress = gelatoExecutor; // For reference
+  // Ensure contracts object exists
+  if (!deployments.contracts) {
+    deployments.contracts = {};
+  }
+  
+  deployments.contracts.GelatoResolver = resolverAddress;
+  deployments.contracts.GelatoExecutor = executorAddress;
+  deployments.gelatoExecutorAddress = gelatoExecutor; // For reference
   deployments.lastDeployment = new Date().toISOString();
   
   // Ensure deployments directory exists
