@@ -22,9 +22,9 @@ export const apiClient = {
   async request<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const { token, ...fetchOptions } = options;
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add authorization header if token is provided, or try to get from localStorage

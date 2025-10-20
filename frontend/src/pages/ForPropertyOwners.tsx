@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Shield, Database, Wallet, ArrowRight, DollarSign, TrendingUp, Users, FileCheck } from 'lucide-react';
+import { CheckCircle, Shield, ArrowRight, TrendingUp, Users, FileCheck } from 'lucide-react';
 
 export const ForPropertyOwners: React.FC = () => {
   const navigate = useNavigate();

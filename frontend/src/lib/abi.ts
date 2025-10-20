@@ -1,5 +1,5 @@
 // Auto-generated ABI file
-// Do not edit manually - run 'node update-frontend-abi.js' to update
+// Do not edit manually - regenerate from artifacts
 
 export const StableRentSubscriptionABI = [
   {
@@ -74,15 +74,21 @@ export const StableRentSubscriptionABI = [
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "subscriber",
+        "name": "senderAddress",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "serviceProviderId",
+        "name": "senderId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "recipientId",
         "type": "uint256"
       },
       {
@@ -123,15 +129,21 @@ export const StableRentSubscriptionABI = [
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "subscriber",
+        "name": "senderAddress",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "serviceProviderId",
+        "name": "senderId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "recipientId",
         "type": "uint256"
       },
       {
@@ -139,6 +151,18 @@ export const StableRentSubscriptionABI = [
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "processorFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "processorFeeAddress",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -172,15 +196,21 @@ export const StableRentSubscriptionABI = [
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "subscriber",
+        "name": "senderAddress",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "serviceProviderId",
+        "name": "senderId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "recipientId",
         "type": "uint256"
       },
       {
@@ -209,15 +239,21 @@ export const StableRentSubscriptionABI = [
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "subscriber",
+        "name": "senderAddress",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "serviceProviderId",
+        "name": "senderId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "recipientId",
         "type": "uint256"
       },
       {
@@ -265,8 +301,38 @@ export const StableRentSubscriptionABI = [
       {
         "indexed": false,
         "internalType": "string",
+        "name": "senderCurrency",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
         "name": "recipientCurrency",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "processorFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "processorFeeAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "processorFeeCurrency",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "processorFeeID",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -295,7 +361,12 @@ export const StableRentSubscriptionABI = [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "serviceProviderId",
+        "name": "senderId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "recipientId",
         "type": "uint256"
       },
       {
@@ -330,8 +401,33 @@ export const StableRentSubscriptionABI = [
       },
       {
         "internalType": "string",
+        "name": "senderCurrency",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
         "name": "recipientCurrency",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "processorFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "processorFeeAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "processorFeeCurrency",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "processorFeeID",
+        "type": "uint256"
       }
     ],
     "name": "createSubscription",
@@ -377,12 +473,17 @@ export const StableRentSubscriptionABI = [
           },
           {
             "internalType": "address",
-            "name": "subscriber",
+            "name": "senderAddress",
             "type": "address"
           },
           {
+            "internalType": "string",
+            "name": "senderCurrency",
+            "type": "string"
+          },
+          {
             "internalType": "uint256",
-            "name": "serviceProviderId",
+            "name": "senderId",
             "type": "uint256"
           },
           {
@@ -426,19 +527,44 @@ export const StableRentSubscriptionABI = [
             "type": "uint8"
           },
           {
+            "internalType": "string",
+            "name": "serviceName",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "recipientId",
+            "type": "uint256"
+          },
+          {
             "internalType": "address",
             "name": "recipientAddress",
             "type": "address"
           },
           {
             "internalType": "string",
-            "name": "serviceName",
+            "name": "recipientCurrency",
             "type": "string"
           },
           {
+            "internalType": "uint256",
+            "name": "processorFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "processorFeeAddress",
+            "type": "address"
+          },
+          {
             "internalType": "string",
-            "name": "recipientCurrency",
+            "name": "processorFeeCurrency",
             "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "processorFeeID",
+            "type": "uint256"
           }
         ],
         "internalType": "struct StableRentSubscription.Subscription",
@@ -529,33 +655,72 @@ export const StableRentSubscriptionABI = [
   }
 ] as const;
 
-// Standard ERC20 ABI for PYUSD token interactions
 export const ERC20_ABI = [
   {
-    "constant": true,
-    "inputs": [{"name": "_owner", "type": "address"}],
-    "name": "balanceOf",
-    "outputs": [{"name": "balance", "type": "uint256"}],
-    "type": "function"
-  },
-  {
-    "constant": false,
     "inputs": [
-      {"name": "_spender", "type": "address"},
-      {"name": "_value", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "approve",
-    "outputs": [{"name": "", "type": "bool"}],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [
-      {"name": "_owner", "type": "address"},
-      {"name": "_spender", "type": "address"}
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      }
     ],
     "name": "allowance",
-    "outputs": [{"name": "", "type": "uint256"}],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ] as const;

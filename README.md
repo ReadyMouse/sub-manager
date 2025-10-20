@@ -2,6 +2,8 @@
 
 StableRent is a tool for property owners and residents to use Stablecoin digital assets. Property owners can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while residents can automatically send rent payments using stablecoins. 
 
+**DEMO Site:** https://stablerent.vercel.app/
+
 **The Problem We're Solving:**
 - The US residential rental market is $291 BILLION dollars
 - Estimates for US-based crypto assets are around $90B
@@ -47,6 +49,13 @@ Landlord's PYUSD
 Rent gets paid 
 ```
 > Note going to try to get it working first with Renter paying gas, but gas-less transcations (paid by smart contract) may a be preferrable expansion model. 
+
+## Deployment
+```
+CONTRACT_ADDRESS_SEPOLIA=0xd91844e669a6138dc41fe1aEb0091822CC12f4d1 
+```
+Check out the [deployed contract](https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1) on Sepolia!
+
 
 ## 🚀 Quick Start
 

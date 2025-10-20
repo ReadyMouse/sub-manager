@@ -1,10 +1,9 @@
-import { useAccount, useConnect, useDisconnect, useChainId } from 'wagmi';
+import { useAccount, useConnect, useChainId } from 'wagmi';
 import { SUPPORTED_CHAINS } from '../lib/constants';
 
 export const WalletConnect: React.FC = () => {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
   const chainId = useChainId();
 
   const isWrongNetwork = isConnected && 

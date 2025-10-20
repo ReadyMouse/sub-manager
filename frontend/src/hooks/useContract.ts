@@ -47,11 +47,11 @@ export const useStableRentContract = () => {
         serviceName,
         BigInt(endDate || 0),
         BigInt(maxPayments || 0),
-        recipientAddress || ('' as Address),
+        recipientAddress || ('0x0000000000000000000000000000000000000000' as Address),
         senderCurrency || 'PYUSD',
         recipientCurrency || 'PYUSD',
         feeWei,
-        processorFeeAddress || CONTRACTS.StableRentSubscription as Address, // Default to contract address
+        processorFeeAddress || (CONTRACTS.StableRentSubscription as Address), // Default to contract address
         processorFeeCurrency || 'PYUSD',
         BigInt(processorFeeID || 0),
       ],

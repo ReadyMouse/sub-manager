@@ -21,7 +21,7 @@ export const Register = () => {
   const [displayName, setDisplayName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber] = useState('');
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

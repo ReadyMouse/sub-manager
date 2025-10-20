@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "contracts": {
+    "StableRentSubscription": "0xd91844e669a6138dc41fe1aEb0091822CC12f4d1",
+    "PYUSD": "0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53"
+  },
+  "deployer": "0xbA2994967b75c22DBF9833fFD0A749BD66e7F0F3",
+  "timestamp": "2025-10-20T15:12:12.810Z",
+  "blockNumber": 9452990,
+  "explorerUrl": "https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1"
+}
