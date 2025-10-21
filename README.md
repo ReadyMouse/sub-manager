@@ -20,6 +20,8 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 **Simply:** Recurring direct peer-to-peer crypto payments: **Rent**, Charities, Patreon, child's allowance, etc 
 
+![Overview of StableRent](./frontend/src/assets/ov1.png)
+
 ## Hackathon Relevance 
 **Why PayPal**: This isn't just catering to PayPal's bounty, PYUSD is actually a good choice for this project: 
 - Reputation of PayPal as good company will encourage adoption among crypto-skeptical users
@@ -51,11 +53,16 @@ Rent gets paid
 ## 🚀 Current Deployment Status
 ### Sepolia Contract Deployment
 **🔗 Subscription Smart Contract:** [0xd91844e669a6138dc41fe1aEb0091822CC12f4d1](https://sepolia.etherscan.io/address/0xd91844e669a6138dc41fe1aEb0091822CC12f4d1)  
+
 **🔗 Gelato Executor Smart Contract:** [0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68](https://sepolia.etherscan.io/address/0x2Eb1FEAd84eEa8C8FB31E80f98aD74c65aD60c68)
+
 **🔗 Gelato Resolver Smart Contract:** [0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36](https://sepolia.etherscan.io/address/0x0Fafb218e162C5Af464D86dCC43De4FBaFC4eA36)
 
 ### Frontend Demo
 **Frontend:** [StableRent](https://stablerent.vercel.app/)
+
+### Database
+**Supabase** 
 
 ### 🔄 **In Progress**
 - **Backend API:** Setting up Vercel + Supabase (free database)
