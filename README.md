@@ -16,11 +16,11 @@ StableRent is a tool for property owners and residents to use Stablecoin digital
 **Our Solution:**
 StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Gelato Network automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project will leverage Hardhat's capability to fork mainnet ETH for development. 
 
-**Target Audience:** Crypto-native users who want to pay rent without off-ramping to traditional bank account.
+**Target Audience:** Crypto-native users who want to pay rent without off-ramping to a traditional bank account.
 
 **Simply:** Recurring direct peer-to-peer crypto payments: **Rent**, Charities, Patreon, child's allowance, etc 
 
-![Overview of StableRent](./frontend/src/assets/ov1.png)
+![Overview of StableRent](./frontend/src/assets/ov1_pp.png)
 
 ## Hackathon Relevance 
 **Why PayPal**: This isn't just catering to PayPal's bounty, PYUSD is actually a good choice for this project: 
