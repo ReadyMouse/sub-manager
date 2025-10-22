@@ -44,6 +44,9 @@ describe("StableRentSubscription - Subscription Creation", function () {
         ethers.parseUnits("1000", 6) // Approve 1000 PYUSD for multiple payments
       );
       
+      // Get start date for subscription
+      const startDate = (await ethers.provider.getBlock("latest")).timestamp + 3600;
+      
       // Create subscription
       const tx = await stableRentContract.connect(user1).createSubscription(
         NETFLIX_ID, // senderId
@@ -51,6 +54,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix Premium",
+        startDate, // startDate (1 hour from now)
         0, // endDate = 0 (unlimited)
         0, // maxPayments = 0 (unlimited)
         serviceProvider.address, // recipientAddress
@@ -88,7 +92,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           SERVICE_PROVIDER_ID, // recipientId
           amount,
           interval,
-          block!.timestamp + interval, // nextPaymentDue
+          startDate, // nextPaymentDue (startDate)
           0, // endDate (unlimited)
           0, // maxPayments (unlimited)
           "Netflix Premium",
@@ -144,6 +148,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix Premium Annual",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         endDate,
         0, // maxPayments = 0 (unlimited, but limited by endDate)
         serviceProvider.address, // recipientAddress
@@ -187,6 +192,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix 12-Month Plan",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0, // endDate = 0 (unlimited, but limited by maxPayments)
         maxPayments,
         serviceProvider.address, // recipientAddress
@@ -263,6 +269,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix Flexible Plan",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         endDate,
         maxPayments,
         serviceProvider.address, // recipientAddress
@@ -334,6 +341,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Private Subscription",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         landlord.address, // recipientAddress (private recipient)
@@ -377,6 +385,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix Basic",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -410,6 +419,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
         amount,
         interval,
         "Netflix Premium",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -438,6 +448,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           "Test Service",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           ethers.ZeroAddress, // Invalid recipient address
@@ -459,6 +470,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           0, // Invalid amount
           interval,
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -480,6 +492,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           ONE_DAY - 1, // Too short
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -501,6 +514,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           (365 * ONE_DAY) + 1, // Too long
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -522,6 +536,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           "", // Empty name
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -545,6 +560,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           longName,
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -568,6 +584,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           "Test Service",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -591,6 +608,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           pastDate,
           0,
           serviceProvider.address,
@@ -618,6 +636,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           amount,
           interval,
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -658,6 +677,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           ethers.parseUnits("10", 6), // More than balance
           interval,
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,
@@ -690,6 +710,7 @@ describe("StableRentSubscription - Subscription Creation", function () {
           ethers.parseUnits("10", 6), // More than allowance
           interval,
           "Netflix Premium",
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0,
           0,
           serviceProvider.address,

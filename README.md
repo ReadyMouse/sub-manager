@@ -60,14 +60,12 @@ Rent gets paid
 ### Backend + Database
 **Railway** [stablerent-backend](https://backend-production-a05e.up.railway.app)
 
-### 🔄 **In Progress**
-- **Full Integration:** Connecting frontend ↔ backend ↔ database
-
 ### 🎯 **How to Test**
-1. Visit the live demo URL above
+1. Visit the live demo [StableRent](https://stablerent.vercel.app/)
 2. Connect MetaMask wallet (Sepolia network)
 3. Get test PYUSD from [faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia/pyusd)
-4. Create subscription and test payments
+4. Get test ETH for signing the approval [faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+5. Create subscription and test payments
 
 ---
 

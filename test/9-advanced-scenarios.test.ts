@@ -41,7 +41,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         86400, // 1 day interval (minimum allowed)
-        "Short Duration Service", // serviceName
+        "Short Duration Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         endDate, // endDate (15 days)
         maxPayments, // maxPayments (5)
         serviceProvider.address, // recipientAddress
@@ -77,7 +78,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         2, // recipientId
         ethers.parseUnits("10", 6), // amount
         86400, // 1 day interval (minimum allowed)
-        "Max Payments Service", // serviceName
+        "Max Payments Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         endDate, // endDate (30 days)
         maxPayments, // maxPayments (2)
         serviceProvider.address, // recipientAddress
@@ -116,7 +118,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         3, // recipientId
         ethers.parseUnits("10", 6), // amount
         86400, // 1 day interval (minimum allowed)
-        "Cancellation Test Service", // serviceName
+        "Cancellation Test Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -158,7 +161,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         4, // recipientId
         amount, // amount
         86400, // 1 day interval (minimum allowed)
-        "Exact Allowance Service", // serviceName
+        "Exact Allowance Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -195,7 +199,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         5, // recipientId
         amount, // amount
         86400, // 1 day interval (minimum allowed)
-        "Insufficient Allowance Service", // serviceName
+        "Insufficient Allowance Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -230,7 +235,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         6, // recipientId
         amount, // amount (minimum)
         86400, // 1 day interval (minimum allowed)
-        "Minimum Amount Service", // serviceName
+        "Minimum Amount Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -273,6 +279,7 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
             ethers.parseUnits("10", 6), // amount
             86400, // 1 day interval (minimum allowed)
             `User ${userIndex} Service ${subIndex}`, // serviceName
+            (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
             0, // endDate
             0, // maxPayments
             serviceProvider.address, // recipientAddress
@@ -304,7 +311,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         100, // recipientId
         ethers.parseUnits("10", 6), // amount
         86400, // 1 day interval (minimum allowed)
-        "Active Service", // serviceName
+        "Active Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -322,7 +330,8 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
         101, // recipientId
         ethers.parseUnits("10", 6), // amount
         86400, // 1 day interval (minimum allowed)
-        "Cancelled Service", // serviceName
+        "Cancelled Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -362,6 +371,7 @@ describe("StableRentSubscription - Advanced Scenarios", function () {
           ethers.parseUnits("1", 6), // amount
           86400, // 1 day interval (minimum allowed)
           `Service ${i}`, // serviceName
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0, // endDate
           0, // maxPayments
           serviceProvider.address, // recipientAddress

@@ -219,7 +219,8 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
         LANDLORD_ID,            // recipientId
         MONTHLY_RENT,           // amount
         ONE_MONTH,              // interval (30 days)
-        "Monthly Rent Payment", // serviceName
+        "Monthly Rent Payment",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0,                      // endDate (0 = unlimited)
         0,                      // maxPayments (0 = unlimited)
         landlordAddress,        // recipientAddress

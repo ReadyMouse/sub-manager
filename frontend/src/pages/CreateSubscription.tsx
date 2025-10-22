@@ -30,6 +30,7 @@ export const CreateSubscription: React.FC = () => {
     senderCurrency: 'PYUSD',
     amount: '',
     interval: PAYMENT_INTERVALS.MONTHLY as number,
+    startDate: '', // When the first payment should be due
     endDate: '',
     maxPayments: '',
     recipientIdentifier: '', // Email or username to look up recipient
@@ -328,7 +329,7 @@ export const CreateSubscription: React.FC = () => {
     }
 
     // Validate required fields
-    if (!formData.serviceName || !formData.amount || !formData.interval) {
+    if (!formData.serviceName || !formData.amount || !formData.interval || !formData.startDate) {
       toast.error('Error', 'Please fill in all required fields');
       return;
     }
@@ -367,6 +368,7 @@ export const CreateSubscription: React.FC = () => {
     }
 
     try {
+      const startDate = Math.floor(new Date(formData.startDate).getTime() / 1000);
       const endDate = formData.endDate ? Math.floor(new Date(formData.endDate).getTime() / 1000) : 0;
       const maxPayments = formData.maxPayments ? parseInt(formData.maxPayments) : 0;
 
@@ -388,6 +390,7 @@ export const CreateSubscription: React.FC = () => {
         formData.amount,
         formData.interval,
         formData.serviceName,
+        startDate,
         endDate,
         maxPayments,
         finalRecipientAddress as Address,
@@ -544,6 +547,23 @@ export const CreateSubscription: React.FC = () => {
                   <option value={PAYMENT_INTERVALS.MONTHLY}>Monthly</option>
                   <option value={PAYMENT_INTERVALS.YEARLY}>Yearly</option>
                 </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                  className="input"
+                  required
+                  min={new Date().toISOString().split('T')[0]} // Can't be in the past
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  When the first payment should be due
+                </p>
               </div>
             </div>
 

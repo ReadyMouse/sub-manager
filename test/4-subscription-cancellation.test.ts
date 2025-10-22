@@ -48,6 +48,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
       amount,
       interval,
       "Netflix Cancel Test",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
       0,
       0,
       serviceProvider.address, // recipientAddress
@@ -57,7 +58,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         owner.address, // processorFeeAddress
         "PYUSD", // processorFeeCurrency
         PROCESSOR_FEE_ID // processorFeeID
-      );
+    );
     
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
@@ -117,6 +118,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         amount,
         interval,
         "Netflix Non-Owner Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -163,6 +165,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         amount,
         interval,
         "Netflix Cancel Then Pay Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -214,6 +217,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         amount,
         interval,
         "Netflix EndDate Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         endDate,
         0,
         serviceProvider.address, // recipientAddress
@@ -283,6 +287,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         amount,
         interval,
         "Netflix MaxPayments Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         endDate, // Set explicit endDate far in future
         maxPayments,
         serviceProvider.address, // recipientAddress
@@ -315,6 +320,7 @@ describe("StableRentSubscription - Subscription Cancellation", function () {
         amount,
         interval,
         "Netflix MaxPayments Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         Number(calculatedEndDate) + (7 * ONE_DAY), // Set endDate far after the contract's calculated endDate
         maxPayments,
         serviceProvider.address, // recipientAddress

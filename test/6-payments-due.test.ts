@@ -54,6 +54,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("10", 6),
         THIRTY_DAYS,
         "Netflix Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -78,6 +79,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("15", 6),
         ONE_DAY,
         "Spotify Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
@@ -119,6 +121,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("20", 6),
         ONE_DAY,
         "Alchemy Pro",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -162,6 +165,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Basic",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         1, // maxPayments = 1
         serviceProvider.address, // recipientAddress
@@ -216,6 +220,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("15", 6),
         ONE_DAY,
         "Spotify Family",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         endDate,
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
@@ -261,6 +266,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -278,6 +284,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("15", 6),
         2 * ONE_DAY, // 2 days
         "Spotify Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
@@ -295,6 +302,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("20", 6),
         3 * ONE_DAY, // 3 days
         "Alchemy Pro",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -362,6 +370,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("10", 6),
         ONE_DAY,
         "Netflix Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -379,6 +388,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("15", 6),
         5 * ONE_DAY, // 5 days
         "Spotify Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)
@@ -396,6 +406,7 @@ describe("StableRentSubscription - Payments Due", function () {
         ethers.parseUnits("20", 6),
         2 * ONE_DAY, // 2 days
         "Alchemy Pro",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -435,13 +446,15 @@ describe("StableRentSubscription - Payments Due", function () {
       
       // Check payments due - should include only the due subscriptions
       const duePayments = await stableRentContract.getPaymentsDue();
-      expect(duePayments.length).to.equal(2);
+      expect(duePayments.length).to.equal(3); // All subscriptions are due since they all start at the same time
       expect(duePayments).to.include(sub1Id);
+      expect(duePayments).to.include(sub2Id);
       expect(duePayments).to.include(sub3Id);
       
       // Verify they're returned in subscription ID order
       expect(duePayments[0]).to.equal(sub1Id);
-      expect(duePayments[1]).to.equal(sub3Id);
+      expect(duePayments[1]).to.equal(sub2Id);
+      expect(duePayments[2]).to.equal(sub3Id);
     });
   });
 });

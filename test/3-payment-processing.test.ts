@@ -48,16 +48,17 @@ describe("StableRentSubscription - Payment Processing", function () {
       amount,
       interval,
       "Netflix Test Sub",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
       0,
       0,
       serviceProvider.address, // recipientAddress
       "PYUSD", // senderCurrency
       "PYUSD", // recipientCurrency
-        DEFAULT_PROCESSOR_FEE, // processorFee
-        owner.address, // processorFeeAddress
-        "PYUSD", // processorFeeCurrency
-        PROCESSOR_FEE_ID // processorFeeID
-      );
+      DEFAULT_PROCESSOR_FEE, // processorFee
+      owner.address, // processorFeeAddress
+      "PYUSD", // processorFeeCurrency
+      PROCESSOR_FEE_ID // processorFeeID
+    );
     
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
@@ -165,6 +166,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Reset Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -232,6 +234,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Not Due Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -278,6 +281,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Inactive Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -327,6 +331,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Insufficient Balance Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -402,6 +407,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Insufficient Allowance Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -466,6 +472,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Consecutive Failures Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -528,6 +535,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Auto-Cancel Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -609,6 +617,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Auto-Cancel Verify Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress
@@ -675,6 +684,7 @@ describe("StableRentSubscription - Payment Processing", function () {
         amount,
         interval,
         "Netflix Allowance Auto-Cancel Test",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         serviceProvider.address, // recipientAddress

@@ -50,6 +50,7 @@ describe("StableRentSubscription - View Functions", function () {
       amount,
       interval,
       "Netflix Premium",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
       0, // No endDate
       0, // No maxPayments
       serviceProvider.address, // recipientAddress
@@ -59,7 +60,7 @@ describe("StableRentSubscription - View Functions", function () {
         owner.address, // processorFeeAddress
         "PYUSD", // processorFeeCurrency
         PROCESSOR_FEE_ID // processorFeeID
-      );
+    );
     
     const receipt = await tx.wait();
     const event = receipt?.logs.find(log => {
@@ -103,6 +104,7 @@ describe("StableRentSubscription - View Functions", function () {
         ethers.parseUnits("15", 6),
         THIRTY_DAYS,
         "Spotify Premium",
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0,
         0,
         landlord.address, // recipientAddress (using landlord for Spotify)

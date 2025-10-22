@@ -270,6 +270,7 @@ contract StableRentSubscription is ReentrancyGuard, Ownable {
         uint256 amount,
         uint256 interval,
         string calldata serviceName,
+        uint256 startDate,
         uint256 endDate,
         uint256 maxPayments,
         address recipientAddress,
@@ -293,6 +294,9 @@ contract StableRentSubscription is ReentrancyGuard, Ownable {
         // Validate interval (minimum 1 day, maximum 1 year for safety)
         require(interval >= 1 days, "Interval must be at least 1 day");
         require(interval <= 365 days, "Interval must be at most 365 days");
+        
+        // Validate start date is not in the past
+        require(startDate >= block.timestamp, "Start date cannot be in the past");
         
         // Validate service name is not empty
         require(bytes(serviceName).length > 0, "Service name cannot be empty");
@@ -353,8 +357,8 @@ contract StableRentSubscription is ReentrancyGuard, Ownable {
         uint256 subscriptionId = _subscriptionIdCounter;
         _subscriptionIdCounter++;
         
-        // Calculate first payment due timestamp
-        uint256 nextPaymentDue = block.timestamp + interval;
+        // Use provided start date for first payment due timestamp
+        uint256 nextPaymentDue = startDate;
         
         // Create subscription struct
         // All payment information is passed in from off-chain and stored in the subscription

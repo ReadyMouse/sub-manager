@@ -63,7 +63,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         largeAmount, // amount
         2592000, // 30 days interval
-        "Large Amount Service", // serviceName
+        "Large Amount Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate (unlimited)
         0, // maxPayments (unlimited)
         serviceProvider.address, // recipientAddress
@@ -97,7 +98,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         maxInterval, // interval
-        "Yearly Service", // serviceName
+        "Yearly Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -120,7 +122,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         minInterval, // interval
-        "Daily Service", // serviceName
+        "Daily Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -144,6 +147,7 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         ethers.parseUnits("10", 6), // amount
         2592000, // interval
         longServiceName, // serviceName
+        (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -166,7 +170,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         2592000, // interval
-        "Service", // serviceName
+        "Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -195,7 +200,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         amount, // amount
         2592000, // 30 days interval
-        "Test Service", // serviceName
+        "Test Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -226,7 +232,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         2, // recipientId
         exactAmount, // amount
         2592000, // interval
-        "Exact Amount Service", // serviceName
+        "Exact Amount Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -274,7 +281,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         3, // recipientId
         ethers.parseUnits("10", 6), // amount
         2592000, // interval
-        "Zero Fee Service", // serviceName
+        "Zero Fee Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -337,7 +345,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         2592000, // interval
-        "Max End Date Service", // serviceName
+        "Max End Date Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         maxEndDate, // endDate
         0, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -365,7 +374,8 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
         1, // recipientId
         ethers.parseUnits("10", 6), // amount
         2592000, // interval
-        "Max Payments Service", // serviceName
+        "Max Payments Service",
+      (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now) // serviceName
         0, // endDate
         maxPayments, // maxPayments
         serviceProvider.address, // recipientAddress
@@ -395,6 +405,7 @@ describe("StableRentSubscription - Edge Cases and Error Conditions", function ()
           ethers.parseUnits("10", 6), // amount
           2592000, // interval
           `Service ${i}`, // serviceName
+          (await ethers.provider.getBlock("latest")).timestamp + 3600, // startDate (1 hour from now)
           0, // endDate
           0, // maxPayments
           serviceProvider.address, // recipientAddress
