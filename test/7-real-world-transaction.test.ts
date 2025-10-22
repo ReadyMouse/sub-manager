@@ -170,7 +170,7 @@ describe("🏠 Real World Transaction: Rent Payment Flow", function () {
       console.log("\n📝 Deploying new StableRentSubscription...");
       console.log("  Deployer:", deployer.address);
       
-      const StableRentSubscription = await ethers.getContractFactory("StableRentSubscription");
+      const StableRentSubscription = await ethers.getContractFactory("contracts/StableRentSubscription.sol:StableRentSubscription");
       stableRentContract = await StableRentSubscription.deploy(deployer.address, PYUSD_ADDRESS);
       await stableRentContract.waitForDeployment();
       

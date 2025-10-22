@@ -17,6 +17,7 @@ import subscriptionRoutes from './routes/subscriptions';
 import paymentRoutes from './routes/payments';
 import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
+import automationRoutes from './routes/automation';
 
 // Initialize Express app
 export const app = express();
@@ -97,6 +98,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/automation', automationRoutes);
 
 // API info endpoint
 app.get('/api', (_req, res) => {
@@ -112,6 +114,7 @@ app.get('/api', (_req, res) => {
       payments: '/api/payments',
       notifications: '/api/notifications',
       webhooks: '/api/webhooks',
+      automation: '/api/automation',
     },
   });
 });

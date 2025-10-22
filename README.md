@@ -65,7 +65,6 @@ Rent gets paid
 **Railway** [stablerent-backend](https://backend-production-a05e.up.railway.app)
 
 ### 🔄 **In Progress**
-- **Backend API:** Setting up Vercel + Supabase (free database)
 - **Full Integration:** Connecting frontend ↔ backend ↔ database
 
 ### 🎯 **How to Test**
@@ -177,8 +176,9 @@ npm run deploy:gelato:sepolia
          └──────────────────────────┘           
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Gelato Network (Decentralized Automation)                          │
-│  Monitors smart contracts → Automatically processes due payments    │
+│  Backend Automation Service (Self-Hosted)                           │
+│  Monitors database → Calls smart contracts → Processes payments     │
+│  Runs every 6 hours, handles failures, sends notifications         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -202,6 +202,8 @@ Cursor + Claude AI was used to support development.
 - Gas optimizations on contract (>$100 to sign the allowance, switch to Base, Arbitrium, Polygon)
 - PayPal database search (ask for Username -> wallet address)
 - Signing transcation also needs to be first month (not just a sign) ETH handling
+- Automation is currently a cron local -> Gelato or Chainlink for Automation
+- Contracts are not yet Verified on Etherscan
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
@@ -219,9 +221,3 @@ This is a proof-of-concept for educational purposes only.
 Not operational. No real financial services provided.
 Production launch subject to regulatory approval.
 
----
-
-## Links
-
-- **Documentation**: [README](https://github.com/ReadyMouse/sub-manager)
-- **GitHub**: [ReadyMouse/sub-manager](https://github.com/ReadyMouse/sub-manager)

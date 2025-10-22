@@ -17,6 +17,8 @@ import subscriptionRoutes from './routes/subscriptions';
 import paymentRoutes from './routes/payments';
 import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
+import automationRoutes from './routes/automation';
+import StartupService from './services/startupService';
 
 // Initialize Express app
 const app = express();
@@ -97,6 +99,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/automation', automationRoutes);
 
 // API info endpoint
 app.get('/api', (_req, res) => {
@@ -112,6 +115,7 @@ app.get('/api', (_req, res) => {
       payments: '/api/payments',
       notifications: '/api/notifications',
       webhooks: '/api/webhooks',
+      automation: '/api/automation',
     },
   });
 });
@@ -132,7 +136,7 @@ app.use(errorHandler);
 
 const PORT = parseInt(env.PORT) || 3001;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║                                                       ║
@@ -147,6 +151,15 @@ const server = app.listen(PORT, () => {
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
   `);
+
+  // Initialize background services
+  try {
+    const startupService = new StartupService();
+    await startupService.initialize();
+    console.log('✅ Background services initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize background services:', error);
+  }
 });
 
 // Graceful shutdown

@@ -8,6 +8,7 @@ User management and subscription metadata backend for StableRent - a decentraliz
 - 👤 **User Profiles** - Comprehensive user management for both payers and service providers
 - 💳 **Payment Addresses** - Support for multiple payment addresses (PayPal, wallets, etc.)
 - 📊 **Subscription Management** - Track and manage subscription metadata
+- 🤖 **Automated Payments** - Background service processes subscription payments every 6 hours
 - 🔔 **Notifications** - Real-time notifications for payment events
 - 🪝 **Webhook Integration** - Sync with Envio blockchain indexer
 - 🔒 **Security** - JWT authentication, rate limiting, helmet security headers
@@ -50,6 +51,9 @@ Edit `.env` and update:
 - `REFRESH_TOKEN_SECRET` - Another strong random secret
 - `ENVIO_WEBHOOK_SECRET` - Secret for Envio webhook verification
 - `FRONTEND_URL` - Your frontend URL for CORS
+- `CONTRACT_ADDRESS_SEPOLIA` - Your deployed StableRentSubscription contract address
+- `SEPOLIA_RPC_URL` - Ethereum RPC endpoint (e.g., Infura, Alchemy)
+- `PROCESSOR_PRIVATE_KEY` - Private key for automation wallet (64 characters)
 
 ### 3. Run Migrations
 
@@ -123,6 +127,14 @@ The API will be available at `http://localhost:3001`
 - `POST /api/webhooks/payment-failed` - Handle payment failed event
 - `POST /api/webhooks/subscription-cancelled` - Handle subscription cancelled event
 
+### Automation (System Administration)
+
+- `GET /api/automation/status` - Get automation service status
+- `GET /api/automation/due-subscriptions` - Get subscriptions due for payment
+- `POST /api/automation/start` - Start automation service
+- `POST /api/automation/stop` - Stop automation service
+- `POST /api/automation/trigger` - Manually trigger payment processing
+
 ## Database Schema
 
 ### User Management
@@ -172,11 +184,12 @@ The API will be available at `http://localhost:3001`
 
 ### Payment Processing
 
-1. Gelato Network processes payment on-chain (automated)
-2. Smart contract emits PaymentProcessed event
-3. Envio sends webhook to backend
-4. Backend creates payment record
-5. Both parties receive notifications
+1. Backend automation service processes payments every 6 hours
+2. Smart contract processes payment on-chain
+3. Smart contract emits PaymentProcessed event
+4. Envio sends webhook to backend
+5. Backend creates payment record
+6. Both parties receive notifications
 
 ## Envio Webhook Verification
 
@@ -223,6 +236,64 @@ npm run prisma:migrate
 npx prisma migrate reset
 ```
 
+## 🤖 Automation System
+
+The backend includes an automated payment processing system that replaces external automation services like Gelato.
+
+### How It Works
+
+1. **Background Service**: Runs automatically when the backend starts
+2. **6-Hour Intervals**: Checks for due subscriptions every 6 hours
+3. **Smart Contract Integration**: Calls the smart contract to process payments
+4. **Database Updates**: Records successful payments and failures
+5. **Notifications**: Sends notifications to users about payment status
+6. **Auto-Cancellation**: Cancels subscriptions after 3 consecutive failures
+
+### Automation Endpoints
+
+All automation endpoints are accessible without authentication for system administration:
+
+```bash
+# Check automation status
+curl -X GET http://localhost:3001/api/automation/status
+
+# Get subscriptions due for payment
+curl -X GET http://localhost:3001/api/automation/due-subscriptions
+
+# Manually trigger payment processing
+curl -X POST http://localhost:3001/api/automation/trigger
+
+# Start automation service
+curl -X POST http://localhost:3001/api/automation/start
+
+# Stop automation service
+curl -X POST http://localhost:3001/api/automation/stop
+```
+
+### Environment Setup
+
+For automation to work, ensure these environment variables are set:
+
+```bash
+# Required for automation
+CONTRACT_ADDRESS_SEPOLIA=0x...  # Your deployed contract address
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+PROCESSOR_PRIVATE_KEY=your-automation-wallet-private-key-64-chars
+```
+
+### Monitoring
+
+- **Logs**: Check backend logs for automation activity
+- **Status API**: Use `/api/automation/status` to check service status
+- **Database**: Monitor payment records and subscription updates
+
+### Security Considerations
+
+1. **Private Key Security**: Store `PROCESSOR_PRIVATE_KEY` securely
+2. **Wallet Funding**: Ensure automation wallet has sufficient ETH for gas
+3. **Access Control**: Automation endpoints are public for system administration
+4. **Error Handling**: Failed payments are logged and handled gracefully
+
 ## Deployment
 
 ### Environment Variables
@@ -236,6 +307,11 @@ REFRESH_TOKEN_SECRET="..."
 ENVIO_WEBHOOK_SECRET="..."
 FRONTEND_URL="https://your-frontend.com"
 NODE_ENV="production"
+
+# Automation system
+CONTRACT_ADDRESS_SEPOLIA="0x..."
+SEPOLIA_RPC_URL="https://sepolia.infura.io/v3/YOUR_PROJECT_ID"
+PROCESSOR_PRIVATE_KEY="your-automation-wallet-private-key-64-chars"
 ```
 
 ### Docker (Optional)
@@ -249,6 +325,15 @@ COPY . .
 RUN npm run build
 RUN npx prisma generate
 CMD ["npm", "start"]
+```
+
+### Testing
+
+```bash
+# Test automation system
+curl -X GET http://localhost:3001/api/automation/status
+curl -X GET http://localhost:3001/api/automation/due-subscriptions
+curl -X POST http://localhost:3001/api/automation/trigger
 ```
 
 ### Recommended Hosts

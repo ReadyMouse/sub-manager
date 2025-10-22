@@ -19,7 +19,7 @@ interface IUniswapV2Router02 {
         external view returns (uint[] memory amounts);
 }
 
-contract StableRentSubscription is ReentrancyGuard, Ownable {
+contract StableRentwSwap is ReentrancyGuard, Ownable {
     
     // ========================================
     // STRUCTS (keeping your existing structure)

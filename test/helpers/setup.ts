@@ -67,7 +67,7 @@ export async function setupTestContracts() {
   console.log("\n💰 Connected to PYUSD:", PYUSD_ADDRESS);
   
   // Deploy StableRentSubscription contract
-  const StableRentSubscription = await ethers.getContractFactory("StableRentSubscription");
+  const StableRentSubscription = await ethers.getContractFactory("contracts/StableRentSubscription.sol:StableRentSubscription");
   const stableRentContract = await StableRentSubscription.deploy(owner.address, PYUSD_ADDRESS);
   await stableRentContract.waitForDeployment();
   

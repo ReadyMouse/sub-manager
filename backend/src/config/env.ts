@@ -1,7 +1,15 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import path from 'path';
 
-dotenv.config();
+// Load from main .env file (project root) for blockchain variables
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Load from backend .env file for backend-specific variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+// Load from backend .env.local file for local development (overrides .env)
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
 
 const envSchema = z.object({
   // Database
@@ -34,7 +42,13 @@ const envSchema = z.object({
 
   // Blockchain
   DEFAULT_CHAIN_ID: z.string().default('1'),
-  CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  CONTRACT_ADDRESS_SEPOLIA: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  SEPOLIA_RPC_URL: z.string().url().optional(),
+  PROCESSOR_PRIVATE_KEY: z.string().min(64).optional(), // Private key for automation wallet
+  
+  // Hardhat/Development (from main .env)
+  ALCHEMY_API_KEY: z.string().optional(),
+  ETHERSCAN_API_KEY: z.string().optional(),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),

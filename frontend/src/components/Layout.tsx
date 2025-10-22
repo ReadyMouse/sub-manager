@@ -265,10 +265,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div>
               <h3 className="font-bold text-lg mb-3">Learn More</h3>
               <div className="flex flex-col gap-2 text-sm">
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="opacity-95 hover:opacity-100 transition-opacity underline">
+                <a href="https://github.com/ReadyMouse/sub-manager" target="_blank" rel="noopener noreferrer" className="opacity-95 hover:opacity-100 transition-opacity underline">
                   Documentation
                 </a>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="opacity-95 hover:opacity-100 transition-opacity underline">
+                <a href="https://github.com/ReadyMouse/sub-manager" target="_blank" rel="noopener noreferrer" className="opacity-95 hover:opacity-100 transition-opacity underline">
                   GitHub Repository
                 </a>
               </div>

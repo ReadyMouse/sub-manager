@@ -20,10 +20,7 @@ const config: HardhatUserConfig = {
   // PATHS CONFIGURATION
   // ========================================
   paths: {
-    // Include contracts from both the main contracts folder and gelato-automation
     sources: "./contracts",
-    // Note: Hardhat will automatically find contracts in subdirectories
-    // But we need to ensure gelato-automation/contracts is accessible
   },
   
   // ========================================
@@ -85,10 +82,10 @@ const config: HardhatUserConfig = {
       },
       
       // chainId: The network ID
-      // 1 = Ethereum mainnet
-      // This tells Hardhat to pretend our local fork IS mainnet
+      // 31337 = Hardhat local network
+      // This tells Hardhat to use the local network ID
       // Important for contracts that check which network they're on
-      chainId: 1,
+      chainId: 31337,
     },
     
     // ========================================
@@ -135,6 +132,33 @@ const config: HardhatUserConfig = {
     // target: Which library we're using to interact with contracts
     // "ethers-v6" means we're using ethers.js version 6
     target: "ethers-v6",
+  },
+
+  // ========================================
+  // ETHERSCAN VERIFICATION CONFIGURATION
+  // ========================================
+  etherscan: {
+    apiKey: {
+      sepolia: process.env.ETHERSCAN_API_KEY!,
+      mainnet: process.env.ETHERSCAN_API_KEY!,
+    },
+    customChains: [
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://api-sepolia.etherscan.io/api",
+          browserURL: "https://sepolia.etherscan.io"
+        }
+      }
+    ]
+  },
+
+  // ========================================
+  // SOURCIFY CONFIGURATION
+  // ========================================
+  sourcify: {
+    enabled: true
   },
 };
 
