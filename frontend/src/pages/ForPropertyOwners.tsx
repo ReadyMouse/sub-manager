@@ -17,6 +17,65 @@ export const ForPropertyOwners: React.FC = () => {
         </p>
       </div>
 
+      {/* Benefits Summary */}
+      <section className="mb-16">
+        <div className="bg-gradient-to-br from-brand-sage/10 to-brand-teal/10 rounded-xl p-8 border border-brand-sage/30">
+          <h2 className="text-2xl font-bold text-brand-navy mb-6 text-center">
+            Why Forward-Thinking Property Owners Choose Blockchain Rent
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Automated, on-time payments every month</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Verify tenant financial capacity instantly</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">View complete payment history from previous rentals</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">No chargebacks or payment reversals</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Permanent, tamper-proof payment records</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Easy conversion to USD through PayPal</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Lower collection costs and admin overhead</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <span className="text-gray-700">Attract tech-savvy, financially responsible tenants</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Overview Section */}
       <section className="mb-16">
         <h2 className="text-3xl font-bold text-brand-navy mb-6">
@@ -573,65 +632,6 @@ export const ForPropertyOwners: React.FC = () => {
               familiar with digital currency basics.
             </p>
           </details>
-        </div>
-      </section>
-
-      {/* Benefits Summary */}
-      <section className="mb-16">
-        <div className="bg-gradient-to-br from-brand-sage/10 to-brand-teal/10 rounded-xl p-8 border border-brand-sage/30">
-          <h2 className="text-2xl font-bold text-brand-navy mb-6 text-center">
-            Why Forward-Thinking Property Owners Choose Blockchain Rent
-          </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Automated, on-time payments every month</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Verify tenant financial capacity instantly</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">View complete payment history from previous rentals</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">No chargebacks or payment reversals</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Permanent, tamper-proof payment records</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Easy conversion to USD through PayPal</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Lower collection costs and admin overhead</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="bg-brand-sage rounded w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                <span className="text-white text-sm">✓</span>
-              </div>
-              <span className="text-gray-700">Attract tech-savvy, financially responsible tenants</span>
-            </div>
-          </div>
         </div>
       </section>
 

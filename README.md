@@ -218,3 +218,10 @@ Talk to a lawyer, what regulations come into play?
 This is a proof-of-concept for educational purposes only.
 Not operational. No real financial services provided.
 Production launch subject to regulatory approval.
+
+---
+
+## Links
+
+- **Documentation**: [README](https://github.com/ReadyMouse/sub-manager)
+- **GitHub**: [ReadyMouse/sub-manager](https://github.com/ReadyMouse/sub-manager)

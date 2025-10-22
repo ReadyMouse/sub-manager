@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useAuth } from '../contexts/AuthContext';
-import { useEnvioAllUserPayments } from '../hooks/useEnvio';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { useSubscriptions } from '../hooks/useSubscriptions';
+import { usePayments } from '../hooks/usePayments';
 import { formatPYUSD, shortenAddress, formatDateTime, getEtherscanLink } from '../lib/utils';
 import { PYUSD_SYMBOL, CONTRACTS } from '../lib/constants';
 import { SkeletonList } from '../components/Skeleton';
@@ -312,49 +314,45 @@ const ReceiveOnlyWalletCard: React.FC<{
   );
 };
 
-interface UserProfile {
-  displayName: string;
-  email?: string;
-  phoneNumber?: string;
-  phoneVerified: boolean;
-  emailVerified: boolean;
-}
 
-interface NotificationSettings {
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  paymentReminders: boolean;
-  paymentConfirmations: boolean;
-  subscriptionUpdates: boolean;
-}
+// Helper function to convert backend subscription to frontend format
+const convertSubscription = (sub: any): EnvioSubscription => ({
+  id: sub.id,
+  subscriber: sub.senderWalletAddress || '',
+  serviceProviderId: sub.serviceName,
+  amount: sub.amount,
+  interval: sub.interval.toString(),
+  nextPaymentDue: sub.nextPaymentDue,
+  endDate: sub.endDate,
+  maxPayments: sub.maxPayments?.toString(),
+  paymentCount: sub.paymentCount.toString(),
+  failedPaymentCount: sub.failedPaymentCount.toString(),
+  isActive: sub.isActive,
+  processorFee: sub.processorFee || '0',
+  processorFeeAddress: sub.processorFeeAddress || '',
+  processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
+  processorFeeID: sub.processorFeeID || '',
+  createdAt: sub.createdAt,
+});
 
 export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { user, logout, isAuthenticated } = useAuth();
-  const { payments, loading: paymentsLoading } = useEnvioAllUserPayments(address);
+  const { profile, preferences, updateProfile, updatePreferences } = useUserProfile();
+  const { subscriptions, loading: subscriptionsLoading } = useSubscriptions();
+  const { payments: allPayments, loading: allPaymentsLoading } = usePayments();
   const [activeTab, setActiveTab] = useState<'profile' | 'wallets' | 'subscriptions' | 'history'>('profile');
   const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
   const [loadingWallets, setLoadingWallets] = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [subscriptions, setSubscriptions] = useState<EnvioSubscription[]>([]);
-  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    displayName: 'User',
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editingProfile, setEditingProfile] = useState({
+    displayName: '',
     email: '',
     phoneNumber: '',
-    phoneVerified: false,
-    emailVerified: false,
   });
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    emailNotifications: true,
-    smsNotifications: false,
-    paymentReminders: true,
-    paymentConfirmations: true,
-    subscriptionUpdates: true,
-  });
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   // Receive-only wallets state
   const [receiveWallets, setReceiveWallets] = useState<ReceiveOnlyWallet[]>([]);
   const [loadingReceiveWallets, setLoadingReceiveWallets] = useState(false);
@@ -527,120 +525,37 @@ export const Settings: React.FC = () => {
     }
   };
 
-  // Load subscriptions
+
+  // Update editing profile when real profile loads
   useEffect(() => {
-    const loadSubscriptions = async () => {
-      if (!isConnected) return;
-      
-      setLoadingSubscriptions(true);
-      try {
-        // TODO: Replace with actual API call when Envio is integrated
-        // For now, using mock data
-        const mockSubscriptions: EnvioSubscription[] = [
-          {
-            id: '1',
-            subscriber: address?.toLowerCase() || '',
-            serviceProviderId: 'Monthly Rent',
-            amount: '2500000000', // $2,500.00 PYUSD (6 decimals)
-            interval: '2592000', // 30 days in seconds
-            nextPaymentDue: String(Math.floor(Date.now() / 1000) + 86400 * 5), // 5 days from now
-            isActive: true,
-            failedPaymentCount: '0',
-            createdAt: String(Math.floor(Date.now() / 1000) - 86400 * 60), // 60 days ago
-            paymentCount: '2',
-            processorFee: '25000000', // $25.00
-            processorFeeAddress: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2',
-            processorFeeCurrency: 'PYUSD',
-            processorFeeID: 'rental-001',
-          },
-          {
-            id: '2',
-            subscriber: address?.toLowerCase() || '',
-            serviceProviderId: 'Storage Unit',
-            amount: '150000000', // $150.00 PYUSD
-            interval: '2592000', // 30 days
-            nextPaymentDue: String(Math.floor(Date.now() / 1000) + 86400 * 12), // 12 days from now
-            isActive: true,
-            failedPaymentCount: '0',
-            createdAt: String(Math.floor(Date.now() / 1000) - 86400 * 90), // 90 days ago
-            paymentCount: '3',
-            processorFee: '1500000', // $1.50
-            processorFeeAddress: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2',
-            processorFeeCurrency: 'PYUSD',
-            processorFeeID: 'storage-001',
-          },
-          {
-            id: '3',
-            subscriber: address?.toLowerCase() || '',
-            serviceProviderId: 'Old Apartment',
-            amount: '1800000000', // $1,800.00 PYUSD
-            interval: '2592000', // 30 days
-            nextPaymentDue: String(Math.floor(Date.now() / 1000) - 86400 * 30), // 30 days ago (past)
-            isActive: false,
-            failedPaymentCount: '0',
-            createdAt: String(Math.floor(Date.now() / 1000) - 86400 * 365), // 365 days ago
-            endDate: String(Math.floor(Date.now() / 1000) - 86400 * 60), // Ended 60 days ago
-            paymentCount: '10',
-            processorFee: '18000000', // $18.00
-            processorFeeAddress: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2',
-            processorFeeCurrency: 'PYUSD',
-            processorFeeID: 'rental-002',
-          },
-        ];
-        setSubscriptions(mockSubscriptions);
-      } catch (error) {
-        console.error('Failed to load subscriptions:', error);
-      } finally {
-        setLoadingSubscriptions(false);
-      }
-    };
-
-    loadSubscriptions();
-  }, [isConnected, address]);
-
-  // Load user profile
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!isConnected) return;
-      
-      try {
-        // TODO: Replace with actual API call to backend
-        // For now, using mock data
-        const mockProfile: UserProfile = {
-          displayName: 'John Doe',
-          email: 'john.doe@example.com',
-          phoneNumber: '+1 (555) 123-4567',
-          phoneVerified: true,
-          emailVerified: true,
-        };
-        setUserProfile(mockProfile);
-
-        // Load notification settings
-        const mockSettings: NotificationSettings = {
-          emailNotifications: true,
-          smsNotifications: true,
-          paymentReminders: true,
-          paymentConfirmations: true,
-          subscriptionUpdates: true,
-        };
-        setNotificationSettings(mockSettings);
-      } catch (error) {
-        console.error('Failed to load user profile:', error);
-      }
-    };
-
-    loadProfile();
-  }, [isConnected, address]);
+    if (profile) {
+      setEditingProfile({
+        displayName: profile.displayName || '',
+        email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
+      });
+    }
+  }, [profile]);
 
   const handleProfileUpdate = async () => {
-    // TODO: Implement profile update API call
-    console.log('Updating profile:', userProfile);
-    setIsEditingProfile(false);
+    if (!profile) return;
+    
+    try {
+      await updateProfile({
+        displayName: editingProfile.displayName,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phoneNumber: editingProfile.phoneNumber,
+      });
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
   };
 
   const handleVerifyPhone = async () => {
     // TODO: Implement phone verification
-    console.log('Verify phone:', userProfile.phoneNumber);
+    console.log('Verify phone:', profile?.phoneNumber);
   };
 
   const handleLogout = async () => {
@@ -654,15 +569,20 @@ export const Settings: React.FC = () => {
 
   const handleVerifyEmail = async () => {
     // TODO: Implement email verification
-    console.log('Verify email:', userProfile.email);
+    console.log('Verify email:', profile?.email);
   };
 
-  const handleNotificationChange = (key: keyof NotificationSettings) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-    // TODO: Save to backend
+  const handleNotificationChange = async (key: string) => {
+    if (!preferences) return;
+    
+    try {
+      const newValue = !preferences[key as keyof typeof preferences];
+      await updatePreferences({
+        [key]: newValue,
+      });
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+    }
   };
 
   if (!isConnected) {
@@ -683,39 +603,6 @@ export const Settings: React.FC = () => {
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'success':
-        return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">Success</span>;
-      case 'failed':
-        return <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">Failed</span>;
-      case 'pending':
-        return <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">Pending</span>;
-      default:
-        return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">{status}</span>;
-    }
-  };
-
-  const getDirectionBadge = (direction: 'sent' | 'received') => {
-    if (direction === 'sent') {
-      return (
-        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-          Sent
-        </span>
-      );
-    }
-    return (
-      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-        </svg>
-        Received
-      </span>
-    );
-  };
 
   return (
     <div>
@@ -804,12 +691,12 @@ export const Settings: React.FC = () => {
                 {isEditingProfile ? (
                   <input
                     type="text"
-                    value={userProfile.displayName}
-                    onChange={(e) => setUserProfile({ ...userProfile, displayName: e.target.value })}
+                    value={editingProfile.displayName}
+                    onChange={(e) => setEditingProfile({ ...editingProfile, displayName: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-transparent"
                   />
                 ) : (
-                  <p className="text-gray-900">{userProfile.displayName}</p>
+                  <p className="text-gray-900">{profile?.displayName || 'Not provided'}</p>
                 )}
               </div>
 
@@ -820,16 +707,16 @@ export const Settings: React.FC = () => {
                   {isEditingProfile ? (
                     <input
                       type="email"
-                      value={userProfile.email || ''}
-                      onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                      value={editingProfile.email}
+                      onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-transparent"
                       placeholder="your.email@example.com"
                     />
                   ) : (
-                    <p className="flex-1 text-gray-900">{userProfile.email || 'Not provided'}</p>
+                    <p className="flex-1 text-gray-900">{profile?.email || 'Not provided'}</p>
                   )}
-                  {userProfile.email && (
-                    userProfile.emailVerified ? (
+                  {profile?.email && (
+                    profile.emailVerified ? (
                       <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -855,16 +742,16 @@ export const Settings: React.FC = () => {
                   {isEditingProfile ? (
                     <input
                       type="tel"
-                      value={userProfile.phoneNumber || ''}
-                      onChange={(e) => setUserProfile({ ...userProfile, phoneNumber: e.target.value })}
+                      value={editingProfile.phoneNumber}
+                      onChange={(e) => setEditingProfile({ ...editingProfile, phoneNumber: e.target.value })}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-transparent"
                       placeholder="+1 (555) 123-4567"
                     />
                   ) : (
-                    <p className="flex-1 text-gray-900">{userProfile.phoneNumber || 'Not provided'}</p>
+                    <p className="flex-1 text-gray-900">{profile?.phoneNumber || 'Not provided'}</p>
                   )}
-                  {userProfile.phoneNumber && (
-                    userProfile.phoneVerified ? (
+                  {profile?.phoneNumber && (
+                    profile.phoneVerified ? (
                       <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -900,7 +787,7 @@ export const Settings: React.FC = () => {
                     </div>
                     <input
                       type="checkbox"
-                      checked={notificationSettings.emailNotifications}
+                      checked={preferences?.emailNotifications || false}
                       onChange={() => handleNotificationChange('emailNotifications')}
                       className="w-5 h-5 text-brand-teal focus:ring-brand-teal rounded"
                     />
@@ -913,13 +800,13 @@ export const Settings: React.FC = () => {
                     </div>
                     <input
                       type="checkbox"
-                      checked={notificationSettings.smsNotifications}
+                      checked={preferences?.smsNotifications || false}
                       onChange={() => handleNotificationChange('smsNotifications')}
                       className="w-5 h-5 text-brand-teal focus:ring-brand-teal rounded"
-                      disabled={!userProfile.phoneVerified}
+                      disabled={!profile?.phoneVerified}
                     />
                   </label>
-                  {!userProfile.phoneVerified && notificationSettings.smsNotifications && (
+                  {!profile?.phoneVerified && preferences?.smsNotifications && (
                     <p className="text-xs text-amber-600 ml-4">
                       Please verify your phone number to enable SMS notifications
                     </p>
@@ -938,7 +825,7 @@ export const Settings: React.FC = () => {
                     </div>
                     <input
                       type="checkbox"
-                      checked={notificationSettings.paymentReminders}
+                      checked={preferences?.paymentReminders || false}
                       onChange={() => handleNotificationChange('paymentReminders')}
                       className="w-5 h-5 text-brand-teal focus:ring-brand-teal rounded"
                     />
@@ -951,7 +838,7 @@ export const Settings: React.FC = () => {
                     </div>
                     <input
                       type="checkbox"
-                      checked={notificationSettings.paymentConfirmations}
+                      checked={preferences?.paymentConfirmations || false}
                       onChange={() => handleNotificationChange('paymentConfirmations')}
                       className="w-5 h-5 text-brand-teal focus:ring-brand-teal rounded"
                     />
@@ -964,7 +851,7 @@ export const Settings: React.FC = () => {
                     </div>
                     <input
                       type="checkbox"
-                      checked={notificationSettings.subscriptionUpdates}
+                      checked={preferences?.subscriptionUpdates || false}
                       onChange={() => handleNotificationChange('subscriptionUpdates')}
                       className="w-5 h-5 text-brand-teal focus:ring-brand-teal rounded"
                     />
@@ -1292,9 +1179,9 @@ export const Settings: React.FC = () => {
             </p>
           </div>
 
-          {loadingSubscriptions ? (
+          {subscriptionsLoading ? (
             <SkeletonList count={3} />
-          ) : subscriptions.length === 0 ? (
+          ) : (subscriptions.sent.length + subscriptions.received.length) === 0 ? (
             <div className="text-center py-12">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1314,36 +1201,40 @@ export const Settings: React.FC = () => {
           ) : (
             <div className="space-y-8">
               {/* Active Subscriptions */}
-              {subscriptions.filter(s => s.isActive).length > 0 && (
-                <div>
-                  <h3 className="text-xl font-semibold text-brand-navy mb-4">
-                    Active ({subscriptions.filter(s => s.isActive).length})
-                  </h3>
-                  <div className="space-y-4">
-                    {subscriptions
-                      .filter(s => s.isActive)
-                      .map((subscription) => (
+              {(() => {
+                const allSubs = [...subscriptions.sent, ...subscriptions.received].map(convertSubscription);
+                const activeSubs = allSubs.filter(s => s.isActive);
+                return activeSubs.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-brand-navy mb-4">
+                      Active ({activeSubs.length})
+                    </h3>
+                    <div className="space-y-4">
+                      {activeSubs.map((subscription) => (
                         <SubscriptionCard key={subscription.id} subscription={subscription} isActive={true} />
                       ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Past Subscriptions */}
-              {subscriptions.filter(s => !s.isActive).length > 0 && (
-                <div>
-                  <h3 className="text-xl font-semibold text-brand-navy mb-4">
-                    Past ({subscriptions.filter(s => !s.isActive).length})
-                  </h3>
-                  <div className="space-y-4 opacity-60">
-                    {subscriptions
-                      .filter(s => !s.isActive)
-                      .map((subscription) => (
+              {(() => {
+                const allSubs = [...subscriptions.sent, ...subscriptions.received].map(convertSubscription);
+                const pastSubs = allSubs.filter(s => !s.isActive);
+                return pastSubs.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-brand-navy mb-4">
+                      Past ({pastSubs.length})
+                    </h3>
+                    <div className="space-y-4 opacity-60">
+                      {pastSubs.map((subscription) => (
                         <SubscriptionCard key={subscription.id} subscription={subscription} isActive={false} />
                       ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </div>
@@ -1352,9 +1243,9 @@ export const Settings: React.FC = () => {
       {/* Payment History Tab Content */}
       {activeTab === 'history' && (
         <div>
-          {paymentsLoading ? (
+          {allPaymentsLoading ? (
             <SkeletonList count={5} />
-          ) : payments.length === 0 ? (
+          ) : allPayments.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1374,24 +1265,24 @@ export const Settings: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Total Payments</div>
-                  <div className="text-3xl font-bold text-brand-navy">{payments.length}</div>
+                  <div className="text-3xl font-bold text-brand-navy">{allPayments.length}</div>
                 </div>
                 <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Sent</div>
-                  <div className="text-3xl font-bold text-blue-600">
-                    {payments.filter(p => p.direction === 'sent').length}
-                  </div>
-                </div>
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Received</div>
-                  <div className="text-3xl font-bold text-purple-600">
-                    {payments.filter(p => p.direction === 'received').length}
-                  </div>
-                </div>
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Successful</div>
+                  <div className="text-sm text-gray-600 mb-1">Completed</div>
                   <div className="text-3xl font-bold text-green-600">
-                    {payments.filter(p => p.status.toLowerCase() === 'success').length}
+                    {allPayments.filter((p: any) => p.status === 'COMPLETED').length}
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="text-sm text-gray-600 mb-1">Failed</div>
+                  <div className="text-3xl font-bold text-red-600">
+                    {allPayments.filter((p: any) => p.status === 'FAILED').length}
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="text-sm text-gray-600 mb-1">Pending</div>
+                  <div className="text-3xl font-bold text-yellow-600">
+                    {allPayments.filter((p: any) => p.status === 'PENDING').length}
                   </div>
                 </div>
               </div>
@@ -1406,7 +1297,7 @@ export const Settings: React.FC = () => {
                           Date
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
+                          Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Service Name
@@ -1415,30 +1306,32 @@ export const Settings: React.FC = () => {
                           Amount
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Transaction
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {payments.map(payment => (
+                      {allPayments.map(payment => (
                         <tr key={payment.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDateTime(parseInt(payment.timestamp))}
+                            {formatDateTime(new Date(payment.createdAt).getTime())}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {getDirectionBadge(payment.direction)}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              payment.status === 'COMPLETED' 
+                                ? 'bg-green-100 text-green-800' 
+                                : payment.status === 'FAILED'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {payment.status}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                            {payment.serviceName}
+                            {payment.subscription?.serviceName || 'Unknown Service'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {formatPYUSD(BigInt(payment.amount))} <span className="text-xs text-gray-500">PYUSD</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(payment.status)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             {payment.transactionHash ? (

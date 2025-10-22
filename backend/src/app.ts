@@ -34,10 +34,15 @@ app.use(helmet());
 // CORS configuration
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: [
+      env.FRONTEND_URL,
+      'https://stablerent.vercel.app', // Your Vercel frontend URL
+      'http://localhost:5173', // For local development
+      'http://localhost:3000', // For local development
+    ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 

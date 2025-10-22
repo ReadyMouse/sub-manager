@@ -74,6 +74,71 @@ export const apiClient = {
 /**
  * Payment Address API endpoints
  */
+/**
+ * User Profile API endpoints
+ */
+export const userApi = {
+  async getProfile(token?: string) {
+    return apiClient.get('/api/users/me', { token });
+  },
+
+  async updateProfile(data: {
+    displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  }, token?: string) {
+    return apiClient.put('/api/users/me', data, { token });
+  },
+
+  async getPreferences(token?: string) {
+    return apiClient.get('/api/users/me/preferences', { token });
+  },
+
+  async updatePreferences(data: {
+    emailNotifications?: boolean;
+    paymentReminders?: boolean;
+    lowBalanceWarnings?: boolean;
+    marketingEmails?: boolean;
+    reminderDaysBefore?: number;
+    defaultCurrency?: string;
+    timezone?: string;
+    language?: string;
+  }, token?: string) {
+    return apiClient.put('/api/users/me/preferences', data, { token });
+  },
+};
+
+/**
+ * Subscription API endpoints
+ */
+export const subscriptionApi = {
+  async getAll(token?: string) {
+    return apiClient.get('/api/subscriptions', { token });
+  },
+
+  async getSent(token?: string) {
+    return apiClient.get('/api/subscriptions/sent', { token });
+  },
+
+  async getReceived(token?: string) {
+    return apiClient.get('/api/subscriptions/received', { token });
+  },
+};
+
+/**
+ * Payment API endpoints
+ */
+export const paymentApi = {
+  async getAll(token?: string) {
+    return apiClient.get('/api/payments', { token });
+  },
+
+  async getBySubscription(subscriptionId: string, token?: string) {
+    return apiClient.get(`/api/payments/subscription/${subscriptionId}`, { token });
+  },
+};
+
 export const paymentAddressApi = {
   async getAll(token?: string) {
     return apiClient.get('/api/users/me/payment-addresses', { token });

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { WalletConnect } from './WalletConnect';
 import { useAuth } from '../contexts/AuthContext';
-import homesImage from '../assets/homes.png';
+import homesImage from '../assets/bw_banner.png';
 import paypalLogo from '../assets/paypal_logo.png';
 
 interface LayoutProps {
@@ -13,11 +13,32 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setLearnMoreOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/create', label: 'Set Up Payment' },
+  ];
+
+  const learnMoreItems = [
+    { path: '/for-property-owners', label: 'For Property Owners' },
+    { path: '/for-residents', label: 'For Residents' },
   ];
 
   const isActive = (path: string) => {
@@ -59,6 +80,42 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {item.label}
                 </Link>
               ))}
+              
+              {/* Learn More Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setLearnMoreOpen(!learnMoreOpen)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-1 ${
+                    learnMoreItems.some(item => isActive(item.path))
+                      ? 'bg-brand-teal text-white shadow-soft'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-brand-navy'
+                  }`}
+                >
+                  Learn More
+                  <svg className={`w-4 h-4 transition-transform duration-200 ${learnMoreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {learnMoreOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {learnMoreItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setLearnMoreOpen(false)}
+                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                          isActive(item.path)
+                            ? 'bg-brand-teal text-white'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-brand-navy'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </nav>
 
             {/* Right Side: Auth Button, Wallet Connect & Mobile Menu */}
@@ -69,7 +126,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {isAuthenticated ? (
                 <Link
                   to="/settings"
-                  className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal-dark transition-colors font-medium flex items-center gap-2"
+                  className="px-4 py-3 bg-brand-teal text-white rounded-lg hover:bg-brand-teal-dark transition-colors font-medium flex items-center gap-2"
                 >
                   <span className="hidden sm:inline">👤</span>
                   <span className="hidden md:inline">{user?.displayName || 'Profile'}</span>
@@ -78,7 +135,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               ) : (
                 <Link
                   to="/login"
-                  className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal-dark transition-colors font-medium"
+                  className="px-4 py-3 bg-brand-teal text-white rounded-lg hover:bg-brand-teal-dark transition-colors font-medium"
                 >
                   Sign In
                 </Link>
@@ -112,6 +169,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {item.label}
                   </Link>
                 ))}
+                
+                {/* Mobile Learn More Section */}
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <div className="px-4 py-2 text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                    Learn More
+                  </div>
+                  {learnMoreItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                        isActive(item.path)
+                          ? 'bg-brand-teal text-white shadow-soft'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-brand-navy'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </nav>
           )}
