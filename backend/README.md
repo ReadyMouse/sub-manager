@@ -22,6 +22,12 @@ User management and subscription metadata backend for StableRent - a decentraliz
 - **Validation:** express-validator + Zod
 - **Security:** helmet, express-rate-limit, CORS
 
+## 🚀 Deployment
+
+**Production**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete Railway deployment guide.
+
+**Architecture**: See [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) for detailed backend architecture.
+
 ## Quick Start
 
 ### 1. Install Dependencies

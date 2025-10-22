@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env';
+import prisma from './config/database';
 
 // Middleware
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -19,6 +20,9 @@ import webhookRoutes from './routes/webhooks';
 
 // Initialize Express app
 export const app = express();
+
+// Trust proxy for Railway deployment
+app.set('trust proxy', 1);
 
 // ========================================
 // MIDDLEWARE
@@ -55,13 +59,26 @@ app.use('/api', apiLimiter);
 // HEALTH CHECK
 // ========================================
 
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: env.NODE_ENV,
-    message: 'StableRent Backend API is running',
-  });
+app.get('/health', async (_req, res) => {
+  try {
+    // Check database connection
+    await prisma.$queryRaw`SELECT 1`;
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+      database: 'connected',
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 });
 
 // ========================================
