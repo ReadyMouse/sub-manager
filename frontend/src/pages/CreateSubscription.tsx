@@ -24,6 +24,7 @@ export const CreateSubscription: React.FC = () => {
   const [allowanceType, setAllowanceType] = useState<'calculated' | 'custom'>('calculated');
   const [customAllowance, setCustomAllowance] = useState('');
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
+  const [hasShownApproveError, setHasShownApproveError] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: '',
     serviceDescription: '', // Off-chain: longer description
@@ -214,11 +215,28 @@ export const CreateSubscription: React.FC = () => {
 
   // Handle approve error
   useEffect(() => {
-    if (approveError) {
+    if (approveError && !hasShownApproveError) {
       console.error('Approve error:', approveError);
-      toast.error('Approval Failed', approveError.message || 'Failed to approve PYUSD allowance. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to approve PYUSD allowance. Please try again.';
+      
+      if (approveError.message) {
+        if (approveError.message.includes('Insufficient funds')) {
+          errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
+        } else if (approveError.message.includes('User rejected')) {
+          errorMessage = 'Transaction was rejected. Please try again.';
+        } else if (approveError.message.includes('Internal JSON-RPC error')) {
+          errorMessage = 'Network error occurred. Please check your connection and try again.';
+        } else {
+          errorMessage = approveError.message;
+        }
+      }
+      
+      toast.error('Approval Failed', errorMessage);
+      setHasShownApproveError(true);
     }
-  }, [approveError, toast]);
+  }, [approveError, toast, hasShownApproveError]);
 
   // Check if allowance is already sufficient
   useEffect(() => {
@@ -290,6 +308,9 @@ export const CreateSubscription: React.FC = () => {
     }
 
     try {
+      // Reset error flag when starting new approval attempt
+      setHasShownApproveError(false);
+      
       const approvalAmount = allowanceType === 'calculated' 
         ? calculateTotalAllowance().total 
         : customAllowance;
@@ -309,7 +330,8 @@ export const CreateSubscription: React.FC = () => {
         return;
       }
 
-      // Note: No balance check needed for approval - this only sets allowance permission
+      // Note: No PYUSD balance check needed for approval - this only sets allowance permission
+      // User only needs ETH for gas, not PYUSD tokens
 
       toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
       await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);

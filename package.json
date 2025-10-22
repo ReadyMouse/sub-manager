@@ -13,6 +13,8 @@
     "clean": "hardhat clean",
     "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
     "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:full": "hardhat run scripts/deploy-full.ts --network sepolia",
+    "deploy:railway": "npx ts-node scripts/railway-deploy.ts",
     "verify:sepolia": "hardhat verify --network sepolia"
   },
   "keywords": [],
