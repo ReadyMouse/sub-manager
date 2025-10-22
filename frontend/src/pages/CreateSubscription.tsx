@@ -308,19 +308,7 @@ export const CreateSubscription: React.FC = () => {
         return;
       }
 
-      // Check user has sufficient PYUSD balance
-      if (pyusdBalance !== undefined) {
-        const balanceInUSD = Number(pyusdBalance) / 1_000_000;
-        const minRequired = minAllowance;
-        
-        if (balanceInUSD < minRequired) {
-          toast.error(
-            'Insufficient Balance',
-            `You need at least $${minRequired.toFixed(2)} PYUSD. Current balance: $${balanceInUSD.toFixed(2)}`
-          );
-          return;
-        }
-      }
+      // Note: No balance check needed for approval - this only sets allowance permission
 
       toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
       await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
