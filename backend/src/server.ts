@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env';
-import prisma from './config/database';
 
 // Middleware
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -56,26 +55,13 @@ app.use('/api', apiLimiter);
 // HEALTH CHECK
 // ========================================
 
-app.get('/health', async (_req, res) => {
-  try {
-    // Check database connection
-    await prisma.$queryRaw`SELECT 1`;
-
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV,
-      database: 'connected',
-    });
-  } catch (error) {
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV,
-      database: 'disconnected',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: env.NODE_ENV,
+    message: 'StableRent Backend API is running',
+  });
 });
 
 // ========================================
@@ -134,8 +120,8 @@ const server = app.listen(PORT, () => {
 ║   Port:        ${PORT.toString().padEnd(40, ' ')}║
 ║   API URL:     ${env.API_URL.padEnd(40, ' ')}║
 ║                                                       ║
-║   Health:      ${env.API_URL}/health${' '.repeat(40 - env.API_URL.length - 7)}║
-║   Docs:        ${env.API_URL}/api${' '.repeat(40 - env.API_URL.length - 4)}║
+║   Health:      /health${' '.repeat(40 - 7)}║
+║   Docs:        /api${' '.repeat(40 - 4)}║
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
   `);
@@ -145,17 +131,9 @@ const server = app.listen(PORT, () => {
 const gracefulShutdown = async (signal: string) => {
   console.log(`\nReceived ${signal}, closing server gracefully...`);
 
-  server.close(async () => {
+  server.close(() => {
     console.log('HTTP server closed');
-
-    try {
-      await prisma.$disconnect();
-      console.log('Database connection closed');
-      process.exit(0);
-    } catch (error) {
-      console.error('Error during shutdown:', error);
-      process.exit(1);
-    }
+    process.exit(0);
   });
 
   // Force shutdown after 10 seconds

@@ -336,7 +336,7 @@ npm run dev
 
 ## Deployment Architecture
 
-### Recommended Setup
+### Current Production Setup
 
 ```
 ┌─────────────────┐
@@ -350,7 +350,7 @@ npm run dev
          │
          ▼
 ┌─────────────────┐
-│   Supabase      │ ← PostgreSQL Database
+│   Railway       │ ← PostgreSQL Database (included)
 └─────────────────┘
 ```
 
@@ -364,10 +364,12 @@ VITE_CONTRACT_ADDRESS=0x...
 
 **Backend (Railway)**
 ```bash
-DATABASE_URL=postgresql://...
-FRONTEND_URL=https://stablerent.com
-JWT_SECRET=...
-ENVIO_WEBHOOK_SECRET=...
+DATABASE_URL=postgresql://... (auto-set by Railway)
+FRONTEND_URL=https://stablerent.vercel.app
+JWT_SECRET=... (generated with openssl rand -base64 32)
+ENVIO_WEBHOOK_SECRET=... (generated with openssl rand -hex 32)
+CONTRACT_ADDRESS=0xd91844e669a6138dc41fe1aEb0091822CC12f4d1
+API_URL=https://backend-production-a05e.up.railway.app
 ```
 
 ## Future Enhancements

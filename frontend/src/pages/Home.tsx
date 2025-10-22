@@ -77,7 +77,7 @@ export const Home: React.FC = () => {
               🏦 Use with Payy Visa Card
             </h3>
             <p className="text-gray-700 mb-4 text-lg leading-relaxed">
-              <strong>For Residents:</strong> Property owner doesn't want a PayPal account? No problem! Use this automation to automatically refill your <a href="https://payy.link/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-semibold">Payy Card</a> balance before rent comes due.
+              <strong>For Residents:</strong> Property owner doesn't want a PayPal account? No problem! Use this automation to automatically refill your <a href="https://payy.link/invite/SNHV5Q" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-semibold">Payy Card (referral link)</a> balance before rent comes due.
             </p>
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-start">

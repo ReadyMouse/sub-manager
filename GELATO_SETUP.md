@@ -25,15 +25,20 @@
 3. Connect with MetaMask (use the same wallet that deployed the contracts)
 4. Switch to **Sepolia** network in the top-right
 
-### Step 2: Fund Your 1Balance (2 min)
+### Step 2: Fund Your Gas Tank (2 min)
 
-**What is 1Balance?** It's a prepaid gas tank that Gelato uses to pay for your automated transactions.
+**What is Gas Tank?** (formerly 1Balance) It's a prepaid gas tank that Gelato uses to pay for your automated transactions.
 
-1. Click **"1Balance"** in the left sidebar
-2. Make sure **Sepolia** is selected
-3. Click **"Deposit"**
-4. Send **0.01 ETH** (enough for testing ~50 payments)
-5. Wait for transaction confirmation
+1. Click **"Paymaster & Bundler"** in the left sidebar
+2. Click **"Gas Tank"** tab
+3. Make sure **Sepolia** is selected
+4. Click **"Deposit"**
+5. Deposit either:
+   - **0.01 ETH** (if available), OR
+   - **10-20 USDC** (equivalent gas value)
+6. Wait for transaction confirmation
+
+**Note:** Gelato now supports multiple payment tokens (ETH, USDC, etc.) - choose what's available on Sepolia.
 
 ### Step 3: Create the Task (5 min)
 
@@ -59,7 +64,7 @@
 - **Max Gas Price**: Leave default or set to `100 Gwei`
 
 #### **Payment Settings**
-- **Payment Method**: 1Balance ✅ (should show your funded balance)
+- **Payment Method**: Gas Tank ✅ (should show your funded balance)
 - Verify you have funds showing
 
 3. Click **"Create Task"**
@@ -130,8 +135,8 @@ await executor.getStats()
 
 ### Daily Checks
 
-✅ **Check 1Balance**: https://app.gelato.network/balance
-- Verify you have > 0.005 ETH remaining
+✅ **Check Gas Tank**: https://app.gelato.network/ → Paymaster & Bundler → Gas Tank
+- Verify you have sufficient balance remaining (> $5 worth)
 
 ✅ **Check Task Status**: https://app.gelato.network/tasks
 - Status: Active ✅
@@ -168,9 +173,9 @@ await resolver.getPaymentsDueCount()
 // Must be > 0 for Gelato to execute
 ```
 
-**Check #2: Is 1Balance funded?**
-- Go to: https://app.gelato.network/balance
-- Must have > 0 ETH on Sepolia
+**Check #2: Is Gas Tank funded?**
+- Go to: https://app.gelato.network/ → Paymaster & Bundler → Gas Tank
+- Must have > 0 balance on Sepolia (ETH or USDC)
 
 **Check #3: Is task active?**
 - Go to: https://app.gelato.network/tasks
@@ -198,16 +203,16 @@ Common reasons:
 - "Subscription not active" → User cancelled
 - "Payment not due yet" → Timing issue
 
-### 1Balance Running Low?
+### Gas Tank Running Low?
 
 **Set up alerts**:
 1. In Gelato dashboard → Settings
 2. Enable low balance notifications
-3. Set threshold to 0.01 ETH
+3. Set threshold to $5-10 equivalent
 
 **Refill immediately**:
-1. Go to 1Balance page
-2. Deposit more ETH
+1. Go to Paymaster & Bundler → Gas Tank
+2. Deposit more ETH or USDC
 3. Task automatically resumes
 
 ---
@@ -218,7 +223,7 @@ Common reasons:
 2. **Monitor Costs**: Check gas usage daily for first week
 3. **Increase Gradually**: Add more subscriptions slowly
 4. **Set Alerts**: Enable all Gelato notifications
-5. **Keep Funded**: Maintain at least 0.1 ETH in 1Balance
+5. **Keep Funded**: Maintain at least $20-30 worth in Gas Tank
 6. **Adjust Intervals**: Once stable, increase check interval to 15 minutes (saves gas)
 
 ---
@@ -235,7 +240,7 @@ Common reasons:
 ## ✅ Success Checklist
 
 - [ ] Connected wallet to Gelato app
-- [ ] Funded 1Balance with 0.01+ ETH
+- [ ] Funded Gas Tank with 0.01 ETH or 10-20 USDC
 - [ ] Created task with correct addresses
 - [ ] Task shows as "Active"
 - [ ] Created test subscription (5-min interval)
