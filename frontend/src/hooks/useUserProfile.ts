@@ -32,7 +32,7 @@ export interface UserPreferences {
 }
 
 export const useUserProfile = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
