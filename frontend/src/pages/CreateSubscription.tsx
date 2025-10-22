@@ -333,6 +333,12 @@ export const CreateSubscription: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      toast.error('Wallet Required', 'Please connect your wallet to create a subscription');
+      return;
+    }
+
     // Validate required fields
     if (!formData.serviceName || !formData.amount || !formData.interval) {
       toast.error('Error', 'Please fill in all required fields');
@@ -413,24 +419,6 @@ export const CreateSubscription: React.FC = () => {
     }
   };
 
-  if (!isConnected) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
-          <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-brand-navy mb-2">Wallet Not Connected</h2>
-          <p className="text-gray-600 mb-6">Please connect your wallet to set up payments</p>
-          <button onClick={() => navigate('/')} className="btn-primary">
-            Go Back Home
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -1132,6 +1120,25 @@ export const CreateSubscription: React.FC = () => {
             ) : null}
           </div>
         </div>
+
+        {/* Wallet Connection Notice */}
+        {!isConnected && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-blue-800 mb-1">Wallet Connection Required</h3>
+                <p className="text-sm text-blue-700">
+                  You can fill out the form now, but you'll need to connect your wallet to submit and create the subscription.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="flex gap-4">
