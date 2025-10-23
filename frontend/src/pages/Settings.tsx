@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -337,13 +337,21 @@ const convertSubscription = (sub: any): EnvioSubscription => ({
 
 export const Settings: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { user, logout, isAuthenticated } = useAuth();
   const { profile, preferences, updateProfile, updatePreferences } = useUserProfile();
   const { subscriptions, loading: subscriptionsLoading } = useSubscriptions();
   const { payments: allPayments, loading: allPaymentsLoading } = usePayments();
-  const [activeTab, setActiveTab] = useState<'profile' | 'wallets' | 'subscriptions' | 'history'>('profile');
+  
+  // Initialize activeTab from URL parameter, fallback to 'profile'
+  const tabFromUrl = searchParams.get('tab') as 'profile' | 'wallets' | 'subscriptions' | 'history' | null;
+  const [activeTab, setActiveTab] = useState<'profile' | 'wallets' | 'subscriptions' | 'history'>(
+    tabFromUrl && ['profile', 'wallets', 'subscriptions', 'history'].includes(tabFromUrl) 
+      ? tabFromUrl 
+      : 'profile'
+  );
   const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
   const [loadingWallets, setLoadingWallets] = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
@@ -371,6 +379,20 @@ export const Settings: React.FC = () => {
     addressType: 'WALLET',
     isDefault: false,
   });
+
+  // Sync activeTab with URL parameter changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') as 'profile' | 'wallets' | 'subscriptions' | 'history' | null;
+    if (urlTab && ['profile', 'wallets', 'subscriptions', 'history'].includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
+
+  // Helper function to change tab and update URL
+  const changeTab = (tab: 'profile' | 'wallets' | 'subscriptions' | 'history') => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Load connected wallets
   useEffect(() => {
@@ -611,7 +633,7 @@ export const Settings: React.FC = () => {
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => changeTab('profile')}
           className={`px-6 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
             activeTab === 'profile'
               ? 'border-brand-teal text-brand-teal'
@@ -621,7 +643,7 @@ export const Settings: React.FC = () => {
           Profile
         </button>
         <button
-          onClick={() => setActiveTab('wallets')}
+          onClick={() => changeTab('wallets')}
           className={`px-6 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
             activeTab === 'wallets'
               ? 'border-brand-teal text-brand-teal'
@@ -631,7 +653,7 @@ export const Settings: React.FC = () => {
           Wallets
         </button>
         <button
-          onClick={() => setActiveTab('subscriptions')}
+          onClick={() => changeTab('subscriptions')}
           className={`px-6 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
             activeTab === 'subscriptions'
               ? 'border-brand-teal text-brand-teal'
@@ -641,7 +663,7 @@ export const Settings: React.FC = () => {
           Subscriptions
         </button>
         <button
-          onClick={() => setActiveTab('history')}
+          onClick={() => changeTab('history')}
           className={`px-6 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
             activeTab === 'history'
               ? 'border-brand-teal text-brand-teal'

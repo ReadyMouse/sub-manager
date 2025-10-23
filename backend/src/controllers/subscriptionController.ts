@@ -130,7 +130,7 @@ export class SubscriptionController {
         chainId,
         onChainId,
         req.user.id, // senderId
-        recipientId,
+        recipientId || null, // Allow null for wallet-only recipients
         serviceName,
         amount,
         interval,

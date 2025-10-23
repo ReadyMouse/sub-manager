@@ -375,7 +375,7 @@ export const CreateSubscription: React.FC = () => {
           if (!isAuth) {
             toast.warning('Partial Success', 'Subscription created on blockchain but metadata could not be saved to database');
             setTimeout(() => {
-              navigate('/subscriptions');
+              navigate('/settings?tab=subscriptions');
             }, 2000);
             return;
           }
@@ -384,12 +384,15 @@ export const CreateSubscription: React.FC = () => {
           // In a real implementation, you'd parse the transaction receipt to get the actual subscription ID
           const subscriptionId = transactionHash || Date.now().toString();
           
+          // Determine recipientId - null for wallet-only recipients
+          const recipientIdValue: string | null = recipientInputType === 'lookup' 
+            ? recipientDetails!.recipientId 
+            : null;
+          
           await subscriptionApi.create({
             chainId: 11155111, // Sepolia
             onChainId: subscriptionId,
-            recipientId: recipientInputType === 'lookup' 
-              ? recipientDetails!.recipientId 
-              : '0',
+            recipientId: recipientIdValue,
             serviceName: formData.serviceName,
             amount: formData.amount,
             interval: formData.interval,
@@ -413,13 +416,21 @@ export const CreateSubscription: React.FC = () => {
           
           toast.success('Success', 'Subscription created successfully!');
           setTimeout(() => {
-            navigate('/subscriptions');
+            navigate('/settings?tab=subscriptions');
           }, 2000);
         } catch (error) {
           console.error('Failed to save subscription metadata:', error);
-          toast.error('Warning', 'Subscription created on blockchain but metadata could not be saved to database');
+          
+          // Provide more detailed error information
+          let errorMessage = 'Subscription created on blockchain but metadata could not be saved to database';
+          if (error instanceof Error) {
+            console.error('Error details:', error.message);
+            errorMessage += `. Error: ${error.message}`;
+          }
+          
+          toast.error('Warning', errorMessage);
           setTimeout(() => {
-            navigate('/subscriptions');
+            navigate('/settings?tab=subscriptions');
           }, 2000);
         }
       };

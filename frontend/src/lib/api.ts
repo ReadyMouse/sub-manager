@@ -128,7 +128,7 @@ export const subscriptionApi = {
   async create(data: {
     chainId: number;
     onChainId: string;
-    recipientId: string;
+    recipientId: string | null | undefined; // Optional - null for wallet-only recipients
     serviceName: string;
     amount: string;
     interval: number;

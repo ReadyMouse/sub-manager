@@ -24,7 +24,7 @@ router.post(
   validate([
     body('chainId').isInt({ min: 1 }),
     body('onChainId').isString().notEmpty(),
-    body('recipientId').isString().notEmpty(),
+    body('recipientId').optional().isString(), // Optional - can be null for wallet-only recipients
     body('serviceName').isString().notEmpty(),
     body('amount').isString().notEmpty(),
     body('interval').isInt({ min: 1 }),
