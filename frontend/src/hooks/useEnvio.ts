@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@apollo/client';
 import type { Address } from 'viem';
 import type { EnvioSubscription, EnvioPayment, EnvioPaymentWithDirection } from '../lib/types';
 import { apolloClient, handleGraphQLError } from '../lib/apollo';
 import {
   GET_USER_SUBSCRIPTIONS,
-  GET_USER_ACTIVE_SUBSCRIPTIONS,
   GET_ALL_SUBSCRIPTIONS,
   GET_USER_PAYMENTS,
   GET_USER_AS_SERVICE_PROVIDER,
@@ -110,7 +110,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      const sentPayments: EnvioPayment[] = sentPaymentsResult.data.payments || [];
+      const sentPayments: EnvioPayment[] = (sentPaymentsResult.data as any)?.payments || [];
 
       // 2. Fetch subscriptions where user is the service provider (to find received payments)
       const receivingSubscriptionsResult = await apolloClient.query({
@@ -118,7 +118,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      const receivingSubscriptions: EnvioSubscription[] = receivingSubscriptionsResult.data.subscriptions || [];
+      const receivingSubscriptions: EnvioSubscription[] = (receivingSubscriptionsResult.data as any)?.subscriptions || [];
       const subscriptionIds = receivingSubscriptions.map(sub => sub.id);
 
       // 3. Fetch payments for those subscriptions (received payments)
@@ -128,7 +128,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
           query: GET_PAYMENTS_BY_SUBSCRIPTION_IDS,
           variables: { subscriptionIds },
         });
-        receivedPayments = receivedPaymentsResult.data.payments || [];
+        receivedPayments = (receivedPaymentsResult.data as any)?.payments || [];
       }
 
       // 4. Combine both arrays, add direction field, and sort by timestamp
