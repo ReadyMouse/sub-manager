@@ -535,7 +535,21 @@ export const CreateSubscription: React.FC = () => {
         : formData.recipientWalletCurrency;
 
       // Create subscription on-chain
-      const result = await createSubscription(
+      console.log('Submitting subscription with data:', {
+        senderId: '0',
+        recipientId: finalRecipientId,
+        amount: formData.amount,
+        interval: formData.interval,
+        serviceName: formData.serviceName,
+        startDate,
+        endDate,
+        maxPayments,
+        recipientAddress: finalRecipientAddress,
+        senderCurrency: formData.senderCurrency,
+        recipientCurrency: finalRecipientCurrency
+      });
+      
+      await createSubscription(
         '0', // senderId - TODO: get from backend/user profile
         finalRecipientId,
         formData.amount,
@@ -549,17 +563,8 @@ export const CreateSubscription: React.FC = () => {
         finalRecipientCurrency
       );
       
-      console.log('Subscription creation result:', result);
-      
-      // The transaction hash will be available in the hook's hash state
-      // You can check it after the transaction is confirmed
-
-      // TODO: After successful on-chain transaction, save off-chain metadata to backend:
-      // - senderConnectedWalletId: selectedWalletId
-      // - serviceDescription: formData.serviceDescription
-      // - notes: formData.notes
-      // - tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
-      // Backend endpoint: POST /api/subscriptions/{subscriptionId}/metadata
+      // The transaction will be handled by the success effect
+      // which will save metadata and redirect to subscriptions page
     } catch (error) {
       console.error('Create subscription failed:', error);
       toast.error('Error', 'Failed to create subscription');

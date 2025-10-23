@@ -36,6 +36,25 @@ export const useStableRentContract = () => {
       ? parsePYUSD(processorFee)
       : (amountWei * BigInt(5)) / BigInt(100);
     
+    console.log('Creating subscription with parameters:', {
+      senderId,
+      recipientId,
+      amount,
+      amountWei: amountWei.toString(),
+      interval,
+      serviceName,
+      startDate,
+      endDate,
+      maxPayments,
+      recipientAddress,
+      senderCurrency,
+      recipientCurrency,
+      feeWei: feeWei.toString(),
+      processorFeeAddress,
+      processorFeeCurrency,
+      processorFeeID
+    });
+    
     return writeContract({
       address: CONTRACTS.StableRentSubscription as Address,
       abi: StableRentSubscriptionABI,
@@ -57,6 +76,7 @@ export const useStableRentContract = () => {
         processorFeeCurrency || 'PYUSD',
         BigInt(processorFeeID || 0),
       ],
+      gas: 500000n, // Set explicit gas limit to avoid estimation issues
     });
   };
 
