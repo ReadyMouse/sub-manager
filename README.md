@@ -69,6 +69,10 @@ Rent gets paid
 5. Create subscription and test payments
 
 ---
+## Business Plan 
+
+![Business Model graphic](frontend/src/assets/business_models.png)
+
 
 ## 🚀 Quick Start
 ### First Time Setup
@@ -204,12 +208,6 @@ Cursor + Claude AI was used to support development.
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
   - Land owners will to rent "I will accept crypto for this rental"
   - For Sale Properties: renter can say "I'd pay X a month for 3 years, if someone bought this and rented it to me."
-
-## Business Plan 
-
-How to take this to market? What investments on PayPal's part would be nice?
-Talk to a lawyer, what regulations come into play? 
-
 
 ⚠️ PROTOTYPE DEMONSTRATION
 This is a proof-of-concept for educational purposes only.

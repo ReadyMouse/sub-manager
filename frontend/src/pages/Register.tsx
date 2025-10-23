@@ -54,7 +54,14 @@ export const Register = () => {
       setSuccess('Registration successful! Please check your email to verify your account.');
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      const errorMessage = err.message || 'Registration failed. Please try again.';
+      
+      // Check if email is already registered
+      if (errorMessage.includes('already registered')) {
+        setError('This email is already registered. Please use the login page to sign in.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +108,14 @@ export const Register = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message || 'Wallet registration failed');
+      const errorMessage = err.message || 'Wallet registration failed';
+      
+      // Check if wallet is already registered
+      if (errorMessage.includes('already registered')) {
+        setError('This wallet is already registered. Please use the login page to sign in with your wallet.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +130,13 @@ export const Register = () => {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
+            {error.includes('already registered') && (
+              <div className="mt-2">
+                <Link to="/login" className="text-brand-teal hover:text-brand-teal-dark font-medium underline">
+                  Go to Login Page →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
