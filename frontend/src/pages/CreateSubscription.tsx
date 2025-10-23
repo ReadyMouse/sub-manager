@@ -6,7 +6,7 @@ import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { apiClient, subscriptionApi } from '../lib/api';
-import { parsePYUSD, formatPYUSD } from '../lib/utils';
+import { parsePYUSD } from '../lib/utils';
 import type { Address } from 'viem';
 
 export const CreateSubscription: React.FC = () => {
@@ -225,15 +225,47 @@ export const CreateSubscription: React.FC = () => {
       approveHash,
       isApproving 
     });
-    if (isApproveSuccess && !hasShownApproveSuccess) {
+    
+    // Only show success message once and only when transaction is confirmed
+    if (isApproveSuccess && !hasShownApproveSuccess && !isApproving && approveHash) {
       console.log('Approval successful! Transaction hash:', approveHash);
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
+      
+      // Refetch allowance and balance
       refetchAllowance();
       refetchBalance();
+      
+      // Set approved state immediately
       setIsApproved(true);
       setHasShownApproveSuccess(true);
+      
+      // Add a fallback check after a short delay to ensure allowance is properly updated
+      setTimeout(async () => {
+        console.log('Fallback allowance check after approval success...');
+        const updatedAllowance = await refetchAllowance();
+        console.log('Fallback allowance result:', updatedAllowance);
+        
+        if (updatedAllowance.data) {
+          const allowanceInUSD = Number(updatedAllowance.data) / 1_000_000;
+          const requiredAllowance = allowanceType === 'calculated' 
+            ? calculateTotalAllowance().total 
+            : customAllowance;
+          const requiredInUSD = parseFloat(requiredAllowance);
+          
+          console.log('Fallback allowance check:', {
+            allowanceInUSD,
+            requiredInUSD,
+            isSufficient: allowanceInUSD >= requiredInUSD
+          });
+          
+          if (allowanceInUSD >= requiredInUSD && !isApproved) {
+            console.log('Fallback: Setting isApproved to true');
+            setIsApproved(true);
+          }
+        }
+      }, 3000); // Check after 3 seconds to ensure blockchain state is updated
     }
-  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, approveHash, isApproving]);
+  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, approveHash, isApproving, allowanceType, customAllowance, isApproved]);
 
   // Handle approve error
   useEffect(() => {
@@ -272,14 +304,27 @@ export const CreateSubscription: React.FC = () => {
         const allowanceInUSD = Number(allowance) / 1_000_000;
         const requiredInUSD = parseFloat(requiredAllowance);
         
+        console.log('Allowance check:', {
+          allowanceInUSD,
+          requiredInUSD,
+          isSufficient: allowanceInUSD >= requiredInUSD,
+          currentIsApproved: isApproved
+        });
+        
         if (allowanceInUSD >= requiredInUSD) {
-          setIsApproved(true);
+          if (!isApproved) {
+            console.log('Setting isApproved to true based on allowance check');
+            setIsApproved(true);
+          }
         } else {
-          setIsApproved(false);
+          if (isApproved) {
+            console.log('Setting isApproved to false - insufficient allowance');
+            setIsApproved(false);
+          }
         }
       }
     }
-  }, [allowance, formData.amount, allowanceType, customAllowance]);
+  }, [allowance, formData.amount, allowanceType, customAllowance, isApproved]);
 
   // Handle create success
   useEffect(() => {
@@ -375,10 +420,17 @@ export const CreateSubscription: React.FC = () => {
       return;
     }
 
+    // Prevent multiple simultaneous approval calls
+    if (isApproving) {
+      console.log('Approval already in progress, skipping...');
+      return;
+    }
+
     try {
       // Reset flags when starting new approval attempt
       setHasShownApproveError(false);
       setHasShownApproveSuccess(false);
+      setIsApproved(false); // Reset approval state when starting new approval
       
       const approvalAmount = allowanceType === 'calculated' 
         ? calculateTotalAllowance().total 
@@ -420,31 +472,6 @@ export const CreateSubscription: React.FC = () => {
       const result = await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
       console.log('Approval result:', result);
       
-      // Add a fallback check for approval success after a delay
-      setTimeout(async () => {
-        console.log('Checking allowance after approval...');
-        const updatedAllowance = await refetchAllowance();
-        console.log('Updated allowance:', updatedAllowance);
-        
-        // Check if allowance is sufficient
-        if (updatedAllowance.data) {
-          const allowanceInUSD = parseFloat(formatPYUSD(updatedAllowance.data));
-          const requiredInUSD = parseFloat(approvalAmount);
-          
-          console.log('Allowance check:', {
-            allowanceInUSD,
-            requiredInUSD,
-            isSufficient: allowanceInUSD >= requiredInUSD
-          });
-          
-          if (allowanceInUSD >= requiredInUSD && !isApproved) {
-            console.log('Manual approval success detected!');
-            toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
-            setIsApproved(true);
-            setHasShownApproveSuccess(true);
-          }
-        }
-      }, 3000); // Check after 3 seconds
     } catch (error) {
       console.error('Approve failed:', error);
       // Error is already handled by useEffect hook
