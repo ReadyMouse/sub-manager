@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } from '../hooks/useContract';
-import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
+import { CONTRACTS, PAYMENT_INTERVALS, PROCESSOR_FEE_CURRENCY, PROCESSOR_FEE_ID } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
-import { apiClient, subscriptionApi } from '../lib/api';
+import { apiClient, subscriptionApi, configApi } from '../lib/api';
 import { parsePYUSD } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import type { Address } from 'viem';
@@ -30,6 +30,7 @@ export const CreateSubscription: React.FC = () => {
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
   const [hasShownApproveSuccess, setHasShownApproveSuccess] = useState(false);
+  const [processorFeePercent, setProcessorFeePercent] = useState(0.05); // Default fallback
   
   // Debug approval state
   useEffect(() => {
@@ -78,6 +79,23 @@ export const CreateSubscription: React.FC = () => {
   } | null>(null);
   const [isLookingUpRecipient, setIsLookingUpRecipient] = useState(false);
   const [recipientLookupError, setRecipientLookupError] = useState<string | null>(null);
+
+  // Load configuration from backend
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const response = await configApi.getConfig();
+        if (response.success && response.data) {
+          setProcessorFeePercent(response.data.processorFeePercent);
+        }
+      } catch (error) {
+        console.error('Failed to load configuration:', error);
+        // Keep default fallback value
+      }
+    };
+
+    loadConfig();
+  }, []);
 
   // Load user's connected wallets on mount
   useEffect(() => {
@@ -393,6 +411,10 @@ export const CreateSubscription: React.FC = () => {
             ? recipientDetails!.recipientId 
             : null;
           
+          // Calculate processor fee using configured percentage
+          const amountFloat = parseFloat(formData.amount);
+          const processorFeeAmount = (amountFloat * processorFeePercent).toFixed(2);
+          
           await subscriptionApi.create({
             chainId: 11155111, // Sepolia
             onChainId: subscriptionId,
@@ -403,7 +425,7 @@ export const CreateSubscription: React.FC = () => {
             nextPaymentDue: new Date(formData.startDate).toISOString(),
             endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
             maxPayments: formData.maxPayments ? parseInt(formData.maxPayments) : undefined,
-            senderWalletAddress: address,
+            senderWalletAddress: address as string,
             recipientWalletAddress: recipientInputType === 'lookup'
               ? recipientDetails!.recipientAddress
               : formData.recipientWalletAddress,
@@ -411,6 +433,11 @@ export const CreateSubscription: React.FC = () => {
             recipientCurrency: recipientInputType === 'lookup'
               ? recipientDetails!.recipientCurrency
               : formData.recipientWalletCurrency,
+            // Include processor fee information
+            processorFee: processorFeeAmount,
+            processorFeeAddress: CONTRACTS.StableRentSubscription,
+            processorFeeCurrency: PROCESSOR_FEE_CURRENCY,
+            processorFeeID: PROCESSOR_FEE_ID,
             metadata: {
               notes: formData.notes,
               tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : undefined,
@@ -449,7 +476,7 @@ export const CreateSubscription: React.FC = () => {
       return { total: '0', paymentCount: 0 };
     }
 
-    const amountPerPayment = parseFloat(formData.amount) * 1.05; // Include 5% fee
+    const amountPerPayment = parseFloat(formData.amount) * (1 + processorFeePercent); // Include processor fee
     let paymentCount = 0;
 
     // Priority 1: If maxPayments is set, use that
@@ -503,7 +530,7 @@ export const CreateSubscription: React.FC = () => {
       }
 
       // Check that custom allowance is at least one payment amount (with fee)
-      const minAllowance = parseFloat(formData.amount) * 1.05;
+      const minAllowance = parseFloat(formData.amount) * (1 + processorFeePercent);
       if (allowanceType === 'custom' && parseFloat(customAllowance) < minAllowance) {
         toast.error(
           'Allowance Too Low', 
@@ -623,7 +650,7 @@ export const CreateSubscription: React.FC = () => {
 
       // Debug all parameters being sent to contract
       const amountWei = parsePYUSD(formData.amount);
-      const processorFeeWei = (amountWei * BigInt(5)) / BigInt(100);
+      const processorFeeWei = (amountWei * BigInt(Math.floor(processorFeePercent * 100))) / BigInt(100);
       const totalPaymentWei = amountWei + processorFeeWei;
       
       console.log('Contract call parameters:', {

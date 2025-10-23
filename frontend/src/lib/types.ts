@@ -1,5 +1,112 @@
 import type { Address } from 'viem';
 
+// ========================================
+// API TYPES (Backend Integration)
+// ========================================
+
+/**
+ * Data sent to backend API when creating a subscription via POST /api/subscriptions
+ * Must match the backend's CreateSubscriptionRequest interface
+ * Note: senderId is NOT sent - backend gets it from authenticated user (req.user.id)
+ */
+export interface CreateSubscriptionRequest {
+  // Blockchain identifiers
+  chainId: number;
+  onChainId: string;
+  
+  // Sender (Payer) - wallet info only, user ID comes from auth token
+  senderWalletAddress: string;
+  senderCurrency: string;
+  
+  // Recipient (Service Provider) - recipientId can be null for wallet-only recipients
+  recipientId?: string | null;
+  recipientWalletAddress: string;
+  recipientCurrency: string;
+  
+  // Service details
+  serviceName: string;
+  
+  // Payment details
+  amount: string;
+  interval: number;
+  nextPaymentDue: string;
+  endDate?: string;
+  maxPayments?: number;
+  
+  // Processor fee information
+  processorFee?: string;
+  processorFeeAddress?: string;
+  processorFeeCurrency?: string;
+  processorFeeID?: string;
+  
+  // Metadata (off-chain only)
+  metadata?: {
+    notes?: string;
+    tags?: string[];
+    serviceDescription?: string;
+  };
+}
+
+/**
+ * Subscription data returned from backend API
+ */
+export interface SubscriptionAPIResponse {
+  id: string;
+  chainId: number;
+  onChainId: string;
+  
+  // Sender (Payer) - may be null for wallet-only
+  sender?: {
+    id: string;
+    displayName: string;
+    email?: string;
+  } | null;
+  senderWalletAddress?: string;
+  senderCurrency: string;
+  
+  // Recipient (Service Provider) - may be null for wallet-only
+  recipient?: {
+    id: string;
+    displayName: string;
+    email?: string;
+  } | null;
+  recipientWalletAddress?: string;
+  recipientCurrency: string;
+  
+  // Service details
+  serviceName: string;
+  serviceDescription?: string | null;
+  
+  // Payment details
+  amount: string;
+  interval: number;
+  nextPaymentDue: string;
+  endDate?: string | null;
+  maxPayments?: number | null;
+  isActive: boolean;
+  paymentCount: number;
+  failedPaymentCount: number;
+  
+  // Processor fee information
+  processorFee: string;
+  processorFeeAddress?: string | null;
+  processorFeeCurrency: string;
+  processorFeeID?: string | null;
+  
+  // Metadata
+  notes?: string | null;
+  tags?: string[];
+  
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  cancelledAt?: string | null;
+}
+
+// ========================================
+// BLOCKCHAIN TYPES
+// ========================================
+
 // Subscription types
 export interface Subscription {
   id: string;

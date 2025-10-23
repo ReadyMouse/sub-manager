@@ -94,41 +94,112 @@ export interface ConnectWalletData {
 // SUBSCRIPTION TYPES
 // ========================================
 
-export interface CreateSubscriptionMetadata {
+/**
+ * Request body for creating a subscription via POST /api/subscriptions
+ * Note: senderId is NOT included - it comes from req.user.id (authenticated user)
+ */
+export interface CreateSubscriptionRequest {
+  // Blockchain identifiers
   chainId: number;
   onChainId: string;
-  senderId: string;
-  recipientId: string;
+  
+  // Sender (Payer) - wallet info only, user ID comes from auth
+  senderWalletAddress: string;
+  senderCurrency: string;
+  
+  // Recipient (Service Provider) - recipientId can be null for wallet-only recipients
+  recipientId?: string | null;
+  recipientWalletAddress: string;
+  recipientCurrency: string;
+  
+  // Service details
   serviceName: string;
-  serviceDescription?: string;
-  notes?: string;
-  tags?: string[];
+  
+  // Payment details
+  amount: string;
+  interval: number;
+  nextPaymentDue: string;
+  endDate?: string;
+  maxPayments?: number;
+  
+  // Processor fee information
+  processorFee?: string;
+  processorFeeAddress?: string;
+  processorFeeCurrency?: string;
+  processorFeeID?: string;
+  
+  // Metadata (off-chain only)
+  metadata?: {
+    notes?: string;
+    tags?: string[];
+    serviceDescription?: string;
+  };
 }
 
+/**
+ * Internal data structure with senderId populated from authenticated user
+ * Used by service layer after controller extracts senderId from req.user.id
+ */
+export interface CreateSubscriptionData extends CreateSubscriptionRequest {
+  // Sender (Payer) - REQUIRED: Populated from req.user.id by controller
+  senderId: string;
+}
+
+/**
+ * Subscription data returned from the API
+ * Includes populated user relationships and all subscription details
+ */
 export interface SubscriptionResponse {
   id: string;
   chainId: number;
   onChainId: string;
-  sender: {
+  
+  // Sender (Payer) - may be null for wallet-only
+  sender?: {
     id: string;
     displayName: string;
     email?: string;
-  };
-  recipient: {
+  } | null;
+  senderWalletAddress?: string;
+  senderCurrency: string;
+  
+  // Recipient (Service Provider) - may be null for wallet-only
+  recipient?: {
     id: string;
     displayName: string;
     email?: string;
-  };
+  } | null;
+  recipientWalletAddress?: string;
+  recipientCurrency: string;
+  
+  // Service details
   serviceName: string;
   serviceDescription?: string | null;
+  
+  // Payment details
   amount: string;
   interval: number;
   nextPaymentDue: Date;
+  endDate?: Date | null;
+  maxPayments?: number | null;
   isActive: boolean;
   paymentCount: number;
   failedPaymentCount: number;
-  createdAt: Date;
+  
+  // Processor fee information
+  processorFee: string;
+  processorFeeAddress?: string | null;
+  processorFeeCurrency: string;
+  processorFeeID?: string | null;
+  
+  // Metadata
+  notes?: string | null;
   tags?: string[];
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+  cancelledAt?: Date | null;
 }
 
 // ========================================

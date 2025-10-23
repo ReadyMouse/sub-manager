@@ -1,4 +1,5 @@
 // API client for backend communication
+import type { CreateSubscriptionRequest } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -125,30 +126,7 @@ export const subscriptionApi = {
     return apiClient.get('/api/subscriptions/received', { token });
   },
 
-  async create(data: {
-    chainId: number;
-    onChainId: string;
-    recipientId: string | null | undefined; // Optional - null for wallet-only recipients
-    serviceName: string;
-    amount: string;
-    interval: number;
-    nextPaymentDue: string;
-    endDate?: string;
-    maxPayments?: number;
-    senderWalletAddress?: string;
-    recipientWalletAddress?: string;
-    senderCurrency?: string;
-    recipientCurrency?: string;
-    processorFee?: string;
-    processorFeeAddress?: string;
-    processorFeeCurrency?: string;
-    processorFeeID?: string;
-    metadata?: {
-      notes?: string;
-      tags?: string[];
-      serviceDescription?: string;
-    };
-  }, token?: string) {
+  async create(data: CreateSubscriptionRequest, token?: string) {
     return apiClient.post('/api/subscriptions', data, { token });
   },
 };
@@ -192,6 +170,15 @@ export const paymentAddressApi = {
   async delete(id: string, token?: string) {
     return apiClient.delete(`/api/users/me/payment-addresses/${id}`, { token });
   },
+};
+
+/**
+ * Config API endpoints
+ */
+export const configApi = {
+  async getConfig() {
+    return apiClient.get('/api/config');
+  }
 };
 
 export default apiClient;

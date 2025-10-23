@@ -46,6 +46,9 @@ const envSchema = z.object({
   SEPOLIA_RPC_URL: z.string().url().optional(),
   PROCESSOR_PRIVATE_KEY: z.string().min(64).optional(), // Private key for automation wallet
   
+  // Processor Fee Configuration
+  PROCESSOR_FEE_PERCENT: z.string().default('0.05'),
+  
   // Hardhat/Development (from main .env)
   ALCHEMY_API_KEY: z.string().optional(),
   ETHERSCAN_API_KEY: z.string().optional(),

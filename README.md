@@ -39,7 +39,6 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 ## 🚀 Current Deployment Status
 ### Sepolia Contract Deployment
-
 **🔗 Subscription Smart Contract:** [0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339](https://sepolia.etherscan.io/address/0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339)  
 
 ### Frontend Demo
@@ -56,9 +55,16 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 5. Create subscription and test payments
 
 ---
-## Business Plan 
+## Business Plans 
 
 ![Business Model graphic](frontend/src/assets/business_models.png)
+
+## Potential Path Forward
+
+-> Investigate need for Money Transmitter License 
+-> Integrate a sender-side DEX to accept any ERC20 currency
+-> Consider a receiver-side DEX to send any ERC20 currency
+-> Decide on a business model, build a team, to the moon 🚀 
 
 ## MIT License. Like what you See? 
 Open source but starving. Donate to the builder. 
