@@ -38,7 +38,7 @@ async function main() {
   // ========================================
   
   // PYUSD contract address on Sepolia testnet
-  const PYUSD_ADDRESS = "0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53";
+  const PYUSD_ADDRESS = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9";
   
   // Get deployer account
   const [deployer] = await ethers.getSigners();

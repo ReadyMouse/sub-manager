@@ -2,11 +2,11 @@
   "network": "sepolia",
   "chainId": "11155111",
   "contracts": {
-    "StableRentSubscription": "0x121403be24b17d1B7055f17ae91C824193F3D26F",
-    "PYUSD": "0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53"
+    "StableRentSubscription": "0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339",
+    "PYUSD": "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9"
   },
   "deployer": "0xbA2994967b75c22DBF9833fFD0A749BD66e7F0F3",
-  "timestamp": "2025-10-22T22:23:49.490Z",
-  "blockNumber": 9468752,
-  "explorerUrl": "https://sepolia.etherscan.io/address/0x121403be24b17d1B7055f17ae91C824193F3D26F"
+  "timestamp": "2025-10-23T04:23:12.812Z",
+  "blockNumber": 9470537,
+  "explorerUrl": "https://sepolia.etherscan.io/address/0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339"
 }

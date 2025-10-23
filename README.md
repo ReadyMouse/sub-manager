@@ -52,8 +52,8 @@ Rent gets paid
 
 ## 🚀 Current Deployment Status
 ### Sepolia Contract Deployment
-0x121403be24b17d1B7055f17ae91C824193F3D26F
-**🔗 Subscription Smart Contract:** [0x121403be24b17d1B7055f17ae91C824193F3D26F](https://sepolia.etherscan.io/address/0x121403be24b17d1B7055f17ae91C824193F3D26F)  
+
+**🔗 Subscription Smart Contract:** [0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339](https://sepolia.etherscan.io/address/0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339)  
 
 ### Frontend Demo
 **Frontend:** [StableRent](https://stablerent.vercel.app/)

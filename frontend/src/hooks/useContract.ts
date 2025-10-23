@@ -70,6 +70,31 @@ export const useStableRentContract = () => {
         functionName: 'createSubscription'
       });
       
+      // First, let's try to simulate the call to see if we can get a better error message
+      try {
+        console.log('Simulating contract call...');
+        // We can't easily simulate with wagmi, but let's log the exact parameters
+        console.log('Contract call parameters:', {
+          senderId: BigInt(senderId || 0),
+          recipientId: BigInt(recipientId || 0),
+          amount: amountWei,
+          interval: BigInt(interval),
+          serviceName,
+          startDate: BigInt(startDate),
+          endDate: BigInt(endDate || 0),
+          maxPayments: BigInt(maxPayments || 0),
+          recipientAddress: recipientAddress || ('0x0000000000000000000000000000000000000000' as Address),
+          senderCurrency: senderCurrency || 'PYUSD',
+          recipientCurrency: recipientCurrency || 'PYUSD',
+          processorFee: feeWei,
+          processorFeeAddress: processorFeeAddress || (CONTRACTS.StableRentSubscription as Address),
+          processorFeeCurrency: processorFeeCurrency || 'PYUSD',
+          processorFeeID: BigInt(processorFeeID || 0),
+        });
+      } catch (simError) {
+        console.error('Simulation error:', simError);
+      }
+      
       const result = await writeContract({
         address: CONTRACTS.StableRentSubscription as Address,
         abi: StableRentSubscriptionABI,
@@ -91,7 +116,7 @@ export const useStableRentContract = () => {
           processorFeeCurrency || 'PYUSD',
           BigInt(processorFeeID || 0),
         ],
-        // Remove gas limit to let wagmi estimate it properly
+        gas: 1000000n, // Set a high gas limit to avoid estimation issues
       });
       
       console.log('Write contract result:', result);

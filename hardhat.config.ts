@@ -62,24 +62,26 @@ const config: HardhatUserConfig = {
     hardhat: {
       // FORKING CONFIGURATION - This is the key feature for learning!
       // Forking creates a local copy of an existing blockchain at a specific point
-      forking: {
-        // url: The RPC endpoint to connect to the real Ethereum mainnet
-        // We read it from environment variable MAINNET_RPC_URL
-        // If not set, falls back to a placeholder (you'll need to replace this)
-        // 
-        // FREE RPC PROVIDERS:
-        // - Alchemy: https://www.alchemy.com/ (recommended, 300M compute units/month free)
-        // - Infura: https://www.infura.io/ (100k requests/day free)
-        // - Public nodes: Less reliable but free (e.g., https://eth.llamarpc.com)
-        url: process.env.MAINNET_RPC_URL!,
-        
-        // OPTIONAL: Pin to a specific block number for deterministic tests
-        // This ensures your tests always run against the same blockchain state
-        // Useful when you want consistent results across test runs
-        // Example: blockNumber: 18000000 would fork from that exact block
-        // Commented out by default so we fork from the latest block
-        // blockNumber: 18000000
-      },
+      ...(process.env.MAINNET_RPC_URL ? {
+        forking: {
+          // url: The RPC endpoint to connect to the real Ethereum mainnet
+          // We read it from environment variable MAINNET_RPC_URL
+          // If not set, falls back to a placeholder (you'll need to replace this)
+          // 
+          // FREE RPC PROVIDERS:
+          // - Alchemy: https://www.alchemy.com/ (recommended, 300M compute units/month free)
+          // - Infura: https://www.infura.io/ (100k requests/day free)
+          // - Public nodes: Less reliable but free (e.g., https://eth.llamarpc.com)
+          url: process.env.MAINNET_RPC_URL,
+          
+          // OPTIONAL: Pin to a specific block number for deterministic tests
+          // This ensures your tests always run against the same blockchain state
+          // Useful when you want consistent results across test runs
+          // Example: blockNumber: 18000000 would fork from that exact block
+          // Commented out by default so we fork from the latest block
+          // blockNumber: 18000000
+        },
+      } : {}),
       
       // chainId: The network ID
       // 31337 = Hardhat local network

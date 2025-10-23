@@ -550,11 +550,15 @@ export const CreateSubscription: React.FC = () => {
         : formData.recipientWalletCurrency;
 
       // Debug all parameters being sent to contract
+      const amountWei = parsePYUSD(formData.amount);
+      const processorFeeWei = (amountWei * BigInt(5)) / BigInt(100);
+      const totalPaymentWei = amountWei + processorFeeWei;
+      
       console.log('Contract call parameters:', {
         senderId: '0',
         recipientId: finalRecipientId,
         amount: formData.amount,
-        amountWei: parsePYUSD(formData.amount).toString(),
+        amountWei: amountWei.toString(),
         interval: formData.interval,
         serviceName: formData.serviceName,
         startDate,
@@ -563,10 +567,12 @@ export const CreateSubscription: React.FC = () => {
         recipientAddress: finalRecipientAddress,
         senderCurrency: formData.senderCurrency,
         recipientCurrency: finalRecipientCurrency,
-        processorFee: (parsePYUSD(formData.amount) * BigInt(5)) / BigInt(100),
+        processorFee: processorFeeWei.toString(),
         processorFeeAddress: CONTRACTS.StableRentSubscription,
         processorFeeCurrency: 'PYUSD',
-        processorFeeID: '0'
+        processorFeeID: '0',
+        totalPaymentAmount: totalPaymentWei.toString(),
+        totalPaymentUSD: (Number(totalPaymentWei) / 1_000_000).toFixed(6)
       });
 
       // Create subscription on-chain
