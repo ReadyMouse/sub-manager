@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client/react/hooks';
 import type { Address } from 'viem';
 import type { EnvioSubscription, EnvioPayment, EnvioPaymentWithDirection } from '../lib/types';
 import { apolloClient, handleGraphQLError } from '../lib/apollo';
@@ -19,16 +18,47 @@ import {
  * Hook for fetching user's subscriptions from Envio
  */
 export const useEnvioUserSubscriptions = (userAddress: Address | undefined) => {
-  const { data, loading, error, refetch } = useQuery(GET_USER_SUBSCRIPTIONS, {
-    variables: { userAddress: userAddress?.toLowerCase() },
-    skip: !userAddress,
-    errorPolicy: 'all',
-  });
+  const [subscriptions, setSubscriptions] = useState<EnvioSubscription[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchSubscriptions = async () => {
+    if (!userAddress) {
+      setSubscriptions([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apolloClient.query({
+        query: GET_USER_SUBSCRIPTIONS,
+        variables: { userAddress: userAddress.toLowerCase() },
+      });
+
+      setSubscriptions((result.data as any)?.subscriptions || []);
+    } catch (err: any) {
+      console.error('Error fetching subscriptions:', err);
+      const errorMessage = handleGraphQLError(err);
+      setError(new Error(errorMessage));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refetch = () => {
+    fetchSubscriptions();
+  };
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [userAddress]);
 
   return {
-    subscriptions: data?.subscriptions || [],
+    subscriptions,
     loading,
-    error: error ? new Error(handleGraphQLError(error)) : null,
+    error,
     refetch,
   };
 };
@@ -37,16 +67,47 @@ export const useEnvioUserSubscriptions = (userAddress: Address | undefined) => {
  * Hook for fetching payment history for a subscription
  */
 export const useEnvioPaymentHistory = (subscriptionId: string | undefined) => {
-  const { data, loading, error, refetch } = useQuery(GET_SUBSCRIPTION_PAYMENTS, {
-    variables: { subscriptionId },
-    skip: !subscriptionId,
-    errorPolicy: 'all',
-  });
+  const [payments, setPayments] = useState<EnvioPayment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchPayments = async () => {
+    if (!subscriptionId) {
+      setPayments([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apolloClient.query({
+        query: GET_SUBSCRIPTION_PAYMENTS,
+        variables: { subscriptionId },
+      });
+
+      setPayments((result.data as any)?.payments || []);
+    } catch (err: any) {
+      console.error('Error fetching payments:', err);
+      const errorMessage = handleGraphQLError(err);
+      setError(new Error(errorMessage));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refetch = () => {
+    fetchPayments();
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, [subscriptionId]);
 
   return {
-    payments: data?.payments || [],
+    payments,
     loading,
-    error: error ? new Error(handleGraphQLError(error)) : null,
+    error,
     refetch,
   };
 };
@@ -55,14 +116,41 @@ export const useEnvioPaymentHistory = (subscriptionId: string | undefined) => {
  * Hook for fetching all subscriptions (for marketplace/dashboard)
  */
 export const useEnvioAllSubscriptions = () => {
-  const { data, loading, error, refetch } = useQuery(GET_ALL_SUBSCRIPTIONS, {
-    errorPolicy: 'all',
-  });
+  const [subscriptions, setSubscriptions] = useState<EnvioSubscription[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchSubscriptions = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apolloClient.query({
+        query: GET_ALL_SUBSCRIPTIONS,
+      });
+
+      setSubscriptions((result.data as any)?.subscriptions || []);
+    } catch (err: any) {
+      console.error('Error fetching all subscriptions:', err);
+      const errorMessage = handleGraphQLError(err);
+      setError(new Error(errorMessage));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refetch = () => {
+    fetchSubscriptions();
+  };
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
 
   return {
-    subscriptions: data?.subscriptions || [],
+    subscriptions,
     loading,
-    error: error ? new Error(handleGraphQLError(error)) : null,
+    error,
     refetch,
   };
 };
@@ -71,16 +159,47 @@ export const useEnvioAllSubscriptions = () => {
  * Hook for fetching user's payment history (sent payments only)
  */
 export const useEnvioUserPayments = (userAddress: Address | undefined) => {
-  const { data, loading, error, refetch } = useQuery(GET_USER_PAYMENTS, {
-    variables: { userAddress: userAddress?.toLowerCase() },
-    skip: !userAddress,
-    errorPolicy: 'all',
-  });
+  const [payments, setPayments] = useState<EnvioPayment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchPayments = async () => {
+    if (!userAddress) {
+      setPayments([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apolloClient.query({
+        query: GET_USER_PAYMENTS,
+        variables: { userAddress: userAddress.toLowerCase() },
+      });
+
+      setPayments((result.data as any)?.payments || []);
+    } catch (err: any) {
+      console.error('Error fetching user payments:', err);
+      const errorMessage = handleGraphQLError(err);
+      setError(new Error(errorMessage));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refetch = () => {
+    fetchPayments();
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, [userAddress]);
 
   return {
-    payments: data?.payments || [],
+    payments,
     loading,
-    error: error ? new Error(handleGraphQLError(error)) : null,
+    error,
     refetch,
   };
 };

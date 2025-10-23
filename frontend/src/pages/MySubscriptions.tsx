@@ -26,7 +26,7 @@ export const MySubscriptions: React.FC = () => {
   // Find the specific subscription if ID is provided
   const selectedSubscription = useMemo(() => {
     if (!subscriptionId || !subscriptions.length) return null;
-    return subscriptions.find(sub => sub.id === subscriptionId);
+    return subscriptions.find((sub: any) => sub.id === subscriptionId);
   }, [subscriptionId, subscriptions]);
 
   const parsedSelectedSubscription = useMemo(() => {
@@ -40,8 +40,8 @@ export const MySubscriptions: React.FC = () => {
       return { isWarning: false, currentBalance: 0n, upcomingPayment: 0n, shortfall: 0n };
     }
 
-    const activeSubscriptions = subscriptions.filter(s => s.isActive);
-    const upcomingPayment = activeSubscriptions.reduce((total, sub) => {
+    const activeSubscriptions = subscriptions.filter((s: any) => s.isActive);
+    const upcomingPayment = activeSubscriptions.reduce((total: bigint, sub: any) => {
       const parsed = parseEnvioSubscription(sub);
       return total + parsed.amount;
     }, 0n);
@@ -371,8 +371,8 @@ export const MySubscriptions: React.FC = () => {
     );
   }
 
-  const activeSubscriptions = subscriptions.filter(s => s.isActive);
-  const cancelledSubscriptions = subscriptions.filter(s => !s.isActive);
+  const activeSubscriptions = subscriptions.filter((s: any) => s.isActive);
+  const cancelledSubscriptions = subscriptions.filter((s: any) => !s.isActive);
 
   return (
     <div>
@@ -421,7 +421,7 @@ export const MySubscriptions: React.FC = () => {
                 Active ({activeSubscriptions.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeSubscriptions.map(sub => {
+                {activeSubscriptions.map((sub: any) => {
                   const parsed = parseEnvioSubscription(sub);
                   return (
                     <SubscriptionCard
@@ -442,7 +442,7 @@ export const MySubscriptions: React.FC = () => {
                 Cancelled ({cancelledSubscriptions.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
-                {cancelledSubscriptions.map(sub => {
+                {cancelledSubscriptions.map((sub: any) => {
                   const parsed = parseEnvioSubscription(sub);
                   return (
                     <SubscriptionCard

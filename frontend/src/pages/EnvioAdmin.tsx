@@ -102,20 +102,20 @@ export const EnvioAdmin: React.FC = () => {
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Active</div>
                   <div className="text-3xl font-bold text-green-600">
-                    {subscriptions.filter(s => s.isActive).length}
+                    {subscriptions.filter((s: any) => s.isActive).length}
                   </div>
                 </div>
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Cancelled</div>
                   <div className="text-3xl font-bold text-red-600">
-                    {subscriptions.filter(s => !s.isActive).length}
+                    {subscriptions.filter((s: any) => !s.isActive).length}
                   </div>
                 </div>
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Total Value</div>
                   <div className="text-3xl font-bold text-brand-teal">
                     {formatPYUSD(
-                      subscriptions.reduce((sum, s) => sum + BigInt(s.amount), BigInt(0))
+                      subscriptions.reduce((sum: bigint, s: any) => sum + BigInt(s.amount), BigInt(0))
                     )} PYUSD
                   </div>
                 </div>
@@ -148,10 +148,10 @@ export const EnvioAdmin: React.FC = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Payments
                         </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {subscriptions.map(subscription => (
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {subscriptions.map((subscription: any) => (
                         <tr key={subscription.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
                             {subscription.id}

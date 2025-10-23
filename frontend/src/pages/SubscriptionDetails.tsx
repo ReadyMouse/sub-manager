@@ -22,7 +22,7 @@ export const SubscriptionDetails: React.FC = () => {
   // Find the specific subscription
   const subscription = useMemo(() => {
     if (!subscriptionId || !subscriptions.length) return null;
-    return subscriptions.find(sub => sub.id === subscriptionId);
+    return subscriptions.find((sub: any) => sub.id === subscriptionId);
   }, [subscriptionId, subscriptions]);
 
   const parsedSubscription = useMemo(() => {
