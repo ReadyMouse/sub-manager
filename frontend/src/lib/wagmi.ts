@@ -21,7 +21,7 @@ export const wagmiConfig = createConfig({
   ],
   transports: {
     [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/demo'),
-    [sepolia.id]: http(import.meta.env.VITE_SEPOLIA_RPC_URL || 'https://eth-sepolia.g.alchemy.com/v2/demo'),
+    [sepolia.id]: http(import.meta.env.VITE_SEPOLIA_RPC_URL || 'https://rpc.sepolia.org'),
     [localhost.id]: http(import.meta.env.VITE_LOCALHOST_RPC_URL || 'http://localhost:8545'),
   },
 });

@@ -26,6 +26,7 @@ export const CreateSubscription: React.FC = () => {
   const [customAllowance, setCustomAllowance] = useState('');
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
+  const [hasShownApproveSuccess, setHasShownApproveSuccess] = useState(false);
   const [hasShownCreateSuccess, setHasShownCreateSuccess] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: '',
@@ -207,14 +208,15 @@ export const CreateSubscription: React.FC = () => {
 
   // Handle approve success
   useEffect(() => {
-    if (isApproveSuccess) {
+    if (isApproveSuccess && !hasShownApproveSuccess) {
       console.log('Approval successful!');
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       refetchAllowance();
       refetchBalance();
       setIsApproved(true);
+      setHasShownApproveSuccess(true);
     }
-  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance]);
+  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess]);
 
   // Handle approve error
   useEffect(() => {
@@ -312,8 +314,9 @@ export const CreateSubscription: React.FC = () => {
     }
 
     try {
-      // Reset error flag when starting new approval attempt
+      // Reset flags when starting new approval attempt
       setHasShownApproveError(false);
+      setHasShownApproveSuccess(false);
       
       const approvalAmount = allowanceType === 'calculated' 
         ? calculateTotalAllowance().total 
