@@ -31,6 +31,7 @@ router.post(
     
     // Common fields
     body('displayName')
+      .optional()
       .trim()
       .isLength({ min: 2, max: 50 })
       .withMessage('Display name must be between 2 and 50 characters'),
@@ -40,7 +41,7 @@ router.post(
       .withMessage('Invalid user type'),
     body('firstName').optional().trim().isLength({ max: 50 }),
     body('lastName').optional().trim().isLength({ max: 50 }),
-    body('phoneNumber').optional().trim().isMobilePhone('any'),
+    body('phoneNumber').optional().trim().isLength({ max: 20 }),
   ]),
   AuthController.register
 );

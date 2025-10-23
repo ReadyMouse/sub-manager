@@ -23,7 +23,7 @@ export class WalletAuthService {
     walletAddress: string,
     signature: string,
     message: string,
-    displayName: string,
+    displayName?: string,
     firstName?: string,
     lastName?: string,
     phoneNumber?: string
@@ -52,7 +52,7 @@ export class WalletAuthService {
       data: {
         email: null,
         passwordHash: null,
-        displayName,
+        displayName: displayName || `Wallet User ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
         firstName,
         lastName,
         phoneNumber,
