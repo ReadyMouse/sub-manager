@@ -1,12 +1,12 @@
 # Envio Indexer Configuration for StableRent
-# Compatible with Envio 2024/2025
+# Basic format for maximum compatibility
 
 name: stablerent-subscription-indexer
-description: "StableRent - Crypto Subscription Manager with Envio Integration"
+description: "StableRent - Crypto Subscription Manager"
 
 # Network Configuration
 networks:
-  - id: 11155111  # Sepolia
+  - id: 11155111
     name: ethereum-sepolia
     rpc_url: ${SEPOLIA_RPC_URL}
     start_block: ${SEPOLIA_START_BLOCK}
@@ -17,8 +17,6 @@ contracts:
     address: ${CONTRACT_ADDRESS}
     abi_file: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
     network: ethereum-sepolia
-    
-    # Events to index
     events:
       - SubscriptionCreated
       - PaymentProcessed
@@ -31,89 +29,34 @@ event_handlers:
     handler: |
       subscription.id = event.params.subscriptionId
       subscription.subscriber = event.params.subscriber
-      subscription.serviceProviderId = event.params.serviceProviderId
       subscription.amount = event.params.amount
-      subscription.interval = event.params.interval
-      subscription.nextPaymentDue = event.params.nextPaymentDue
-      subscription.endDate = event.params.endDate
-      subscription.maxPayments = event.params.maxPayments
       subscription.serviceName = event.params.serviceName
-      subscription.paymentType = event.params.paymentType
-      subscription.providerType = event.params.providerType
-      subscription.recipientAddress = event.params.recipientAddress
-      subscription.recipientCurrency = event.params.recipientCurrency
-      subscription.processorFee = event.params.processorFee
-      subscription.processorFeeAddress = event.params.processorFeeAddress
-      subscription.processorFeeCurrency = event.params.processorFeeCurrency
-      subscription.processorFeeID = event.params.processorFeeID
       subscription.createdAt = event.params.timestamp
       subscription.isActive = true
-      subscription.paymentCount = 0
-      subscription.failedPaymentCount = 0
       
   - event: PaymentProcessed
     handler: |
-      subscription.paymentCount = event.params.paymentCount
-      subscription.lastPaymentTime = event.params.timestamp
-      subscription.nextPaymentDue = event.params.nextPaymentDue
-      subscription.failedPaymentCount = 0
-      
       payment.id = event.transactionHash + "-" + event.logIndex
       payment.subscriptionId = event.params.subscriptionId
       payment.subscriber = event.params.subscriber
-      payment.serviceName = subscription.serviceName
       payment.amount = event.params.amount
-      payment.processorFee = event.params.processorFee
-      payment.processorFeeAddress = event.params.processorFeeAddress
       payment.timestamp = event.params.timestamp
-      payment.paymentNumber = event.params.paymentCount
       payment.status = "success"
       payment.transactionHash = event.transactionHash
       
   - event: PaymentFailed
     handler: |
-      subscription.failedPaymentCount = event.params.failedCount
-      subscription.lastFailedPayment = event.params.timestamp
-      
       failedPayment.id = event.transactionHash + "-" + event.logIndex
       failedPayment.subscriptionId = event.params.subscriptionId
       failedPayment.subscriber = event.params.subscriber
       failedPayment.amount = event.params.amount
       failedPayment.timestamp = event.params.timestamp
       failedPayment.reason = event.params.reason
-      failedPayment.failedCount = event.params.failedCount
       
   - event: SubscriptionCancelled
     handler: |
       subscription.isActive = false
       subscription.cancelledAt = event.params.timestamp
-      subscription.cancellationReason = event.params.reason
-
-# Webhook Configuration
-webhooks:
-  - name: payment-processor
-    url: ${WEBHOOK_URL}/api/webhooks/payment-processed
-    events:
-      - PaymentProcessed
-    secret: ${ENVIO_WEBHOOK_SECRET}
-    
-  - name: payment-failed-notifier
-    url: ${WEBHOOK_URL}/api/webhooks/payment-failed
-    events:
-      - PaymentFailed
-    secret: ${ENVIO_WEBHOOK_SECRET}
-    
-  - name: subscription-lifecycle
-    url: ${WEBHOOK_URL}/api/webhooks/subscription-cancelled
-    events:
-      - SubscriptionCancelled
-    secret: ${ENVIO_WEBHOOK_SECRET}
-    
-  - name: subscription-created-notifier
-    url: ${WEBHOOK_URL}/api/webhooks/subscription-created
-    events:
-      - SubscriptionCreated
-    secret: ${ENVIO_WEBHOOK_SECRET}
 
 # Database Schema
 schema:
@@ -122,41 +65,18 @@ schema:
       fields:
         id: ID!
         subscriber: Address!
-        serviceProviderId: BigInt!
         amount: BigInt!
-        interval: BigInt!
-        nextPaymentDue: BigInt!
-        endDate: BigInt!
-        maxPayments: BigInt!
         serviceName: String!
-        paymentType: Int!
-        providerType: Int!
-        recipientAddress: Address!
-        recipientCurrency: String!
-        processorFee: BigInt!
-        processorFeeAddress: Address!
-        processorFeeCurrency: String!
-        processorFeeID: BigInt!
         createdAt: BigInt!
         isActive: Boolean!
-        paymentCount: BigInt!
-        failedPaymentCount: Int!
-        lastPaymentTime: BigInt
-        lastFailedPayment: BigInt
-        cancelledAt: BigInt
-        cancellationReason: String
         
     Payment:
       fields:
         id: ID!
         subscriptionId: BigInt!
         subscriber: Address!
-        serviceName: String!
         amount: BigInt!
-        processorFee: BigInt!
-        processorFeeAddress: Address!
         timestamp: BigInt!
-        paymentNumber: BigInt!
         status: String!
         transactionHash: String!
         
@@ -168,9 +88,3 @@ schema:
         amount: BigInt!
         timestamp: BigInt!
         reason: String!
-        failedCount: Int!
-
-# GraphQL API Configuration
-graphql:
-  endpoint: /graphql
-  playground: true
