@@ -54,6 +54,12 @@ DEFAULT_CHAIN_ID=11155111
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 PROCESSOR_PRIVATE_KEY=your-automation-wallet-private-key
 
+# Processor Fee Configuration (loaded from .env file)
+PROCESSOR_FEE_ADDRESS=0x17A4bAf74aC19ab1254fc24D7DcED2ad7639451b
+PROCESSOR_FEE_PERCENT=0.05
+PROCESSOR_FEE_CURRENCY=PYUSD
+PROCESSOR_FEE_ID=1
+
 # Email (optional)
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=587

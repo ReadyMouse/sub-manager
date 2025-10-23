@@ -204,6 +204,7 @@ Cursor + Claude AI was used to support development.
 - Signing transcation could also be first month (not just a sign)
 - Automation is currently a cron local -> Gelato or Chainlink for Automation
 - Contracts are not yet Verified on Etherscan
+- Confusing handling of the .env files (main, frontend, backend, envio.env, hardcoded, browser)
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"

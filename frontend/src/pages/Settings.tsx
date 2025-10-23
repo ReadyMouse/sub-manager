@@ -4,7 +4,7 @@ import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useSubscriptions } from '../hooks/useSubscriptions';
-import { usePayments } from '../hooks/usePayments';
+import { useEnvioAllUserPayments } from '../hooks/useEnvio';
 import { formatPYUSD, shortenAddress, formatDateTime, getEtherscanLink } from '../lib/utils';
 import { PYUSD_SYMBOL, CONTRACTS } from '../lib/constants';
 import { SkeletonList } from '../components/Skeleton';
@@ -364,7 +364,7 @@ export const Settings: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { profile, preferences, updateProfile, updatePreferences } = useUserProfile();
   const { subscriptions, loading: subscriptionsLoading } = useSubscriptions();
-  const { payments: allPayments, loading: allPaymentsLoading } = usePayments();
+  const { payments: allPayments, loading: allPaymentsLoading } = useEnvioAllUserPayments(address);
   
   // Initialize activeTab from URL parameter, fallback to 'profile'
   const tabFromUrl = searchParams.get('tab') as 'profile' | 'wallets' | 'subscriptions' | 'history' | null;
@@ -1313,19 +1313,19 @@ export const Settings: React.FC = () => {
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Completed</div>
                   <div className="text-3xl font-bold text-green-600">
-                    {allPayments.filter((p: any) => p.status === 'COMPLETED').length}
+                    {allPayments.filter((p: any) => p.status === 'success').length}
                   </div>
                 </div>
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Failed</div>
                   <div className="text-3xl font-bold text-red-600">
-                    {allPayments.filter((p: any) => p.status === 'FAILED').length}
+                    {allPayments.filter((p: any) => p.status === 'failed').length}
                   </div>
                 </div>
                 <div className="card">
                   <div className="text-sm text-gray-600 mb-1">Pending</div>
                   <div className="text-3xl font-bold text-yellow-600">
-                    {allPayments.filter((p: any) => p.status === 'PENDING').length}
+                    {allPayments.filter((p: any) => p.status !== 'success' && p.status !== 'failed').length}
                   </div>
                 </div>
               </div>
@@ -1357,21 +1357,21 @@ export const Settings: React.FC = () => {
                       {allPayments.map(payment => (
                         <tr key={payment.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDateTime(parseInt(payment.createdAt))}
+                            {formatDateTime(parseInt(payment.timestamp))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              payment.status === 'COMPLETED' 
+                              payment.status === 'success' 
                                 ? 'bg-green-100 text-green-800' 
-                                : payment.status === 'FAILED'
+                                : payment.status === 'failed'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {payment.status}
+                              {payment.status === 'success' ? 'COMPLETED' : payment.status === 'failed' ? 'FAILED' : 'PENDING'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                            {payment.subscription?.serviceName || 'Unknown Service'}
+                            {payment.serviceName || 'Unknown Service'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {formatPYUSD(BigInt(payment.amount))} <span className="text-xs text-gray-500">PYUSD</span>
@@ -1395,6 +1395,23 @@ export const Settings: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Admin Link */}
+              <div className="mt-8 text-center">
+                <a
+                  href="/envio-admin"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-teal"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Envio Admin
+                </a>
+                <p className="text-xs text-gray-500 mt-2">
+                  View all events and debug information
+                </p>
               </div>
             </>
           )}

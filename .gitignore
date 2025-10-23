@@ -10,6 +10,7 @@ typechain-types
 .env
 .env.local
 .env.*.local
+envio.env
 
 # Coverage reports
 coverage

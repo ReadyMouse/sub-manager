@@ -6,6 +6,10 @@ import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import * as dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const execAsync = promisify(exec);
 
@@ -86,7 +90,12 @@ async function main() {
     { key: 'CONTRACT_ADDRESS_SEPOLIA', value: deploymentInfo.contracts.StableRentSubscription },
     { key: 'DEFAULT_CHAIN_ID', value: deploymentInfo.chainId },
     { key: 'NODE_ENV', value: 'production' },
-    { key: 'LAST_DEPLOYMENT', value: new Date().toISOString() }
+    { key: 'LAST_DEPLOYMENT', value: new Date().toISOString() },
+    // Processor fee configuration from .env
+    { key: 'PROCESSOR_FEE_ADDRESS', value: process.env.PROCESSOR_FEE_ADDRESS || '0x17A4bAf74aC19ab1254fc24D7DcED2ad7639451b' },
+    { key: 'PROCESSOR_FEE_PERCENT', value: process.env.PROCESSOR_FEE_PERCENT || '0.05' },
+    { key: 'PROCESSOR_FEE_CURRENCY', value: process.env.PROCESSOR_FEE_CURRENCY || 'PYUSD' },
+    { key: 'PROCESSOR_FEE_ID', value: process.env.PROCESSOR_FEE_ID || '1' }
   ];
 
   console.log("🔧 Updating Railway environment variables...");

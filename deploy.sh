@@ -156,9 +156,14 @@ if [ "$DEPLOY_RAILWAY" = true ]; then
             
             # Update Railway environment variables
             railway variables set CONTRACT_ADDRESS_SEPOLIA="$CONTRACT_ADDRESS"
-            railway variables set DEFAULT_CHAIN_ID="11155111"
+            railway variables set DEFAULT_CHAIN_ID="${DEFAULT_CHAIN_ID:-11155111}"
             railway variables set NODE_ENV="production"
             railway variables set LAST_DEPLOYMENT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            # Processor fee configuration from environment variables
+            railway variables set PROCESSOR_FEE_ADDRESS="${PROCESSOR_FEE_ADDRESS:-0x17A4bAf74aC19ab1254fc24D7DcED2ad7639451b}"
+            railway variables set PROCESSOR_FEE_PERCENT="${PROCESSOR_FEE_PERCENT:-0.05}"
+            railway variables set PROCESSOR_FEE_CURRENCY="${PROCESSOR_FEE_CURRENCY:-PYUSD}"
+            railway variables set PROCESSOR_FEE_ID="${PROCESSOR_FEE_ID:-1}"
             
             echo -e "${GREEN}✅ Railway environment variables updated${NC}"
             

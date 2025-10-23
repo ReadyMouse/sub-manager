@@ -12,6 +12,7 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { CreateSubscription } from './pages/CreateSubscription';
 import { MySubscriptions } from './pages/MySubscriptions';
 import { Settings } from './pages/Settings';
+import { EnvioAdmin } from './pages/EnvioAdmin';
 import { ForResidents } from './pages/ForResidents';
 import { ForPropertyOwners } from './pages/ForPropertyOwners';
 
@@ -46,6 +47,7 @@ function App() {
                 <Route path="/create" element={<CreateSubscription />} />
                 <Route path="/subscriptions" element={<MySubscriptions />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/envio-admin" element={<EnvioAdmin />} />
                 
                 {/* Legacy redirect - /profile now goes to /settings */}
                 <Route path="/profile" element={<Settings />} />
