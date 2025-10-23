@@ -1,90 +1,104 @@
-# Envio Indexer Configuration for StableRent
-# Basic format for maximum compatibility
+version: 2.31.0
 
-name: stablerent-subscription-indexer
-description: "StableRent - Crypto Subscription Manager"
-
-# Network Configuration
-networks:
-  - id: 11155111
-    name: ethereum-sepolia
-    rpc_url: ${SEPOLIA_RPC_URL}
-    start_block: ${SEPOLIA_START_BLOCK}
-
-# Contract Configuration
-contracts:
-  - name: StableRentSubscription
-    address: ${CONTRACT_ADDRESS}
-    abi_file: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
-    network: ethereum-sepolia
-    events:
-      - SubscriptionCreated
-      - PaymentProcessed
-      - PaymentFailed
-      - SubscriptionCancelled
-
-# Event Handlers
-event_handlers:
-  - event: SubscriptionCreated
-    handler: |
-      subscription.id = event.params.subscriptionId
-      subscription.subscriber = event.params.subscriber
-      subscription.amount = event.params.amount
-      subscription.serviceName = event.params.serviceName
-      subscription.createdAt = event.params.timestamp
-      subscription.isActive = true
+indexer:
+  name: stablerent-subscription-indexer
+  description: "StableRent - Crypto Subscription Manager with Envio Integration"
+  
+  networks:
+    - name: ethereum-sepolia
+      rpc_url: ${SEPOLIA_RPC_URL}
+      start_block: ${SEPOLIA_START_BLOCK}
       
-  - event: PaymentProcessed
-    handler: |
-      payment.id = event.transactionHash + "-" + event.logIndex
-      payment.subscriptionId = event.params.subscriptionId
-      payment.subscriber = event.params.subscriber
-      payment.amount = event.params.amount
-      payment.timestamp = event.params.timestamp
-      payment.status = "success"
-      payment.transactionHash = event.transactionHash
-      
-  - event: PaymentFailed
-    handler: |
-      failedPayment.id = event.transactionHash + "-" + event.logIndex
-      failedPayment.subscriptionId = event.params.subscriptionId
-      failedPayment.subscriber = event.params.subscriber
-      failedPayment.amount = event.params.amount
-      failedPayment.timestamp = event.params.timestamp
-      failedPayment.reason = event.params.reason
-      
-  - event: SubscriptionCancelled
-    handler: |
-      subscription.isActive = false
-      subscription.cancelledAt = event.params.timestamp
+  contracts:
+    - name: StableRentSubscription
+      address: ${CONTRACT_ADDRESS}
+      abi: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
+      network: ethereum-sepolia
+      events:
+        - name: SubscriptionCreated
+          handler: |
+            subscription.id = event.params.subscriptionId
+            subscription.subscriber = event.params.subscriber
+            subscription.amount = event.params.amount
+            subscription.serviceName = event.params.serviceName
+            subscription.createdAt = event.params.timestamp
+            subscription.isActive = true
+            
+        - name: PaymentProcessed
+          handler: |
+            payment.id = event.transactionHash + "-" + event.logIndex
+            payment.subscriptionId = event.params.subscriptionId
+            payment.subscriber = event.params.subscriber
+            payment.amount = event.params.amount
+            payment.timestamp = event.params.timestamp
+            payment.status = "success"
+            payment.transactionHash = event.transactionHash
+            
+        - name: PaymentFailed
+          handler: |
+            failedPayment.id = event.transactionHash + "-" + event.logIndex
+            failedPayment.subscriptionId = event.params.subscriptionId
+            failedPayment.subscriber = event.params.subscriber
+            failedPayment.amount = event.params.amount
+            failedPayment.timestamp = event.params.timestamp
+            failedPayment.reason = event.params.reason
+            
+        - name: SubscriptionCancelled
+          handler: |
+            subscription.isActive = false
+            subscription.cancelledAt = event.params.timestamp
 
-# Database Schema
-schema:
-  entities:
-    Subscription:
-      fields:
-        id: ID!
-        subscriber: Address!
-        amount: BigInt!
-        serviceName: String!
-        createdAt: BigInt!
-        isActive: Boolean!
-        
-    Payment:
-      fields:
-        id: ID!
-        subscriptionId: BigInt!
-        subscriber: Address!
-        amount: BigInt!
-        timestamp: BigInt!
-        status: String!
-        transactionHash: String!
-        
-    FailedPayment:
-      fields:
-        id: ID!
-        subscriptionId: BigInt!
-        subscriber: Address!
-        amount: BigInt!
-        timestamp: BigInt!
-        reason: String!
+  schema:
+    entities:
+      Subscription:
+        fields:
+          id: ID!
+          subscriber: Address!
+          amount: BigInt!
+          serviceName: String!
+          createdAt: BigInt!
+          isActive: Boolean!
+          
+      Payment:
+        fields:
+          id: ID!
+          subscriptionId: BigInt!
+          subscriber: Address!
+          amount: BigInt!
+          timestamp: BigInt!
+          status: String!
+          transactionHash: String!
+          
+      FailedPayment:
+        fields:
+          id: ID!
+          subscriptionId: BigInt!
+          subscriber: Address!
+          amount: BigInt!
+          timestamp: BigInt!
+          reason: String!
+
+  webhooks:
+    - name: payment-processor
+      url: ${WEBHOOK_URL}/api/webhooks/payment-processed
+      events:
+        - PaymentProcessed
+      secret: ${ENVIO_WEBHOOK_SECRET}
+      
+    - name: payment-failed-notifier
+      url: ${WEBHOOK_URL}/api/webhooks/payment-failed
+      events:
+        - PaymentFailed
+      secret: ${ENVIO_WEBHOOK_SECRET}
+      
+    - name: subscription-lifecycle
+      url: ${WEBHOOK_URL}/api/webhooks/subscription-cancelled
+      events:
+        - SubscriptionCancelled
+      secret: ${ENVIO_WEBHOOK_SECRET}
+      
+    - name: subscription-created-notifier
+      url: ${WEBHOOK_URL}/api/webhooks/subscription-created
+      events:
+        - SubscriptionCreated
+      secret: ${ENVIO_WEBHOOK_SECRET}
