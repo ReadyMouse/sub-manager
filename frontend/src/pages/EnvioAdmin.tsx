@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { useEnvioAllSubscriptions } from '../hooks/useEnvio';
 import { SkeletonList } from '../components/Skeleton';
-import { formatPYUSD, formatDateTime, getEtherscanLink } from '../lib/utils';
+import { formatPYUSD, formatDateTime } from '../lib/utils';
 
 export const EnvioAdmin: React.FC = () => {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { subscriptions, loading: subscriptionsLoading } = useEnvioAllSubscriptions();
   const [activeTab, setActiveTab] = useState<'subscriptions' | 'payments' | 'events'>('subscriptions');
 

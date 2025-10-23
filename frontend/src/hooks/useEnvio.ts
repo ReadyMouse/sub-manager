@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client/react/hooks';
 import type { Address } from 'viem';
 import type { EnvioSubscription, EnvioPayment, EnvioPaymentWithDirection } from '../lib/types';
 import { apolloClient, handleGraphQLError } from '../lib/apollo';
