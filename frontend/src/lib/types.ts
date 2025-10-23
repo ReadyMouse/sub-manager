@@ -229,6 +229,8 @@ export interface EnvioSubscription {
   processorFeeAddress: string;
   processorFeeCurrency: string;
   processorFeeID: string;
+  recipientAddress?: string;
+  chainId?: number;
 }
 
 export interface EnvioPayment {

@@ -110,11 +110,11 @@ const SubscriptionCard: React.FC<{ subscription: EnvioSubscription; isActive: bo
                 Payments made: {subscription.paymentCount}
               </div>
               <div>
-                Started: {formatDate(parseInt(subscription.createdAt))}
+                Started: {formatDate(subscription.createdAt)}
               </div>
               {subscription.endDate && (
                 <div>
-                  Ended: {formatDate(parseInt(subscription.endDate))}
+                  Ended: {formatDate(subscription.endDate)}
                 </div>
               )}
             </div>
