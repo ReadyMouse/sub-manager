@@ -103,6 +103,12 @@ export const useStableRentContract = () => {
         code: (error as any)?.code || 'Unknown code',
         details: error
       });
+      
+      // Try to extract more specific error information
+      if (error instanceof Error && error.message.includes('reverted')) {
+        console.error('Contract reverted with reason:', error.message);
+      }
+      
       throw error;
     }
   };
@@ -125,10 +131,23 @@ export const useStableRentContract = () => {
     });
   };
 
+  // Test function to check if contract is readable
+  const testContractRead = async () => {
+    try {
+      console.log('Testing contract read...');
+      // This will be implemented if needed
+      return true;
+    } catch (error) {
+      console.error('Contract read test failed:', error);
+      return false;
+    }
+  };
+
   return {
     createSubscription,
     processPayment,
     cancelSubscription,
+    testContractRead,
     hash,
     isPending,
     isConfirming,
@@ -244,6 +263,15 @@ export const usePYUSDBalance = (address: Address | undefined) => {
       enabled: !!address,
       refetchInterval: 10000, // Refetch every 10 seconds
     },
+  });
+
+  // Debug balance reading
+  console.log('PYUSD Balance Debug:', {
+    address,
+    balance: data ? data.toString() : 'undefined',
+    isLoading,
+    error: error ? error.message : null,
+    pyusdAddress: CONTRACTS.PYUSD
   });
 
   return {

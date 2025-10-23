@@ -537,7 +537,7 @@ export const CreateSubscription: React.FC = () => {
         toast.error('Invalid Date', 'Start date must be in the future');
         return;
       }
-
+      
       // Determine recipient details based on input type
       const finalRecipientId = recipientInputType === 'lookup' 
         ? recipientDetails!.recipientId 
@@ -548,6 +548,26 @@ export const CreateSubscription: React.FC = () => {
       const finalRecipientCurrency = recipientInputType === 'lookup'
         ? recipientDetails!.recipientCurrency
         : formData.recipientWalletCurrency;
+
+      // Debug all parameters being sent to contract
+      console.log('Contract call parameters:', {
+        senderId: '0',
+        recipientId: finalRecipientId,
+        amount: formData.amount,
+        amountWei: parsePYUSD(formData.amount).toString(),
+        interval: formData.interval,
+        serviceName: formData.serviceName,
+        startDate,
+        endDate,
+        maxPayments,
+        recipientAddress: finalRecipientAddress,
+        senderCurrency: formData.senderCurrency,
+        recipientCurrency: finalRecipientCurrency,
+        processorFee: (parsePYUSD(formData.amount) * BigInt(5)) / BigInt(100),
+        processorFeeAddress: CONTRACTS.StableRentSubscription,
+        processorFeeCurrency: 'PYUSD',
+        processorFeeID: '0'
+      });
 
       // Create subscription on-chain
       console.log('Submitting subscription with data:', {
