@@ -222,26 +222,3 @@ export const usePYUSDAllowance = (
   };
 };
 
-/**
- * Hook for testing PYUSD token contract connectivity
- */
-export const usePYUSDTest = () => {
-  const { data: name, isLoading: nameLoading, error: nameError } = useReadContract({
-    address: CONTRACTS.PYUSD as Address,
-    abi: ERC20_ABI,
-    functionName: 'name',
-  });
-
-  const { data: symbol, isLoading: symbolLoading, error: symbolError } = useReadContract({
-    address: CONTRACTS.PYUSD as Address,
-    abi: ERC20_ABI,
-    functionName: 'symbol',
-  });
-
-  return {
-    name,
-    symbol,
-    isLoading: nameLoading || symbolLoading,
-    error: nameError || symbolError,
-  };
-};
