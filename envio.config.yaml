@@ -1,54 +1,34 @@
 # Envio Indexer Configuration for StableRent
-# 
-# This configuration sets up Envio to index all StableRentSubscription events
-# and send webhooks to the backend for automated payment processing.
-#
-# Hackathon Showcase Features:
-# - Real-time event indexing for instant dashboard updates
-# - Webhook integration for payment automation
-# - Multi-event tracking (PaymentProcessed, PaymentFailed, SubscriptionCreated, etc.)
-# - Production-ready with signature verification
+# Compatible with Envio 2024/2025
 
 name: stablerent-subscription-indexer
 description: "StableRent - Crypto Subscription Manager with Envio Integration"
 
 # Network Configuration
-# Update these based on your deployment network
 networks:
-  # SEPOLIA TESTNET - For hackathon demo (ACTIVE)
   - id: 11155111  # Sepolia
     name: ethereum-sepolia
     rpc_url: ${SEPOLIA_RPC_URL}
     start_block: ${SEPOLIA_START_BLOCK}
-    
-  # MAINNET - Uncomment for production deployment
-  # - id: 1  # Ethereum Mainnet
-  #   name: ethereum-mainnet
-  #   rpc_url: ${RPC_URL}
-  #   start_block: ${START_BLOCK}
 
 # Contract Configuration
 contracts:
   - name: StableRentSubscription
     address: ${CONTRACT_ADDRESS}
     abi_file: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
-    network: ethereum-sepolia  # Changed to Sepolia for testnet deployment
+    network: ethereum-sepolia
     
     # Events to index
     events:
-      # Primary Events - Used by frontend dashboard and backend automation
       - SubscriptionCreated
       - PaymentProcessed
       - PaymentFailed
       - SubscriptionCancelled
 
 # Event Handlers
-# These define what data to extract and store from each event
 event_handlers:
   - event: SubscriptionCreated
     handler: |
-      // Store subscription creation data
-      // This powers the "All Subscriptions" view in the dashboard
       subscription.id = event.params.subscriptionId
       subscription.subscriber = event.params.subscriber
       subscription.serviceProviderId = event.params.serviceProviderId
@@ -73,18 +53,15 @@ event_handlers:
       
   - event: PaymentProcessed
     handler: |
-      // Update subscription payment data
-      // This triggers webhook to backend for Coinbase automation
       subscription.paymentCount = event.params.paymentCount
       subscription.lastPaymentTime = event.params.timestamp
       subscription.nextPaymentDue = event.params.nextPaymentDue
-      subscription.failedPaymentCount = 0  // Reset on successful payment
+      subscription.failedPaymentCount = 0
       
-      // Track payment history (including processor fee and service name)
       payment.id = event.transactionHash + "-" + event.logIndex
       payment.subscriptionId = event.params.subscriptionId
       payment.subscriber = event.params.subscriber
-      payment.serviceName = subscription.serviceName  // Get from subscription
+      payment.serviceName = subscription.serviceName
       payment.amount = event.params.amount
       payment.processorFee = event.params.processorFee
       payment.processorFeeAddress = event.params.processorFeeAddress
@@ -95,11 +72,9 @@ event_handlers:
       
   - event: PaymentFailed
     handler: |
-      // Track failed payments
       subscription.failedPaymentCount = event.params.failedCount
       subscription.lastFailedPayment = event.params.timestamp
       
-      // Store failure details
       failedPayment.id = event.transactionHash + "-" + event.logIndex
       failedPayment.subscriptionId = event.params.subscriptionId
       failedPayment.subscriber = event.params.subscriber
@@ -110,44 +85,37 @@ event_handlers:
       
   - event: SubscriptionCancelled
     handler: |
-      // Mark subscription as cancelled
       subscription.isActive = false
       subscription.cancelledAt = event.params.timestamp
       subscription.cancellationReason = event.params.reason
 
-# Webhook Configuration for Backend Automation
-# These webhooks trigger the Coinbase payment processing flow
+# Webhook Configuration
 webhooks:
   - name: payment-processor
-    url: ${WEBHOOK_URL}/webhook/payment-processed
+    url: ${WEBHOOK_URL}/api/webhooks/payment-processed
     events:
       - PaymentProcessed
     secret: ${ENVIO_WEBHOOK_SECRET}
-    retry_policy:
-      max_attempts: 3
-      backoff_multiplier: 2
-      initial_interval: 1000  # 1 second
     
   - name: payment-failed-notifier
-    url: ${WEBHOOK_URL}/webhook/payment-failed
+    url: ${WEBHOOK_URL}/api/webhooks/payment-failed
     events:
       - PaymentFailed
     secret: ${ENVIO_WEBHOOK_SECRET}
     
   - name: subscription-lifecycle
-    url: ${WEBHOOK_URL}/webhook/subscription-cancelled
+    url: ${WEBHOOK_URL}/api/webhooks/subscription-cancelled
     events:
       - SubscriptionCancelled
     secret: ${ENVIO_WEBHOOK_SECRET}
     
   - name: subscription-created-notifier
-    url: ${WEBHOOK_URL}/webhook/subscription-created
+    url: ${WEBHOOK_URL}/api/webhooks/subscription-created
     events:
       - SubscriptionCreated
     secret: ${ENVIO_WEBHOOK_SECRET}
 
 # Database Schema
-# Defines how Envio stores indexed data for fast queries
 schema:
   entities:
     Subscription:
@@ -203,17 +171,6 @@ schema:
         failedCount: Int!
 
 # GraphQL API Configuration
-# Envio auto-generates a GraphQL API for your frontend
 graphql:
   endpoint: /graphql
-  playground: true  # Enable GraphQL playground for testing
-  
-# Optional: Analytics and Monitoring
-monitoring:
-  enabled: true
-  metrics:
-    - subscriptions_created
-    - payments_processed
-    - payment_failures
-    - active_subscriptions
-
+  playground: true
