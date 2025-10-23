@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } from '../hooks/useContract';
-import { CONTRACTS, PAYMENT_INTERVALS, PROCESSOR_FEE_CURRENCY, PROCESSOR_FEE_ID } from '../lib/constants';
+import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { apiClient, subscriptionApi, configApi } from '../lib/api';
@@ -31,6 +31,11 @@ export const CreateSubscription: React.FC = () => {
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
   const [hasShownApproveSuccess, setHasShownApproveSuccess] = useState(false);
   const [processorFeePercent, setProcessorFeePercent] = useState(0.05); // Default fallback
+  const [processorFeeConfig, setProcessorFeeConfig] = useState({
+    processorFeeAddress: '',
+    processorFeeCurrency: 'PYUSD',
+    processorFeeID: '0'
+  });
   
   // Debug approval state
   useEffect(() => {
@@ -87,10 +92,15 @@ export const CreateSubscription: React.FC = () => {
         const response = await configApi.getConfig();
         if (response.success && response.data) {
           setProcessorFeePercent(response.data.processorFeePercent);
+          setProcessorFeeConfig({
+            processorFeeAddress: response.data.processorFeeAddress || '',
+            processorFeeCurrency: response.data.processorFeeCurrency || 'PYUSD',
+            processorFeeID: response.data.processorFeeID || '0'
+          });
         }
       } catch (error) {
         console.error('Failed to load configuration:', error);
-        // Keep default fallback value
+        // Keep default fallback values
       }
     };
 
@@ -435,9 +445,9 @@ export const CreateSubscription: React.FC = () => {
               : formData.recipientWalletCurrency,
             // Include processor fee information
             processorFee: processorFeeAmount,
-            processorFeeAddress: CONTRACTS.StableRentSubscription,
-            processorFeeCurrency: PROCESSOR_FEE_CURRENCY,
-            processorFeeID: PROCESSOR_FEE_ID,
+            processorFeeAddress: processorFeeConfig.processorFeeAddress,
+            processorFeeCurrency: processorFeeConfig.processorFeeCurrency,
+            processorFeeID: processorFeeConfig.processorFeeID,
             metadata: {
               notes: formData.notes,
               tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : undefined,
@@ -667,9 +677,9 @@ export const CreateSubscription: React.FC = () => {
         senderCurrency: formData.senderCurrency,
         recipientCurrency: finalRecipientCurrency,
         processorFee: processorFeeWei.toString(),
-        processorFeeAddress: CONTRACTS.StableRentSubscription,
-        processorFeeCurrency: 'PYUSD',
-        processorFeeID: '0',
+        processorFeeAddress: processorFeeConfig.processorFeeAddress,
+        processorFeeCurrency: processorFeeConfig.processorFeeCurrency,
+        processorFeeID: processorFeeConfig.processorFeeID,
         totalPaymentAmount: totalPaymentWei.toString(),
         totalPaymentUSD: (Number(totalPaymentWei) / 1_000_000).toFixed(6)
       });
@@ -700,7 +710,11 @@ export const CreateSubscription: React.FC = () => {
         maxPayments,
         finalRecipientAddress as Address,
         formData.senderCurrency,
-        finalRecipientCurrency
+        finalRecipientCurrency,
+        processorFeeWei.toString(),
+        processorFeeConfig.processorFeeAddress as Address,
+        processorFeeConfig.processorFeeCurrency,
+        processorFeeConfig.processorFeeID
       );
       
       console.log('Subscription creation initiated:', result);

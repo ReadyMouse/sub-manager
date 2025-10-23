@@ -31,9 +31,7 @@ export const PYUSD_DECIMALS = 6;
 export const PYUSD_SYMBOL = 'PYUSD';
 export const PYUSD_NAME = 'PayPal USD';
 
-// Processor fee configuration - will be fetched from backend
-export const PROCESSOR_FEE_CURRENCY = 'PYUSD';
-export const PROCESSOR_FEE_ID = '0';
+// Processor fee configuration - fetched from backend via /api/config
 
 // Payment intervals (in seconds)
 export const PAYMENT_INTERVALS = {

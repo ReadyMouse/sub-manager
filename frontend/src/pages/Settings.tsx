@@ -316,32 +316,45 @@ const ReceiveOnlyWalletCard: React.FC<{
 
 
 // Helper function to convert backend subscription to frontend format
-const convertSubscription = (sub: any): EnvioSubscription => ({
-  id: sub.id,
-  subscriber: sub.senderWalletAddress || '',
-  serviceProviderId: sub.serviceName,
-  amount: sub.amount, // Keep as string - will be converted to BigInt in display
-  interval: sub.interval.toString(),
-  nextPaymentDue: typeof sub.nextPaymentDue === 'string' 
-    ? sub.nextPaymentDue 
-    : Math.floor(new Date(sub.nextPaymentDue).getTime() / 1000).toString(),
-  endDate: sub.endDate 
-    ? (typeof sub.endDate === 'string' 
-        ? sub.endDate 
-        : Math.floor(new Date(sub.endDate).getTime() / 1000).toString())
-    : undefined,
-  maxPayments: sub.maxPayments?.toString(),
-  paymentCount: sub.paymentCount.toString(),
-  failedPaymentCount: sub.failedPaymentCount.toString(),
-  isActive: sub.isActive,
-  processorFee: sub.processorFee || '0',
-  processorFeeAddress: sub.processorFeeAddress || '',
-  processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
-  processorFeeID: sub.processorFeeID || '',
-  createdAt: typeof sub.createdAt === 'string' 
-    ? sub.createdAt 
-    : Math.floor(new Date(sub.createdAt).getTime() / 1000).toString(),
-});
+const convertSubscription = (sub: any): EnvioSubscription => {
+  // Debug logging to help identify the issue
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Converting subscription data:', {
+      id: sub.id,
+      amount: sub.amount,
+      amountType: typeof sub.amount,
+      serviceName: sub.serviceName,
+      allFields: Object.keys(sub)
+    });
+  }
+  
+  return {
+    id: sub.id,
+    subscriber: sub.senderWalletAddress || '',
+    serviceProviderId: sub.serviceName,
+    amount: sub.amount || '0', // Ensure amount is never null/undefined
+    interval: sub.interval.toString(),
+    nextPaymentDue: typeof sub.nextPaymentDue === 'string' 
+      ? sub.nextPaymentDue 
+      : Math.floor(new Date(sub.nextPaymentDue).getTime() / 1000).toString(),
+    endDate: sub.endDate 
+      ? (typeof sub.endDate === 'string' 
+          ? sub.endDate 
+          : Math.floor(new Date(sub.endDate).getTime() / 1000).toString())
+      : undefined,
+    maxPayments: sub.maxPayments?.toString(),
+    paymentCount: sub.paymentCount.toString(),
+    failedPaymentCount: sub.failedPaymentCount.toString(),
+    isActive: sub.isActive,
+    processorFee: sub.processorFee || '0',
+    processorFeeAddress: sub.processorFeeAddress || '',
+    processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
+    processorFeeID: sub.processorFeeID || '',
+    createdAt: typeof sub.createdAt === 'string' 
+      ? sub.createdAt 
+      : Math.floor(new Date(sub.createdAt).getTime() / 1000).toString(),
+  };
+};
 
 export const Settings: React.FC = () => {
   const navigate = useNavigate();

@@ -12,8 +12,9 @@ export class ConfigController {
         success: true,
         data: {
           processorFeePercent: parseFloat(env.PROCESSOR_FEE_PERCENT),
-          processorFeeCurrency: 'PYUSD',
-          processorFeeID: '0',
+          processorFeeAddress: env.PROCESSOR_FEE_ADDRESS,
+          processorFeeCurrency: env.PROCESSOR_FEE_CURRENCY,
+          processorFeeID: env.PROCESSOR_FEE_ID,
         },
       });
     } catch (error) {

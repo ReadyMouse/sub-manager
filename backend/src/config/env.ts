@@ -48,6 +48,9 @@ const envSchema = z.object({
   
   // Processor Fee Configuration
   PROCESSOR_FEE_PERCENT: z.string().default('0.05'),
+  PROCESSOR_FEE_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  PROCESSOR_FEE_CURRENCY: z.string().default('PYUSD'),
+  PROCESSOR_FEE_ID: z.string().default('0'),
   
   // Hardhat/Development (from main .env)
   ALCHEMY_API_KEY: z.string().optional(),
