@@ -1,51 +1,64 @@
-type Subscription @entity {
+type StableRentSubscription_OwnershipTransferred {
   id: ID!
-  subscriber: Bytes!
-  serviceProviderId: BigInt!
+  previousOwner: String!
+  newOwner: String!
+}
+
+type StableRentSubscription_PaymentFailed {
+  id: ID!
+  subscriptionId: BigInt!
+  senderAddress: String!
+  senderId: BigInt!
+  recipientId: BigInt!
+  amount: BigInt!
+  timestamp: BigInt!
+  reason: String!
+  failedCount: BigInt!
+}
+
+type StableRentSubscription_PaymentProcessed {
+  id: ID!
+  subscriptionId: BigInt!
+  senderAddress: String!
+  senderId: BigInt!
+  recipientId: BigInt!
+  amount: BigInt!
+  processorFee: BigInt!
+  processorFeeAddress: String!
+  paymentCount: BigInt!
+  timestamp: BigInt!
+  nextPaymentDue: BigInt!
+}
+
+type StableRentSubscription_SubscriptionCancelled {
+  id: ID!
+  subscriptionId: BigInt!
+  senderAddress: String!
+  senderId: BigInt!
+  recipientId: BigInt!
+  timestamp: BigInt!
+  reason: String!
+}
+
+type StableRentSubscription_SubscriptionCreated {
+  id: ID!
+  subscriptionId: BigInt!
+  senderAddress: String!
+  senderId: BigInt!
+  recipientId: BigInt!
   amount: BigInt!
   interval: BigInt!
   nextPaymentDue: BigInt!
   endDate: BigInt!
   maxPayments: BigInt!
   serviceName: String!
-  paymentType: Int!
-  providerType: Int!
-  recipientAddress: Bytes!
+  recipientAddress: String!
+  senderCurrency: String!
   recipientCurrency: String!
   processorFee: BigInt!
-  processorFeeAddress: Bytes!
+  processorFeeAddress: String!
   processorFeeCurrency: String!
   processorFeeID: BigInt!
-  createdAt: BigInt!
-  isActive: Boolean!
-  paymentCount: BigInt!
-  failedPaymentCount: Int!
-  lastPaymentTime: BigInt
-  lastFailedPayment: BigInt
-  cancelledAt: BigInt
-  cancellationReason: String
+  timestamp: BigInt!
 }
 
-type Payment @entity {
-  id: ID!
-  subscriptionId: BigInt!
-  subscriber: Bytes!
-  serviceName: String!
-  amount: BigInt!
-  processorFee: BigInt!
-  processorFeeAddress: Bytes!
-  timestamp: BigInt!
-  paymentNumber: BigInt!
-  status: String!
-  transactionHash: String!
-}
-
-type FailedPayment @entity {
-  id: ID!
-  subscriptionId: BigInt!
-  subscriber: Bytes!
-  amount: BigInt!
-  timestamp: BigInt!
-  reason: String!
-  failedCount: Int!
-}
