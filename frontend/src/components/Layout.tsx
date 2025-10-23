@@ -284,6 +284,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <a href="https://github.com/ReadyMouse/sub-manager" target="_blank" rel="noopener noreferrer" className="opacity-95 hover:opacity-100 transition-opacity underline">
                   GitHub Repository
                 </a>
+                <Link to="/envio-admin" className="opacity-95 hover:opacity-100 transition-opacity underline">
+                  Envio Admin (Debug)
+                </Link>
               </div>
             </div>
           </div>

@@ -3,13 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useSubscriptions } from '../hooks/useSubscriptions';
+import { useSubscriptions, type Subscription } from '../hooks/useSubscriptions';
 import { useEnvioAllUserPayments } from '../hooks/useEnvio';
 import { formatPYUSD, shortenAddress, formatDateTime, getEtherscanLink } from '../lib/utils';
 import { PYUSD_SYMBOL, CONTRACTS } from '../lib/constants';
 import { SkeletonList } from '../components/Skeleton';
 import { erc20Abi } from 'viem';
-import type { EnvioSubscription } from '../lib/types';
 
 interface ConnectedWallet {
   id: string;
@@ -33,35 +32,44 @@ interface ReceiveOnlyWallet {
   createdAt: string;
 }
 
-// Subscription Card Component
-const SubscriptionCard: React.FC<{ subscription: EnvioSubscription; isActive: boolean }> = ({ subscription, isActive }) => {
-  const formatInterval = (intervalSeconds: string) => {
-    const seconds = parseInt(intervalSeconds);
-    const days = Math.floor(seconds / 86400);
+// Backend Subscription Card Component (for database subscriptions)
+const BackendSubscriptionCard: React.FC<{ subscription: Subscription; isActive: boolean }> = ({ subscription, isActive }) => {
+  const formatInterval = (intervalSeconds: number) => {
+    if (intervalSeconds === 0 || isNaN(intervalSeconds)) return 'Not set';
+    const days = Math.floor(intervalSeconds / 86400);
     if (days === 30 || days === 31) return 'Monthly';
     if (days === 7) return 'Weekly';
     if (days === 365) return 'Yearly';
+    if (days === 1) return 'Daily';
     return `Every ${days} days`;
   };
 
-  const formatDate = (timestamp: string) => {
-    return new Date(parseInt(timestamp) * 1000).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not set';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Not set';
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Not set';
+    }
   };
 
-  const nextPaymentDate = parseInt(subscription.nextPaymentDue) * 1000;
-  const isOverdue = isActive && nextPaymentDate < Date.now();
-  const daysUntilPayment = Math.ceil((nextPaymentDate - Date.now()) / (1000 * 60 * 60 * 24));
+  const nextPaymentDate = subscription.nextPaymentDue ? new Date(subscription.nextPaymentDue) : null;
+  const hasValidNextPayment = nextPaymentDate && !isNaN(nextPaymentDate.getTime());
+  const isOverdue = isActive && hasValidNextPayment && nextPaymentDate.getTime() < Date.now();
+  const daysUntilPayment = hasValidNextPayment ? Math.ceil((nextPaymentDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
   return (
     <div className={`card ${isActive ? 'hover:shadow-medium' : ''} transition-shadow`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-brand-navy">{subscription.serviceProviderId}</h3>
+            <h3 className="text-lg font-semibold text-brand-navy">{subscription.serviceName}</h3>
             {isActive ? (
               <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
                 Active
@@ -92,7 +100,9 @@ const SubscriptionCard: React.FC<{ subscription: EnvioSubscription; isActive: bo
             {isActive && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Next Payment:</span>
-                {isOverdue ? (
+                {!hasValidNextPayment ? (
+                  <span className="text-sm text-gray-500 italic">Not scheduled</span>
+                ) : isOverdue ? (
                   <span className="text-sm font-medium text-red-600">
                     Overdue (was due {formatDate(subscription.nextPaymentDue)})
                   </span>
@@ -312,49 +322,6 @@ const ReceiveOnlyWalletCard: React.FC<{
       </div>
     </div>
   );
-};
-
-
-// Helper function to convert backend subscription to frontend format
-const convertSubscription = (sub: any): EnvioSubscription => {
-  // Debug logging to help identify the issue
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Converting subscription data:', {
-      id: sub.id,
-      amount: sub.amount,
-      amountType: typeof sub.amount,
-      serviceName: sub.serviceName,
-      allFields: Object.keys(sub)
-    });
-  }
-  
-  return {
-    id: sub.id,
-    subscriber: sub.senderWalletAddress || '',
-    serviceProviderId: sub.serviceName,
-    amount: sub.amount || '0', // Ensure amount is never null/undefined
-    interval: sub.interval.toString(),
-    nextPaymentDue: typeof sub.nextPaymentDue === 'string' 
-      ? sub.nextPaymentDue 
-      : Math.floor(new Date(sub.nextPaymentDue).getTime() / 1000).toString(),
-    endDate: sub.endDate 
-      ? (typeof sub.endDate === 'string' 
-          ? sub.endDate 
-          : Math.floor(new Date(sub.endDate).getTime() / 1000).toString())
-      : undefined,
-    maxPayments: sub.maxPayments?.toString(),
-    paymentCount: sub.paymentCount.toString(),
-    failedPaymentCount: sub.failedPaymentCount.toString(),
-    isActive: sub.isActive,
-    processorFee: sub.processorFee || '0',
-    processorFeeAddress: sub.processorFeeAddress || '',
-    processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
-    processorFeeID: sub.processorFeeID || '',
-    serviceName: sub.serviceName,
-    createdAt: typeof sub.createdAt === 'string' 
-      ? sub.createdAt 
-      : Math.floor(new Date(sub.createdAt).getTime() / 1000).toString(),
-  };
 };
 
 export const Settings: React.FC = () => {
@@ -1246,7 +1213,7 @@ export const Settings: React.FC = () => {
             <div className="space-y-8">
               {/* Active Subscriptions */}
               {(() => {
-                const allSubs = [...subscriptions.sent, ...subscriptions.received].map(convertSubscription);
+                const allSubs = [...subscriptions.sent, ...subscriptions.received];
                 const activeSubs = allSubs.filter(s => s.isActive);
                 return activeSubs.length > 0 && (
                   <div>
@@ -1255,7 +1222,7 @@ export const Settings: React.FC = () => {
                     </h3>
                     <div className="space-y-4">
                       {activeSubs.map((subscription) => (
-                        <SubscriptionCard key={subscription.id} subscription={subscription} isActive={true} />
+                        <BackendSubscriptionCard key={subscription.id} subscription={subscription} isActive={true} />
                       ))}
                     </div>
                   </div>
@@ -1264,7 +1231,7 @@ export const Settings: React.FC = () => {
 
               {/* Past Subscriptions */}
               {(() => {
-                const allSubs = [...subscriptions.sent, ...subscriptions.received].map(convertSubscription);
+                const allSubs = [...subscriptions.sent, ...subscriptions.received];
                 const pastSubs = allSubs.filter(s => !s.isActive);
                 return pastSubs.length > 0 && (
                   <div>
@@ -1273,7 +1240,7 @@ export const Settings: React.FC = () => {
                     </h3>
                     <div className="space-y-4 opacity-60">
                       {pastSubs.map((subscription) => (
-                        <SubscriptionCard key={subscription.id} subscription={subscription} isActive={false} />
+                        <BackendSubscriptionCard key={subscription.id} subscription={subscription} isActive={false} />
                       ))}
                     </div>
                   </div>
@@ -1290,19 +1257,21 @@ export const Settings: React.FC = () => {
           {allPaymentsLoading ? (
             <SkeletonList count={5} />
           ) : allPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+            <>
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-brand-navy mb-2">
+                  No Payment History
+                </h2>
+                <p className="text-gray-600">
+                  Your payment history will appear here once you have active rent payments
+                </p>
               </div>
-              <h2 className="text-2xl font-bold text-brand-navy mb-2">
-                No Payment History
-              </h2>
-              <p className="text-gray-600">
-                Your payment history will appear here once you have active rent payments
-              </p>
-            </div>
+            </>
           ) : (
             <>
               {/* Summary Cards */}
@@ -1396,23 +1365,6 @@ export const Settings: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              {/* Admin Link */}
-              <div className="mt-8 text-center">
-                <a
-                  href="/envio-admin"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-teal"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Envio Admin
-                </a>
-                <p className="text-xs text-gray-500 mt-2">
-                  View all events and debug information
-                </p>
               </div>
             </>
           )}

@@ -1,13 +1,88 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { useEnvioAllSubscriptions } from '../hooks/useEnvio';
 import { SkeletonList } from '../components/Skeleton';
 import { formatPYUSD, formatDateTime } from '../lib/utils';
+import { apolloClient } from '../lib/apollo';
+import { gql } from '@apollo/client/index.js';
 
 export const EnvioAdmin: React.FC = () => {
   const { isConnected } = useAccount();
-  const { subscriptions, loading: subscriptionsLoading } = useEnvioAllSubscriptions();
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'payments' | 'events'>('subscriptions');
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  // Query to get all events from the contract
+  const ALL_EVENTS_QUERY = gql`
+    query GetAllEvents {
+      stableRentSubscription_SubscriptionCreateds(orderBy: timestamp, orderDirection: desc, first: 100) {
+        id
+        subscriptionId
+        senderAddress
+        recipientId
+        amount
+        serviceName
+        timestamp
+      }
+      stableRentSubscription_PaymentProcesseds(orderBy: timestamp, orderDirection: desc, first: 100) {
+        id
+        subscriptionId
+        senderAddress
+        amount
+        processorFee
+        paymentCount
+        timestamp
+      }
+      stableRentSubscription_SubscriptionCancelleds(orderBy: timestamp, orderDirection: desc, first: 100) {
+        id
+        subscriptionId
+        senderAddress
+        timestamp
+        reason
+      }
+      stableRentSubscription_PaymentFaileds(orderBy: timestamp, orderDirection: desc, first: 100) {
+        id
+        subscriptionId
+        senderAddress
+        amount
+        timestamp
+        reason
+        failedCount
+      }
+    }
+  `;
+
+  useEffect(() => {
+    const fetchAllEvents = async () => {
+      setEventsLoading(true);
+      try {
+        const result = await apolloClient.query({
+          query: ALL_EVENTS_QUERY,
+        });
+
+        const data = result.data as any;
+        
+        // Combine all events and add event type
+        const events = [
+          ...(data.stableRentSubscription_SubscriptionCreateds || []).map((e: any) => ({ ...e, eventType: 'SubscriptionCreated' })),
+          ...(data.stableRentSubscription_PaymentProcesseds || []).map((e: any) => ({ ...e, eventType: 'PaymentProcessed' })),
+          ...(data.stableRentSubscription_SubscriptionCancelleds || []).map((e: any) => ({ ...e, eventType: 'SubscriptionCancelled' })),
+          ...(data.stableRentSubscription_PaymentFaileds || []).map((e: any) => ({ ...e, eventType: 'PaymentFailed' })),
+        ];
+
+        // Sort all events by timestamp
+        events.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+        
+        setAllEvents(events);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
+    if (isConnected) {
+      fetchAllEvents();
+    }
+  }, [isConnected]);
 
   if (!isConnected) {
     return (
@@ -30,171 +105,44 @@ export const EnvioAdmin: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-navy mb-2">Envio Admin</h1>
+        <h1 className="text-3xl font-bold text-brand-navy mb-2">Envio Admin - All Contract Events</h1>
         <p className="text-gray-600">
-          Debug panel showing all subscription events from the Envio indexer
+          Debug panel showing all events from the StableRentSubscription contract indexed by Envio
         </p>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="mb-8">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('subscriptions')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'subscriptions'
-                ? 'border-brand-teal text-brand-teal'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            All Subscriptions ({subscriptions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('payments')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'payments'
-                ? 'border-brand-teal text-brand-teal'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            All Payments
-          </button>
-          <button
-            onClick={() => setActiveTab('events')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'events'
-                ? 'border-brand-teal text-brand-teal'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            All Events
-          </button>
-        </nav>
-      </div>
-
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <div>
-          {subscriptionsLoading ? (
-            <SkeletonList count={5} />
-          ) : subscriptions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-brand-navy mb-2">
-                No Subscriptions Found
-              </h2>
-              <p className="text-gray-600">
-                No subscriptions have been indexed by Envio yet
-              </p>
+      {/* Summary Card */}
+      {!eventsLoading && allEvents.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="card">
+            <div className="text-sm text-gray-600 mb-1">Total Events</div>
+            <div className="text-3xl font-bold text-brand-navy">{allEvents.length}</div>
+          </div>
+          <div className="card">
+            <div className="text-sm text-gray-600 mb-1">Subscriptions Created</div>
+            <div className="text-3xl font-bold text-green-600">
+              {allEvents.filter(e => e.eventType === 'SubscriptionCreated').length}
             </div>
-          ) : (
-            <>
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Total Subscriptions</div>
-                  <div className="text-3xl font-bold text-brand-navy">{subscriptions.length}</div>
-                </div>
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Active</div>
-                  <div className="text-3xl font-bold text-green-600">
-                    {subscriptions.filter((s: any) => s.isActive).length}
-                  </div>
-                </div>
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Cancelled</div>
-                  <div className="text-3xl font-bold text-red-600">
-                    {subscriptions.filter((s: any) => !s.isActive).length}
-                  </div>
-                </div>
-                <div className="card">
-                  <div className="text-sm text-gray-600 mb-1">Total Value</div>
-                  <div className="text-3xl font-bold text-brand-teal">
-                    {formatPYUSD(
-                      subscriptions.reduce((sum: bigint, s: any) => sum + BigInt(s.amount), BigInt(0))
-                    )} PYUSD
-                  </div>
-                </div>
-              </div>
-
-              {/* Subscriptions Table */}
-              <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Subscriber
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Service
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Amount
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Created
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Payments
-                        </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {subscriptions.map((subscription: any) => (
-                        <tr key={subscription.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                            {subscription.id}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="font-mono text-xs">
-                              {subscription.subscriber.slice(0, 6)}...{subscription.subscriber.slice(-4)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                            {subscription.serviceName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {formatPYUSD(BigInt(subscription.amount))} <span className="text-xs text-gray-500">PYUSD</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              subscription.isActive 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {subscription.isActive ? 'Active' : 'Cancelled'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDateTime(parseInt(subscription.createdAt))}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {subscription.paymentCount} / {subscription.maxPayments || '∞'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
+          </div>
+          <div className="card">
+            <div className="text-sm text-gray-600 mb-1">Payments Processed</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {allEvents.filter(e => e.eventType === 'PaymentProcessed').length}
+            </div>
+          </div>
+          <div className="card">
+            <div className="text-sm text-gray-600 mb-1">Cancellations</div>
+            <div className="text-3xl font-bold text-red-600">
+              {allEvents.filter(e => e.eventType === 'SubscriptionCancelled').length}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Payments Tab */}
-      {activeTab === 'payments' && (
+      {/* All Events */}
+      {eventsLoading ? (
+        <SkeletonList count={5} />
+      ) : allEvents.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,28 +150,90 @@ export const EnvioAdmin: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-brand-navy mb-2">
-            Payments Tab
+            No Events Found
           </h2>
           <p className="text-gray-600">
-            This will show all payments across all subscriptions. Implementation coming soon.
+            No events have been indexed by Envio yet for this contract
           </p>
         </div>
-      )}
-
-      {/* Events Tab */}
-      {activeTab === 'events' && (
-        <div className="text-center py-12">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+      ) : (
+        <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Event Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Subscription ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sender
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Timestamp
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {allEvents.map((event) => (
+                  <tr key={event.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        event.eventType === 'SubscriptionCreated' 
+                          ? 'bg-green-100 text-green-800'
+                          : event.eventType === 'PaymentProcessed'
+                          ? 'bg-blue-100 text-blue-800'
+                          : event.eventType === 'SubscriptionCancelled'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {event.eventType}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                      {event.subscriptionId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="font-mono text-xs">
+                        {event.senderAddress.slice(0, 6)}...{event.senderAddress.slice(-4)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {event.eventType === 'SubscriptionCreated' && (
+                        <div>
+                          <div className="font-medium">{event.serviceName}</div>
+                          <div className="text-xs text-gray-500">{formatPYUSD(BigInt(event.amount))} PYUSD</div>
+                        </div>
+                      )}
+                      {event.eventType === 'PaymentProcessed' && (
+                        <div>
+                          <div className="font-medium">Payment #{event.paymentCount}</div>
+                          <div className="text-xs text-gray-500">{formatPYUSD(BigInt(event.amount))} PYUSD</div>
+                        </div>
+                      )}
+                      {event.eventType === 'SubscriptionCancelled' && (
+                        <div className="text-xs text-gray-500">{event.reason || 'No reason provided'}</div>
+                      )}
+                      {event.eventType === 'PaymentFailed' && (
+                        <div>
+                          <div className="font-medium text-red-600">Failed (Attempt #{event.failedCount})</div>
+                          <div className="text-xs text-gray-500">{event.reason}</div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDateTime(parseInt(event.timestamp))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <h2 className="text-2xl font-bold text-brand-navy mb-2">
-            Events Tab
-          </h2>
-          <p className="text-gray-600">
-            This will show all blockchain events (SubscriptionCreated, PaymentProcessed, etc.). Implementation coming soon.
-          </p>
         </div>
       )}
     </div>
