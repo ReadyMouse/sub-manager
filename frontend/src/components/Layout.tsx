@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { WalletConnect } from './WalletConnect';
 import { useAuth } from '../contexts/AuthContext';
+import { useAccount, useDisconnect } from 'wagmi';
 import homesImage from '../assets/bw_banner.png';
 import paypalLogo from '../assets/paypal_logo.png';
 
@@ -12,9 +13,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const { isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -43,6 +47,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  const handleDisconnectWallet = () => {
+    disconnect();
   };
 
   return (
@@ -274,6 +287,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
           </div>
+          
+          {/* Account Actions - Only show if user is authenticated or wallet is connected */}
+          {(isAuthenticated || isConnected) && (
+            <div className="mt-8 pt-6 border-t border-white/20">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {isAuthenticated && (
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors font-medium text-sm"
+                  >
+                    Logout
+                  </button>
+                )}
+                {isConnected && (
+                  <button
+                    onClick={handleDisconnectWallet}
+                    className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors font-medium text-sm"
+                  >
+                    Disconnect Wallet
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div className="mt-8 pt-6 border-t border-white/20 text-center text-sm opacity-90">
             <p>© 2025 StableRent. Professional PYUSD rent payment platform.</p>
           </div>

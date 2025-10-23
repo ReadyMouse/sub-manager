@@ -172,8 +172,8 @@ export class SubscriptionService {
         lastSyncedAt: new Date(),
         createdAt: new Date(),
         // Optional fields
-        senderWalletAddress: senderWalletAddress?.toLowerCase(),
-        recipientWalletAddress: recipientWalletAddress?.toLowerCase(),
+        senderWalletAddress: senderWalletAddress?.toLowerCase() || undefined,
+        recipientWalletAddress: recipientWalletAddress?.toLowerCase() || undefined,
         senderCurrency,
         recipientCurrency,
         processorFee,

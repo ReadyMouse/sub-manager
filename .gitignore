@@ -40,3 +40,4 @@ yarn-debug.log*
 yarn-error.log*
 
 images/*
+users_private.md 

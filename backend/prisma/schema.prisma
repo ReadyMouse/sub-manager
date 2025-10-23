@@ -215,7 +215,7 @@ model Subscription {
   sender                User     @relation("SubscriptionSender", fields: [senderId], references: [id])
   senderConnectedWalletId String?
   senderConnectedWallet ConnectedWallet? @relation("SubscriptionConnectedWallet", fields: [senderConnectedWalletId], references: [id])
-  senderWalletAddress   String   // Denormalized from blockchain
+  senderWalletAddress   String?  // Denormalized from blockchain
   senderCurrency        String   @default("PYUSD")
   
   // Recipient (Service Provider / Landlord)
@@ -223,7 +223,7 @@ model Subscription {
   recipient             User     @relation("SubscriptionRecipient", fields: [recipientId], references: [id])
   recipientPaymentAddressId String?
   recipientPaymentAddress   PaymentAddress? @relation("SubscriptionPaymentAddress", fields: [recipientPaymentAddressId], references: [id])
-  recipientWalletAddress String  // Actual receive address (from PaymentAddress or wallet)
+  recipientWalletAddress String?  // Actual receive address (from PaymentAddress or wallet)
   recipientCurrency     String   @default("PYUSD")
   
   // Service Information

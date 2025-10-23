@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } from '../hooks/useContract';
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
@@ -7,18 +7,21 @@ import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { apiClient, subscriptionApi } from '../lib/api';
 import { parsePYUSD } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 import type { Address } from 'viem';
 
 export const CreateSubscription: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
-  const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess } = useStableRentContract();
+  const { signMessageAsync } = useSignMessage();
+  const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess, hash: transactionHash } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
   const { allowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
   );
   const { balance: pyusdBalance } = usePYUSDBalance(address);
+  const { isAuthenticated, loginWithWallet } = useAuth();
   const toast = useToast();
 
   const [isApproved, setIsApproved] = useState(false);
@@ -39,6 +42,7 @@ export const CreateSubscription: React.FC = () => {
     });
   }, [isApproving, isApproveSuccess, approveError, approveHash, isApproved]);
   const [hasShownCreateSuccess, setHasShownCreateSuccess] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: '',
     serviceDescription: '', // Off-chain: longer description
@@ -315,6 +319,48 @@ export const CreateSubscription: React.FC = () => {
     }
   }, [allowance, formData.amount, allowanceType, customAllowance, isApproved]);
 
+  // Handle wallet authentication
+  const authenticateWithWallet = async (): Promise<boolean> => {
+    if (isAuthenticated) {
+      return true;
+    }
+
+    if (!isConnected || !address) {
+      toast.error('Authentication Required', 'Please connect your wallet to save subscription metadata');
+      return false;
+    }
+
+    try {
+      setIsAuthenticating(true);
+      
+      // Generate message from backend
+      const messageResponse = await apiClient.post('/api/auth/wallet/generate-message', {
+        walletAddress: address,
+      });
+
+      if (!messageResponse.success) {
+        throw new Error('Failed to generate signature message');
+      }
+
+      const { message } = messageResponse.data;
+
+      // Sign the message
+      const signature = await signMessageAsync({ message });
+
+      // Login with wallet
+      await loginWithWallet(address, signature, message);
+      
+      toast.success('Authentication', 'Wallet authenticated successfully');
+      return true;
+    } catch (error) {
+      console.error('Wallet authentication failed:', error);
+      toast.error('Authentication Failed', 'Could not authenticate with wallet. Subscription will be created on-chain only.');
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   // Handle create success
   useEffect(() => {
     if (isCreateSuccess && !hasShownCreateSuccess) {
@@ -323,9 +369,20 @@ export const CreateSubscription: React.FC = () => {
       // Save subscription metadata to database
       const saveSubscriptionMetadata = async () => {
         try {
-          // For now, we'll use a placeholder subscription ID
-          // In a real implementation, you'd get this from the transaction receipt
-          const subscriptionId = Date.now().toString(); // Temporary placeholder
+          // First, ensure user is authenticated
+          const isAuth = await authenticateWithWallet();
+          
+          if (!isAuth) {
+            toast.warning('Partial Success', 'Subscription created on blockchain but metadata could not be saved to database');
+            setTimeout(() => {
+              navigate('/subscriptions');
+            }, 2000);
+            return;
+          }
+
+          // Use transaction hash as temporary subscription ID
+          // In a real implementation, you'd parse the transaction receipt to get the actual subscription ID
+          const subscriptionId = transactionHash || Date.now().toString();
           
           await subscriptionApi.create({
             chainId: 11155111, // Sepolia
@@ -369,7 +426,7 @@ export const CreateSubscription: React.FC = () => {
       
       saveSubscriptionMetadata();
     }
-  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess, formData, recipientInputType, recipientDetails, address]);
+  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess, formData, recipientInputType, recipientDetails, address, isAuthenticated, loginWithWallet, signMessageAsync, transactionHash]);
 
   // Calculate total allowance needed for bulk approval
   const calculateTotalAllowance = (): { total: string; paymentCount: number } => {
@@ -1366,13 +1423,14 @@ export const CreateSubscription: React.FC = () => {
             type="submit"
             disabled={
               isCreating || 
+              isAuthenticating ||
               !isApproved || 
               (recipientInputType === 'lookup' && !recipientDetails) ||
               (recipientInputType === 'wallet' && !formData.recipientWalletAddress) ||
               !selectedWalletId
             }
             className={`flex-1 ${
-              isCreating || !isApproved || 
+              isCreating || isAuthenticating || !isApproved || 
               (recipientInputType === 'lookup' && !recipientDetails) ||
               (recipientInputType === 'wallet' && !formData.recipientWalletAddress) ||
               !selectedWalletId
@@ -1380,7 +1438,9 @@ export const CreateSubscription: React.FC = () => {
                 : 'bg-blue-600 hover:bg-blue-700 text-white'
             } px-6 py-3 rounded-lg font-medium transition-colors duration-200`}
           >
-            {isCreating ? 'Setting Up Payment...' : 'Set Up Payment'}
+            {isCreating ? 'Setting Up Payment...' : 
+             isAuthenticating ? 'Authenticating...' : 
+             'Set Up Payment'}
           </button>
         </div>
 
@@ -1397,6 +1457,26 @@ export const CreateSubscription: React.FC = () => {
             </svg>
             <p className="text-sm font-medium text-green-900">
               Payment approved! You can now set up your subscription.
+            </p>
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-medium text-blue-900">
+              Wallet authenticated! Subscription metadata will be saved to your account.
+            </p>
+          </div>
+        )}
+        {!isAuthenticated && isConnected && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-sm font-medium text-yellow-900">
+              Wallet connected but not authenticated. You'll be prompted to sign a message to save subscription metadata.
             </p>
           </div>
         )}
