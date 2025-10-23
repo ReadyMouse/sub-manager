@@ -350,6 +350,7 @@ const convertSubscription = (sub: any): EnvioSubscription => {
     processorFeeAddress: sub.processorFeeAddress || '',
     processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
     processorFeeID: sub.processorFeeID || '',
+    serviceName: sub.serviceName,
     createdAt: typeof sub.createdAt === 'string' 
       ? sub.createdAt 
       : Math.floor(new Date(sub.createdAt).getTime() / 1000).toString(),

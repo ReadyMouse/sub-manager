@@ -16,6 +16,7 @@ import {
 
 /**
  * Hook for fetching user's subscriptions from Envio
+ * Aggregates SubscriptionCreated and SubscriptionCancelled events
  */
 export const useEnvioUserSubscriptions = (userAddress: Address | undefined) => {
   const [subscriptions, setSubscriptions] = useState<EnvioSubscription[]>([]);
@@ -37,7 +38,42 @@ export const useEnvioUserSubscriptions = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      setSubscriptions((result.data as any)?.subscriptions || []);
+      const data = result.data as any;
+      const created = data?.stableRentSubscription_SubscriptionCreateds || [];
+      const cancelled = data?.stableRentSubscription_SubscriptionCancelleds || [];
+
+      // Create a map of cancelled subscriptions
+      const cancelledMap = new Map(
+        cancelled.map((c: any) => [c.subscriptionId.toString(), c])
+      );
+
+      // Convert created events to subscription objects
+      const subs: EnvioSubscription[] = created.map((event: any) => {
+        const isCancelled = cancelledMap.has(event.subscriptionId.toString());
+        
+        return {
+          id: event.subscriptionId.toString(),
+          subscriber: event.senderAddress,
+          serviceProviderId: event.recipientId.toString(),
+          amount: event.amount.toString(),
+          interval: event.interval.toString(),
+          nextPaymentDue: event.nextPaymentDue.toString(),
+          isActive: !isCancelled,
+          failedPaymentCount: '0',
+          createdAt: event.timestamp.toString(),
+          endDate: event.endDate.toString(),
+          maxPayments: event.maxPayments.toString(),
+          paymentCount: '0',
+          processorFee: event.processorFee.toString(),
+          processorFeeAddress: event.processorFeeAddress,
+          processorFeeCurrency: event.processorFeeCurrency,
+          processorFeeID: event.processorFeeID.toString(),
+          recipientAddress: event.recipientAddress,
+          serviceName: event.serviceName,
+        };
+      });
+
+      setSubscriptions(subs);
     } catch (err: any) {
       console.error('Error fetching subscriptions:', err);
       const errorMessage = handleGraphQLError(err);
@@ -129,7 +165,42 @@ export const useEnvioAllSubscriptions = () => {
         query: GET_ALL_SUBSCRIPTIONS,
       });
 
-      setSubscriptions((result.data as any)?.subscriptions || []);
+      const data = result.data as any;
+      const created = data?.stableRentSubscription_SubscriptionCreateds || [];
+      const cancelled = data?.stableRentSubscription_SubscriptionCancelleds || [];
+
+      // Create a map of cancelled subscriptions
+      const cancelledMap = new Map(
+        cancelled.map((c: any) => [c.subscriptionId.toString(), c])
+      );
+
+      // Convert created events to subscription objects
+      const subs: EnvioSubscription[] = created.map((event: any) => {
+        const isCancelled = cancelledMap.has(event.subscriptionId.toString());
+        
+        return {
+          id: event.subscriptionId.toString(),
+          subscriber: event.senderAddress,
+          serviceProviderId: event.recipientId.toString(),
+          amount: event.amount.toString(),
+          interval: event.interval.toString(),
+          nextPaymentDue: event.nextPaymentDue.toString(),
+          isActive: !isCancelled,
+          failedPaymentCount: '0',
+          createdAt: event.timestamp.toString(),
+          endDate: event.endDate.toString(),
+          maxPayments: event.maxPayments.toString(),
+          paymentCount: '0',
+          processorFee: event.processorFee.toString(),
+          processorFeeAddress: event.processorFeeAddress,
+          processorFeeCurrency: event.processorFeeCurrency,
+          processorFeeID: event.processorFeeID.toString(),
+          recipientAddress: event.recipientAddress,
+          serviceName: event.serviceName,
+        };
+      });
+
+      setSubscriptions(subs);
     } catch (err: any) {
       console.error('Error fetching all subscriptions:', err);
       const errorMessage = handleGraphQLError(err);
@@ -229,7 +300,21 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      const sentPayments: EnvioPayment[] = (sentPaymentsResult.data as any)?.payments || [];
+      const sentPaymentEvents = (sentPaymentsResult.data as any)?.stableRentSubscription_PaymentProcesseds || [];
+      
+      // Convert payment events to EnvioPayment format
+      const sentPayments: EnvioPayment[] = sentPaymentEvents.map((event: any) => ({
+        id: event.id,
+        subscriptionId: event.subscriptionId.toString(),
+        subscriber: event.senderAddress,
+        serviceName: 'Payment', // We don't have service name in payment event
+        amount: event.amount.toString(),
+        processorFee: event.processorFee.toString(),
+        processorFeeAddress: event.processorFeeAddress,
+        timestamp: event.timestamp.toString(),
+        paymentNumber: event.paymentCount.toString(),
+        status: 'success',
+      }));
 
       // 2. Fetch subscriptions where user is the service provider (to find received payments)
       const receivingSubscriptionsResult = await apolloClient.query({
@@ -237,8 +322,15 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      const receivingSubscriptions: EnvioSubscription[] = (receivingSubscriptionsResult.data as any)?.subscriptions || [];
-      const subscriptionIds = receivingSubscriptions.map(sub => sub.id);
+      const data2 = receivingSubscriptionsResult.data as any;
+      const createdEvents = data2?.stableRentSubscription_SubscriptionCreateds || [];
+
+      const receivingSubscriptions = createdEvents.map((event: any) => ({
+        id: event.subscriptionId.toString(),
+        serviceName: event.serviceName,
+      }));
+      
+      const subscriptionIds = receivingSubscriptions.map((sub: any) => sub.id);
 
       // 3. Fetch payments for those subscriptions (received payments)
       let receivedPayments: EnvioPayment[] = [];
@@ -247,7 +339,23 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
           query: GET_PAYMENTS_BY_SUBSCRIPTION_IDS,
           variables: { subscriptionIds },
         });
-        receivedPayments = (receivedPaymentsResult.data as any)?.payments || [];
+        const receivedPaymentEvents = (receivedPaymentsResult.data as any)?.stableRentSubscription_PaymentProcesseds || [];
+        
+        // Create a map of subscription IDs to service names
+        const serviceNameMap = new Map(receivingSubscriptions.map((s: any) => [s.id, s.serviceName]));
+        
+        receivedPayments = receivedPaymentEvents.map((event: any) => ({
+          id: event.id,
+          subscriptionId: event.subscriptionId.toString(),
+          subscriber: event.senderAddress,
+          serviceName: serviceNameMap.get(event.subscriptionId.toString()) || 'Payment',
+          amount: event.amount.toString(),
+          processorFee: event.processorFee.toString(),
+          processorFeeAddress: event.processorFeeAddress,
+          timestamp: event.timestamp.toString(),
+          paymentNumber: event.paymentCount.toString(),
+          status: 'success',
+        }));
       }
 
       // 4. Combine both arrays, add direction field, and sort by timestamp
