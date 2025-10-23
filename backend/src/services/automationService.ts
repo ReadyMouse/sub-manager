@@ -316,27 +316,31 @@ export class AutomationService {
       });
 
       if (subscription) {
-        // Notify sender
-        await prisma.notification.create({
-          data: {
-            userId: subscription.senderId,
-            type: 'SUBSCRIPTION_CANCELLED',
-            title: 'Subscription Cancelled',
-            message: `Your subscription for ${subscription.serviceName} has been cancelled: ${reason}`,
-            subscriptionId: subscription.id,
-          },
-        });
+        // Notify sender (only if registered user)
+        if (subscription.senderId) {
+          await prisma.notification.create({
+            data: {
+              userId: subscription.senderId,
+              type: 'SUBSCRIPTION_CANCELLED',
+              title: 'Subscription Cancelled',
+              message: `Your subscription for ${subscription.serviceName} has been cancelled: ${reason}`,
+              subscriptionId: subscription.id,
+            },
+          });
+        }
 
-        // Notify recipient
-        await prisma.notification.create({
-          data: {
-            userId: subscription.recipientId,
-            type: 'SUBSCRIPTION_CANCELLED',
-            title: 'Subscription Cancelled',
-            message: `A subscription for ${subscription.serviceName} has been cancelled: ${reason}`,
-            subscriptionId: subscription.id,
-          },
-        });
+        // Notify recipient (only if registered user)
+        if (subscription.recipientId) {
+          await prisma.notification.create({
+            data: {
+              userId: subscription.recipientId,
+              type: 'SUBSCRIPTION_CANCELLED',
+              title: 'Subscription Cancelled',
+              message: `A subscription for ${subscription.serviceName} has been cancelled: ${reason}`,
+              subscriptionId: subscription.id,
+            },
+          });
+        }
       }
 
       logger.info(`Subscription ${subscriptionId} cancelled: ${reason}`);

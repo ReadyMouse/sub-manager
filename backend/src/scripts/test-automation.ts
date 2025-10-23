@@ -26,8 +26,8 @@ async function testAutomation() {
         console.log(`      Service: ${sub.serviceName}`);
         console.log(`      Amount: ${sub.amount} PYUSD`);
         console.log(`      Next Payment Due: ${sub.nextPaymentDue}`);
-        console.log(`      Sender: ${sub.sender.displayName} (${sub.senderWalletAddress})`);
-        console.log(`      Recipient: ${sub.recipient.displayName} (${sub.recipientWalletAddress})`);
+        console.log(`      Sender: ${sub.sender?.displayName || 'Wallet-only'} (${sub.senderWalletAddress})`);
+        console.log(`      Recipient: ${sub.recipient?.displayName || 'Wallet-only'} (${sub.recipientWalletAddress})`);
         console.log('');
       });
     }

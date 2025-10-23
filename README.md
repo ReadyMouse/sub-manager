@@ -214,3 +214,14 @@ This is a proof-of-concept for educational purposes only.
 Not operational. No real financial services provided.
 Production launch subject to regulatory approval.
 
+# Like What you See? 
+Donate to the builder. 
+
+* PYUSD on ETH: 0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8
+
+* ZEC: u1s9730x48hwm78q6v6fc9qgwdd46qdkw3lzsvw6ql34sskxhgp82t8xtd7q8j4hsjrhuxglgzj8xdw9llh2qa68alhn59tw72hcjfzu27khep5pktjt077t97t4e529nu8qd88newzvyfhuq37mtjw7jeqqd6y9n8684vmy2me5k30zf5
+
+* BTC: bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
+
+
+
