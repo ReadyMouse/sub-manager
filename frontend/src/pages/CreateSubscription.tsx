@@ -438,12 +438,8 @@ export const CreateSubscription: React.FC = () => {
       
       console.log('Subscription creation result:', result);
       
-      // TODO: Check if subscription was created on blockchain
-      // You can use the transaction hash to verify on Etherscan
-      if (result && typeof result === 'string') {
-        console.log('Transaction hash:', result);
-        console.log('Check transaction on Etherscan:', `https://sepolia.etherscan.io/tx/${result}`);
-      }
+      // The transaction hash will be available in the hook's hash state
+      // You can check it after the transaction is confirmed
 
       // TODO: After successful on-chain transaction, save off-chain metadata to backend:
       // - senderConnectedWalletId: selectedWalletId
