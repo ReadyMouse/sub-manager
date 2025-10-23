@@ -1,104 +1,19 @@
-version: 2.31.0
+# yaml-language: $schema=./node_modules/envio/evm.schema.json
+name: stablerent-subscription-indexer
+description: StableRent - Crypto Subscription Manager with Envio Integration
 
-indexer:
-  name: stablerent-subscription-indexer
-  description: "StableRent - Crypto Subscription Manager with Envio Integration"
-  
-  networks:
-    - name: ethereum-sepolia
-      rpc_url: ${SEPOLIA_RPC_URL}
-      start_block: ${SEPOLIA_START_BLOCK}
-      
-  contracts:
-    - name: StableRentSubscription
-      address: ${CONTRACT_ADDRESS}
-      abi: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
-      network: ethereum-sepolia
-      events:
-        - name: SubscriptionCreated
-          handler: |
-            subscription.id = event.params.subscriptionId
-            subscription.subscriber = event.params.subscriber
-            subscription.amount = event.params.amount
-            subscription.serviceName = event.params.serviceName
-            subscription.createdAt = event.params.timestamp
-            subscription.isActive = true
-            
-        - name: PaymentProcessed
-          handler: |
-            payment.id = event.transactionHash + "-" + event.logIndex
-            payment.subscriptionId = event.params.subscriptionId
-            payment.subscriber = event.params.subscriber
-            payment.amount = event.params.amount
-            payment.timestamp = event.params.timestamp
-            payment.status = "success"
-            payment.transactionHash = event.transactionHash
-            
-        - name: PaymentFailed
-          handler: |
-            failedPayment.id = event.transactionHash + "-" + event.logIndex
-            failedPayment.subscriptionId = event.params.subscriptionId
-            failedPayment.subscriber = event.params.subscriber
-            failedPayment.amount = event.params.amount
-            failedPayment.timestamp = event.params.timestamp
-            failedPayment.reason = event.params.reason
-            
-        - name: SubscriptionCancelled
-          handler: |
-            subscription.isActive = false
-            subscription.cancelledAt = event.params.timestamp
+contracts:
+  - name: StableRentSubscription
+    abi: ./artifacts/contracts/StableRentSubscription.sol/StableRentSubscription.json
+    events:
+      - event: "SubscriptionCreated(uint256 subscriptionId, address subscriber, uint256 serviceProviderId, uint256 amount, uint256 interval, uint256 nextPaymentDue, uint256 endDate, uint256 maxPayments, string serviceName, uint8 paymentType, uint8 providerType, address recipientAddress, string recipientCurrency, uint256 processorFee, address processorFeeAddress, string processorFeeCurrency, uint256 processorFeeID, uint256 timestamp)"
+      - event: "PaymentProcessed(uint256 subscriptionId, address subscriber, uint256 amount, uint256 processorFee, address processorFeeAddress, uint256 paymentCount, uint256 timestamp, uint256 nextPaymentDue)"
+      - event: "PaymentFailed(uint256 subscriptionId, address subscriber, uint256 amount, uint256 timestamp, string reason, uint256 failedCount)"
+      - event: "SubscriptionCancelled(uint256 subscriptionId, address subscriber, uint256 timestamp, string reason)"
 
-  schema:
-    entities:
-      Subscription:
-        fields:
-          id: ID!
-          subscriber: Address!
-          amount: BigInt!
-          serviceName: String!
-          createdAt: BigInt!
-          isActive: Boolean!
-          
-      Payment:
-        fields:
-          id: ID!
-          subscriptionId: BigInt!
-          subscriber: Address!
-          amount: BigInt!
-          timestamp: BigInt!
-          status: String!
-          transactionHash: String!
-          
-      FailedPayment:
-        fields:
-          id: ID!
-          subscriptionId: BigInt!
-          subscriber: Address!
-          amount: BigInt!
-          timestamp: BigInt!
-          reason: String!
-
-  webhooks:
-    - name: payment-processor
-      url: ${WEBHOOK_URL}/api/webhooks/payment-processed
-      events:
-        - PaymentProcessed
-      secret: ${ENVIO_WEBHOOK_SECRET}
-      
-    - name: payment-failed-notifier
-      url: ${WEBHOOK_URL}/api/webhooks/payment-failed
-      events:
-        - PaymentFailed
-      secret: ${ENVIO_WEBHOOK_SECRET}
-      
-    - name: subscription-lifecycle
-      url: ${WEBHOOK_URL}/api/webhooks/subscription-cancelled
-      events:
-        - SubscriptionCancelled
-      secret: ${ENVIO_WEBHOOK_SECRET}
-      
-    - name: subscription-created-notifier
-      url: ${WEBHOOK_URL}/api/webhooks/subscription-created
-      events:
-        - SubscriptionCreated
-      secret: ${ENVIO_WEBHOOK_SECRET}
+networks:
+  - id: 11155111 # ethereum-sepolia
+    start_block: 9470537
+    contracts:
+      - name: StableRentSubscription
+        address: 0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339
