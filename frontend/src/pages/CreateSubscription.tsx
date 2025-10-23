@@ -45,7 +45,7 @@ export const CreateSubscription: React.FC = () => {
     senderCurrency: 'PYUSD',
     amount: '',
     interval: PAYMENT_INTERVALS.MONTHLY as number,
-    startDate: '', // When the first payment should be due
+    startDate: new Date().toISOString().split('T')[0], // Default to today
     endDate: '',
     maxPayments: '',
     recipientIdentifier: '', // Email or username to look up recipient
@@ -522,6 +522,21 @@ export const CreateSubscription: React.FC = () => {
       const startDate = Math.floor(new Date(formData.startDate).getTime() / 1000);
       const endDate = formData.endDate ? Math.floor(new Date(formData.endDate).getTime() / 1000) : 0;
       const maxPayments = formData.maxPayments ? parseInt(formData.maxPayments) : 0;
+      
+      // Debug date values
+      console.log('Date debugging:', {
+        formDataStartDate: formData.startDate,
+        startDateTimestamp: startDate,
+        currentTimestamp: Math.floor(Date.now() / 1000),
+        startDateIsInFuture: startDate > Math.floor(Date.now() / 1000),
+        startDateAsDate: new Date(startDate * 1000)
+      });
+      
+      // Validate start date is in the future
+      if (startDate <= Math.floor(Date.now() / 1000)) {
+        toast.error('Invalid Date', 'Start date must be in the future');
+        return;
+      }
 
       // Determine recipient details based on input type
       const finalRecipientId = recipientInputType === 'lookup' 
@@ -549,7 +564,7 @@ export const CreateSubscription: React.FC = () => {
         recipientCurrency: finalRecipientCurrency
       });
       
-      await createSubscription(
+      const result = await createSubscription(
         '0', // senderId - TODO: get from backend/user profile
         finalRecipientId,
         formData.amount,
@@ -562,6 +577,8 @@ export const CreateSubscription: React.FC = () => {
         formData.senderCurrency,
         finalRecipientCurrency
       );
+      
+      console.log('Subscription creation initiated:', result);
       
       // The transaction will be handled by the success effect
       // which will save metadata and redirect to subscriptions page

@@ -13,6 +13,15 @@ export const useStableRentContract = () => {
     hash,
   });
 
+  // Debug contract interaction state
+  console.log('StableRent Contract Hook Debug:', {
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error: error ? error.message : null
+  });
+
   const createSubscription = async (
     senderId: string,
     recipientId: string,
@@ -55,29 +64,47 @@ export const useStableRentContract = () => {
       processorFeeID
     });
     
-    return writeContract({
-      address: CONTRACTS.StableRentSubscription as Address,
-      abi: StableRentSubscriptionABI,
-      functionName: 'createSubscription',
-      args: [
-        BigInt(senderId || 0),
-        BigInt(recipientId || 0),
-        amountWei,
-        BigInt(interval),
-        serviceName,
-        BigInt(startDate),
-        BigInt(endDate || 0),
-        BigInt(maxPayments || 0),
-        recipientAddress || ('0x0000000000000000000000000000000000000000' as Address),
-        senderCurrency || 'PYUSD',
-        recipientCurrency || 'PYUSD',
-        feeWei,
-        processorFeeAddress || (CONTRACTS.StableRentSubscription as Address), // Default to contract address
-        processorFeeCurrency || 'PYUSD',
-        BigInt(processorFeeID || 0),
-      ],
-      gas: 500000n, // Set explicit gas limit to avoid estimation issues
-    });
+    try {
+      console.log('About to call writeContract with:', {
+        address: CONTRACTS.StableRentSubscription,
+        functionName: 'createSubscription'
+      });
+      
+      const result = await writeContract({
+        address: CONTRACTS.StableRentSubscription as Address,
+        abi: StableRentSubscriptionABI,
+        functionName: 'createSubscription',
+        args: [
+          BigInt(senderId || 0),
+          BigInt(recipientId || 0),
+          amountWei,
+          BigInt(interval),
+          serviceName,
+          BigInt(startDate),
+          BigInt(endDate || 0),
+          BigInt(maxPayments || 0),
+          recipientAddress || ('0x0000000000000000000000000000000000000000' as Address),
+          senderCurrency || 'PYUSD',
+          recipientCurrency || 'PYUSD',
+          feeWei,
+          processorFeeAddress || (CONTRACTS.StableRentSubscription as Address), // Default to contract address
+          processorFeeCurrency || 'PYUSD',
+          BigInt(processorFeeID || 0),
+        ],
+        // Remove gas limit to let wagmi estimate it properly
+      });
+      
+      console.log('Write contract result:', result);
+      return result;
+    } catch (error) {
+      console.error('Write contract error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error
+      });
+      throw error;
+    }
   };
 
   const processPayment = async (subscriptionId: bigint) => {

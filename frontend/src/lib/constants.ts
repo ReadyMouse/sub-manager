@@ -5,7 +5,7 @@ export const CONTRACTS = {
   // Updated by deployment script when using local Hardhat
   StableRentSubscription: getAddress(import.meta.env.VITE_CONTRACT_ADDRESS || '0x121403be24b17d1B7055f17ae91C824193F3D26F'),
   // PYUSD token address (Ethereum Mainnet & Hardhat Fork) - properly checksummed
-  PYUSD: getAddress(import.meta.env.VITE_PYUSD_ADDRESS || '0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9'),
+  PYUSD: getAddress(import.meta.env.VITE_PYUSD_ADDRESS || '0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53'),
 } as const;
 
 // Network configuration
