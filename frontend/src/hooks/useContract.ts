@@ -145,11 +145,22 @@ export const usePYUSD = () => {
 
   const approve = async (spender: Address, amount: string) => {
     const amountWei = parsePYUSD(amount);
+    
+    // Log the exact parameters being sent
+    console.log('PYUSD Approve call:', {
+      tokenAddress: CONTRACTS.PYUSD,
+      spender,
+      amount: amount,
+      amountWei: amountWei.toString(),
+      gas: 100000n
+    });
+    
     return writeContract({
       address: CONTRACTS.PYUSD as Address,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [spender, amountWei],
+      gas: 100000n, // Set explicit gas limit to avoid estimation issues
     });
   };
 
@@ -208,5 +219,29 @@ export const usePYUSDAllowance = (
     isLoading,
     error,
     refetch,
+  };
+};
+
+/**
+ * Hook for testing PYUSD token contract connectivity
+ */
+export const usePYUSDTest = () => {
+  const { data: name, isLoading: nameLoading, error: nameError } = useReadContract({
+    address: CONTRACTS.PYUSD as Address,
+    abi: ERC20_ABI,
+    functionName: 'name',
+  });
+
+  const { data: symbol, isLoading: symbolLoading, error: symbolError } = useReadContract({
+    address: CONTRACTS.PYUSD as Address,
+    abi: ERC20_ABI,
+    functionName: 'symbol',
+  });
+
+  return {
+    name,
+    symbol,
+    isLoading: nameLoading || symbolLoading,
+    error: nameError || symbolError,
   };
 };

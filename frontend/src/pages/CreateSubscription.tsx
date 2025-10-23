@@ -6,6 +6,7 @@ import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { apiClient } from '../lib/api';
+import { parsePYUSD } from '../lib/utils';
 import type { Address } from 'viem';
 
 export const CreateSubscription: React.FC = () => {
@@ -332,6 +333,15 @@ export const CreateSubscription: React.FC = () => {
 
       // Note: No PYUSD balance check needed for approval - this only sets allowance permission
       // User only needs ETH for gas, not PYUSD tokens
+
+      // Debug logging
+      console.log('Approval details:', {
+        spender: CONTRACTS.StableRentSubscription,
+        amount: approvalAmount,
+        amountWei: parsePYUSD(approvalAmount).toString(),
+        pyusdAddress: CONTRACTS.PYUSD,
+        userAddress: address,
+      });
 
       toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
       await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
