@@ -99,8 +99,8 @@ export const useStableRentContract = () => {
     } catch (error) {
       console.error('Write contract error:', error);
       console.error('Error details:', {
-        message: error.message,
-        code: error.code,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: (error as any)?.code || 'Unknown code',
         details: error
       });
       throw error;
