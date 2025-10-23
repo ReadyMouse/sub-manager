@@ -27,7 +27,6 @@ export const CreateSubscription: React.FC = () => {
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
   const [hasShownApproveSuccess, setHasShownApproveSuccess] = useState(false);
-  const [isWaitingForConfirmation, setIsWaitingForConfirmation] = useState(false);
   
   // Debug approval state
   useEffect(() => {
@@ -218,7 +217,7 @@ export const CreateSubscription: React.FC = () => {
     }
   };
 
-  // Handle approve success - Primary method
+  // Handle approve success - Simple approach
   useEffect(() => {
     console.log('Approval success check:', { 
       isApproveSuccess, 
@@ -228,86 +227,15 @@ export const CreateSubscription: React.FC = () => {
     });
     
     // Show success message when transaction is confirmed
-    if (isApproveSuccess && !hasShownApproveSuccess && !isApproving) {
+    if (isApproveSuccess && !hasShownApproveSuccess) {
       console.log('Approval successful! Transaction hash:', approveHash);
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       
-      // Refetch allowance and balance
-      refetchAllowance();
-      refetchBalance();
-      
-      // Set approved state immediately
+      // Set approved state
       setIsApproved(true);
       setHasShownApproveSuccess(true);
-      setIsWaitingForConfirmation(false);
     }
-  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, isApproving]);
-
-  // Fallback: Handle approval success based on transaction hash (when isApproveSuccess fails)
-  useEffect(() => {
-    if (approveHash && !hasShownApproveSuccess && !isApproving && !isApproveSuccess) {
-      console.log('Fallback approval success detection based on hash:', approveHash);
-      
-      // Show pending message to user
-      setIsWaitingForConfirmation(true);
-      toast.info('Transaction Pending', 'Your approval transaction is being confirmed. Please wait...');
-    }
-  }, [approveHash, hasShownApproveSuccess, isApproving, isApproveSuccess, toast]);
-
-  // Monitor transaction confirmation status
-  useEffect(() => {
-    if (approveHash && isWaitingForConfirmation && !isApproveSuccess) {
-      console.log('Monitoring transaction confirmation for hash:', approveHash);
-      
-      // Check transaction status periodically
-      const checkInterval = setInterval(async () => {
-        try {
-          // Refetch allowance to see if it was updated
-          const updatedAllowance = await refetchAllowance();
-          console.log('Periodic allowance check result:', updatedAllowance);
-          
-          if (updatedAllowance.data) {
-            const allowanceInUSD = Number(updatedAllowance.data) / 1_000_000;
-            const requiredAllowance = allowanceType === 'calculated' 
-              ? calculateTotalAllowance().total 
-              : customAllowance;
-            const requiredInUSD = parseFloat(requiredAllowance);
-            
-            console.log('Periodic transaction check:', {
-              allowanceInUSD,
-              requiredInUSD,
-              isSufficient: allowanceInUSD >= requiredInUSD,
-              currentIsApproved: isApproved
-            });
-            
-            if (allowanceInUSD >= requiredInUSD) {
-              console.log('Transaction confirmed via allowance check!');
-              clearInterval(checkInterval);
-              if (!hasShownApproveSuccess) {
-                toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
-                setHasShownApproveSuccess(true);
-              }
-              setIsApproved(true);
-              setIsWaitingForConfirmation(false);
-            }
-          }
-        } catch (error) {
-          console.log('Allowance check failed, but transaction exists - assuming success:', error);
-          // If we have a transaction hash but can't check allowance, assume it was successful
-          clearInterval(checkInterval);
-          if (!hasShownApproveSuccess) {
-            toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
-            setHasShownApproveSuccess(true);
-          }
-          setIsApproved(true);
-          setIsWaitingForConfirmation(false);
-        }
-      }, 2000); // Check every 2 seconds
-      
-      // Cleanup interval on unmount or when conditions change
-      return () => clearInterval(checkInterval);
-    }
-  }, [approveHash, isWaitingForConfirmation, isApproveSuccess, refetchAllowance, allowanceType, customAllowance, isApproved, toast, hasShownApproveSuccess]);
+  }, [isApproveSuccess, toast, hasShownApproveSuccess]);
 
   // Handle approve error
   useEffect(() => {
@@ -1194,7 +1122,7 @@ export const CreateSubscription: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleApprove}
-                  disabled={isApproving || isWaitingForConfirmation || !formData.amount || (allowanceType === 'custom' && !customAllowance)}
+                  disabled={isApproving || !formData.amount || (allowanceType === 'custom' && !customAllowance)}
                   className="btn-primary w-full relative"
                 >
                   {isApproving ? (
@@ -1204,14 +1132,6 @@ export const CreateSubscription: React.FC = () => {
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       <span>Waiting for signature...</span>
-                    </span>
-                  ) : isWaitingForConfirmation ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Confirming transaction...</span>
                     </span>
                   ) : (
                     `Approve ${allowanceType === 'calculated' ? '$' + calculateTotalAllowance().total : customAllowance ? '$' + customAllowance : 'Allowance'}`
@@ -1233,20 +1153,6 @@ export const CreateSubscription: React.FC = () => {
                   </div>
                 )}
 
-                {/* Transaction confirmation pending */}
-                {isWaitingForConfirmation && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                    <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-yellow-900">Transaction Pending</p>
-                      <p className="text-xs text-yellow-700 mt-1">
-                        Your approval transaction is being confirmed on the blockchain. This may take a few moments...
-                      </p>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
