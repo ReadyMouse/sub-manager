@@ -217,7 +217,7 @@ export const CreateSubscription: React.FC = () => {
     }
   };
 
-  // Handle approve success
+  // Handle approve success - Primary method
   useEffect(() => {
     console.log('Approval success check:', { 
       isApproveSuccess, 
@@ -226,8 +226,8 @@ export const CreateSubscription: React.FC = () => {
       isApproving 
     });
     
-    // Only show success message once and only when transaction is confirmed
-    if (isApproveSuccess && !hasShownApproveSuccess && !isApproving && approveHash) {
+    // Show success message when transaction is confirmed
+    if (isApproveSuccess && !hasShownApproveSuccess && !isApproving) {
       console.log('Approval successful! Transaction hash:', approveHash);
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       
@@ -238,12 +238,21 @@ export const CreateSubscription: React.FC = () => {
       // Set approved state immediately
       setIsApproved(true);
       setHasShownApproveSuccess(true);
+    }
+  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, isApproving]);
+
+  // Fallback: Handle approval success based on transaction hash (when isApproveSuccess fails)
+  useEffect(() => {
+    if (approveHash && !hasShownApproveSuccess && !isApproving) {
+      console.log('Fallback approval success detection based on hash:', approveHash);
       
-      // Add a fallback check after a short delay to ensure allowance is properly updated
+      // Wait a bit for the transaction to be confirmed, then check
       setTimeout(async () => {
-        console.log('Fallback allowance check after approval success...');
+        console.log('Checking transaction status for hash:', approveHash);
+        
+        // Refetch allowance to see if it was updated
         const updatedAllowance = await refetchAllowance();
-        console.log('Fallback allowance result:', updatedAllowance);
+        console.log('Fallback allowance check result:', updatedAllowance);
         
         if (updatedAllowance.data) {
           const allowanceInUSD = Number(updatedAllowance.data) / 1_000_000;
@@ -252,20 +261,25 @@ export const CreateSubscription: React.FC = () => {
             : customAllowance;
           const requiredInUSD = parseFloat(requiredAllowance);
           
-          console.log('Fallback allowance check:', {
+          console.log('Fallback transaction check:', {
             allowanceInUSD,
             requiredInUSD,
-            isSufficient: allowanceInUSD >= requiredInUSD
+            isSufficient: allowanceInUSD >= requiredInUSD,
+            currentIsApproved: isApproved
           });
           
-          if (allowanceInUSD >= requiredInUSD && !isApproved) {
-            console.log('Fallback: Setting isApproved to true');
+          if (allowanceInUSD >= requiredInUSD) {
+            console.log('Fallback: Transaction successful, setting approved state');
+            if (!hasShownApproveSuccess) {
+              toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
+              setHasShownApproveSuccess(true);
+            }
             setIsApproved(true);
           }
         }
-      }, 3000); // Check after 3 seconds to ensure blockchain state is updated
+      }, 3000); // Wait 3 seconds for transaction to be confirmed
     }
-  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, approveHash, isApproving, allowanceType, customAllowance, isApproved]);
+  }, [approveHash, hasShownApproveSuccess, isApproving, refetchAllowance, allowanceType, customAllowance, isApproved, toast]);
 
   // Handle approve error
   useEffect(() => {

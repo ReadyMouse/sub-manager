@@ -139,8 +139,18 @@ export const useUserSubscriptions = (userAddress: Address | undefined) => {
  */
 export const usePYUSD = () => {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash,
+  });
+
+  // Debug transaction receipt status
+  console.log('PYUSD Hook Debug:', {
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    receipt: receipt ? 'Receipt received' : 'No receipt yet'
   });
 
   const approve = async (spender: Address, amount: string) => {
