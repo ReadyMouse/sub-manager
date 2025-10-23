@@ -14,11 +14,11 @@ export const CreateSubscription: React.FC = () => {
   const { address, isConnected } = useAccount();
   const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
-  const { allowance, refetch: refetchAllowance } = usePYUSDAllowance(
+  const { allowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
   );
-  const { balance: pyusdBalance, refetch: refetchBalance } = usePYUSDBalance(address);
+  const { balance: pyusdBalance } = usePYUSDBalance(address);
   const toast = useToast();
 
   const [isApproved, setIsApproved] = useState(false);
