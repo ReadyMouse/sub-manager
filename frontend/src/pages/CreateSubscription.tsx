@@ -6,7 +6,7 @@ import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { apiClient, subscriptionApi } from '../lib/api';
-import { parsePYUSD } from '../lib/utils';
+import { parsePYUSD, formatPYUSD } from '../lib/utils';
 import type { Address } from 'viem';
 
 export const CreateSubscription: React.FC = () => {
@@ -27,6 +27,17 @@ export const CreateSubscription: React.FC = () => {
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
   const [hasShownApproveSuccess, setHasShownApproveSuccess] = useState(false);
+  
+  // Debug approval state
+  useEffect(() => {
+    console.log('Approval state debug:', {
+      isApproving,
+      isApproveSuccess,
+      approveError,
+      approveHash,
+      isApproved
+    });
+  }, [isApproving, isApproveSuccess, approveError, approveHash, isApproved]);
   const [hasShownCreateSuccess, setHasShownCreateSuccess] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: '',
@@ -208,15 +219,21 @@ export const CreateSubscription: React.FC = () => {
 
   // Handle approve success
   useEffect(() => {
+    console.log('Approval success check:', { 
+      isApproveSuccess, 
+      hasShownApproveSuccess,
+      approveHash,
+      isApproving 
+    });
     if (isApproveSuccess && !hasShownApproveSuccess) {
-      console.log('Approval successful!');
+      console.log('Approval successful! Transaction hash:', approveHash);
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       refetchAllowance();
       refetchBalance();
       setIsApproved(true);
       setHasShownApproveSuccess(true);
     }
-  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess]);
+  }, [isApproveSuccess, toast, refetchAllowance, refetchBalance, hasShownApproveSuccess, approveHash, isApproving]);
 
   // Handle approve error
   useEffect(() => {
@@ -393,9 +410,41 @@ export const CreateSubscription: React.FC = () => {
         pyusdAddress: CONTRACTS.PYUSD,
         userAddress: address,
       });
+      
+      console.log('Contract addresses:', {
+        StableRentSubscription: CONTRACTS.StableRentSubscription,
+        PYUSD: CONTRACTS.PYUSD
+      });
 
       toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
-      await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
+      const result = await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
+      console.log('Approval result:', result);
+      
+      // Add a fallback check for approval success after a delay
+      setTimeout(async () => {
+        console.log('Checking allowance after approval...');
+        const updatedAllowance = await refetchAllowance();
+        console.log('Updated allowance:', updatedAllowance);
+        
+        // Check if allowance is sufficient
+        if (updatedAllowance.data) {
+          const allowanceInUSD = parseFloat(formatPYUSD(updatedAllowance.data));
+          const requiredInUSD = parseFloat(approvalAmount);
+          
+          console.log('Allowance check:', {
+            allowanceInUSD,
+            requiredInUSD,
+            isSufficient: allowanceInUSD >= requiredInUSD
+          });
+          
+          if (allowanceInUSD >= requiredInUSD && !isApproved) {
+            console.log('Manual approval success detected!');
+            toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
+            setIsApproved(true);
+            setHasShownApproveSuccess(true);
+          }
+        }
+      }, 3000); // Check after 3 seconds
     } catch (error) {
       console.error('Approve failed:', error);
       // Error is already handled by useEffect hook
