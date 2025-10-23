@@ -78,7 +78,7 @@ const SubscriptionCard: React.FC<{ subscription: EnvioSubscription; isActive: bo
               <div>
                 <span className="text-sm text-gray-600">Amount:</span>
                 <span className="ml-2 font-semibold text-brand-navy">
-                  {formatPYUSD(BigInt(subscription.amount))} {PYUSD_SYMBOL}
+                  {formatPYUSD(BigInt(subscription.amount || '0'))} {PYUSD_SYMBOL}
                 </span>
               </div>
               <div>
@@ -110,11 +110,11 @@ const SubscriptionCard: React.FC<{ subscription: EnvioSubscription; isActive: bo
                 Payments made: {subscription.paymentCount}
               </div>
               <div>
-                Started: {formatDate(subscription.createdAt)}
+                Started: {formatDate(parseInt(subscription.createdAt))}
               </div>
               {subscription.endDate && (
                 <div>
-                  Ended: {formatDate(subscription.endDate)}
+                  Ended: {formatDate(parseInt(subscription.endDate))}
                 </div>
               )}
             </div>
@@ -320,10 +320,16 @@ const convertSubscription = (sub: any): EnvioSubscription => ({
   id: sub.id,
   subscriber: sub.senderWalletAddress || '',
   serviceProviderId: sub.serviceName,
-  amount: sub.amount,
+  amount: sub.amount, // Keep as string - will be converted to BigInt in display
   interval: sub.interval.toString(),
-  nextPaymentDue: sub.nextPaymentDue,
-  endDate: sub.endDate,
+  nextPaymentDue: typeof sub.nextPaymentDue === 'string' 
+    ? sub.nextPaymentDue 
+    : Math.floor(new Date(sub.nextPaymentDue).getTime() / 1000).toString(),
+  endDate: sub.endDate 
+    ? (typeof sub.endDate === 'string' 
+        ? sub.endDate 
+        : Math.floor(new Date(sub.endDate).getTime() / 1000).toString())
+    : undefined,
   maxPayments: sub.maxPayments?.toString(),
   paymentCount: sub.paymentCount.toString(),
   failedPaymentCount: sub.failedPaymentCount.toString(),
@@ -332,7 +338,9 @@ const convertSubscription = (sub: any): EnvioSubscription => ({
   processorFeeAddress: sub.processorFeeAddress || '',
   processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
   processorFeeID: sub.processorFeeID || '',
-  createdAt: sub.createdAt,
+  createdAt: typeof sub.createdAt === 'string' 
+    ? sub.createdAt 
+    : Math.floor(new Date(sub.createdAt).getTime() / 1000).toString(),
 });
 
 export const Settings: React.FC = () => {
@@ -1336,7 +1344,7 @@ export const Settings: React.FC = () => {
                       {allPayments.map(payment => (
                         <tr key={payment.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDateTime(new Date(payment.createdAt).getTime())}
+                            {formatDateTime(parseInt(payment.createdAt))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

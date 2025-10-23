@@ -6,7 +6,7 @@ export class ConfigController {
    * GET /api/config
    * Get public configuration for frontend
    */
-  static async getConfig(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getConfig(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       res.json({
         success: true,

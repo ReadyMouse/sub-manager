@@ -51,7 +51,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <div>
           <div className="text-sm text-gray-600 mb-1">Amount</div>
           <div className="text-xl font-bold text-brand-navy">
-            {formatPYUSD(subscription.amount)} {PYUSD_SYMBOL}
+            {formatPYUSD(BigInt(subscription.amount || '0'))} {PYUSD_SYMBOL}
           </div>
         </div>
         <div>
@@ -67,7 +67,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Next Payment</span>
           <span className={`font-medium ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-gray-900'}`}>
-            {subscription.isActive ? formatDate(subscription.nextPaymentDue) : 'N/A'}
+            {subscription.isActive ? formatDate(parseInt(subscription.nextPaymentDue)) : 'N/A'}
           </span>
         </div>
         {subscription.isActive && (
@@ -93,11 +93,11 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             </span>
           </div>
         )}
-        {subscription.endDate && subscription.endDate > 0 && (
+        {subscription.endDate && parseInt(subscription.endDate) > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">End Date</span>
             <span className="font-medium text-gray-900">
-              {formatDate(subscription.endDate)}
+              {formatDate(parseInt(subscription.endDate))}
             </span>
           </div>
         )}
