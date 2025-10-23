@@ -37,19 +37,6 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 - The forking of mainnet ETH is invaluable for testing indexing of account balances
 - The simulated blockchain is game-changer for rapid development without faucets or testnets
 
-## How It Works
-
-PYUSD native Peer-to-Peer:
-```
-Resident's PYUSD
-    ↓ 
-Smart Contract
-    ↓ 
-Property Owner's PYUSD 
-    ↓ 
-Rent gets paid 
-```
-
 ## 🚀 Current Deployment Status
 ### Sepolia Contract Deployment
 
@@ -73,6 +60,14 @@ Rent gets paid
 
 ![Business Model graphic](frontend/src/assets/business_models.png)
 
+## MIT License. Like what you See? 
+Open source but starving. Donate to the builder. 
+
+PYUSD on ETH: 
+```
+0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8
+```
+(Other currency wallets listed below.)
 
 ## 🚀 Quick Start
 ### First Time Setup
@@ -197,10 +192,10 @@ Cursor + Claude AI was used to support development.
 - KYC for transcations over gov reporting limits ($3-5k in single)
 - Limits on the allowance approval (is there a regulation limit? what's reasonable?)
 - More flexible scheduling options (every 3 weeks, first and fifteenth, etc)
-- Internal encrypted messaging system. (Propoerty owner requests of resident to see account balances, resident can approve this requests)
-- Gas optimizations on contract (>$100 to sign the allowance, switch to Base, Arbitrium, Polygon)
+- Internal encrypted messaging system. (Property owner requests of resident to see account balances, resident can approve this requests)
+- Gas optimizations on contract (switch to Base, Arbitrium, Polygon)
 - PayPal database search (ask for Username -> wallet address)
-- Signing transcation also needs to be first month (not just a sign) ETH handling
+- Signing transcation could also be first month (not just a sign)
 - Automation is currently a cron local -> Gelato or Chainlink for Automation
 - Contracts are not yet Verified on Etherscan
 
@@ -214,14 +209,28 @@ This is a proof-of-concept for educational purposes only.
 Not operational. No real financial services provided.
 Production launch subject to regulatory approval.
 
-# Like What you See? 
-Donate to the builder. 
+# Like What you See? MIT License
+Open source but starving. Donate to the builder. 
 
-* PYUSD on ETH: 0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8
+ZEC (preferred): 
+```
+u1s9730x48hwm78q6v6fc9qgwdd46qdkw3lzsvw6ql34sskxhgp82t8xtd7q8j4hsjrhuxglgzj8xdw9llh2qa68alhn59tw72hcjfzu27khep5pktjt077t97t4e529nu8qd88newzvyfhuq37mtjw7jeqqd6y9n8684vmy2me5k30zf5
+```
+But a dollar is a dollar. 
 
-* ZEC: u1s9730x48hwm78q6v6fc9qgwdd46qdkw3lzsvw6ql34sskxhgp82t8xtd7q8j4hsjrhuxglgzj8xdw9llh2qa68alhn59tw72hcjfzu27khep5pktjt077t97t4e529nu8qd88newzvyfhuq37mtjw7jeqqd6y9n8684vmy2me5k30zf5
+PYUSD on ETH: 
+```
+0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8
+```
 
-* BTC: bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
+ETH:
+```
+0xcE43a6bEd4bE93DA20fA8F1092Ae3D34662F43b8
+```
 
+BTC: 
+```
+bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
+```
 
 

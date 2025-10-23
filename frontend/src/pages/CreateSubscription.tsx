@@ -301,7 +301,9 @@ export const CreateSubscription: React.FC = () => {
           allowanceInUSD,
           requiredInUSD,
           isSufficient: allowanceInUSD >= requiredInUSD,
-          currentIsApproved: isApproved
+          currentIsApproved: isApproved,
+          hasApproveSuccess: isApproveSuccess,
+          hasApproveHash: !!approveHash
         });
         
         if (allowanceInUSD >= requiredInUSD) {
@@ -310,14 +312,16 @@ export const CreateSubscription: React.FC = () => {
             setIsApproved(true);
           }
         } else {
-          if (isApproved) {
+          // Don't override approval state if there's a recent successful approval
+          // Wait for allowance to update on-chain
+          if (isApproved && !isApproveSuccess && !approveHash) {
             console.log('Setting isApproved to false - insufficient allowance');
             setIsApproved(false);
           }
         }
       }
     }
-  }, [allowance, formData.amount, allowanceType, customAllowance, isApproved]);
+  }, [allowance, formData.amount, allowanceType, customAllowance, isApproved, isApproveSuccess, approveHash]);
 
   // Handle wallet authentication
   const authenticateWithWallet = async (): Promise<boolean> => {
