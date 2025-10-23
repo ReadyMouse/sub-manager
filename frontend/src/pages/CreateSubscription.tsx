@@ -26,6 +26,7 @@ export const CreateSubscription: React.FC = () => {
   const [customAllowance, setCustomAllowance] = useState('');
   const [recipientInputType, setRecipientInputType] = useState<'lookup' | 'wallet'>('lookup');
   const [hasShownApproveError, setHasShownApproveError] = useState(false);
+  const [hasShownCreateSuccess, setHasShownCreateSuccess] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: '',
     serviceDescription: '', // Off-chain: longer description
@@ -207,6 +208,7 @@ export const CreateSubscription: React.FC = () => {
   // Handle approve success
   useEffect(() => {
     if (isApproveSuccess) {
+      console.log('Approval successful!');
       toast.success('Success', 'PYUSD allowance approved! You can now set up your payment.');
       refetchAllowance();
       refetchBalance();
@@ -262,13 +264,14 @@ export const CreateSubscription: React.FC = () => {
 
   // Handle create success
   useEffect(() => {
-    if (isCreateSuccess) {
+    if (isCreateSuccess && !hasShownCreateSuccess) {
       toast.success('Success', 'Subscription created successfully!');
+      setHasShownCreateSuccess(true);
       setTimeout(() => {
         navigate('/subscriptions');
       }, 2000);
     }
-  }, [isCreateSuccess, navigate, toast]);
+  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess]);
 
   // Calculate total allowance needed for bulk approval
   const calculateTotalAllowance = (): { total: string; paymentCount: number } => {
@@ -354,6 +357,9 @@ export const CreateSubscription: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Reset success flag when starting new subscription creation
+    setHasShownCreateSuccess(false);
+
     // Check if wallet is connected
     if (!isConnected || !address) {
       toast.error('Wallet Required', 'Please connect your wallet to create a subscription');
@@ -416,7 +422,7 @@ export const CreateSubscription: React.FC = () => {
         : formData.recipientWalletCurrency;
 
       // Create subscription on-chain
-      await createSubscription(
+      const result = await createSubscription(
         '0', // senderId - TODO: get from backend/user profile
         finalRecipientId,
         formData.amount,
@@ -429,6 +435,15 @@ export const CreateSubscription: React.FC = () => {
         formData.senderCurrency,
         finalRecipientCurrency
       );
+      
+      console.log('Subscription creation result:', result);
+      
+      // TODO: Check if subscription was created on blockchain
+      // You can use the transaction hash to verify on Etherscan
+      if (result && typeof result === 'string') {
+        console.log('Transaction hash:', result);
+        console.log('Check transaction on Etherscan:', `https://sepolia.etherscan.io/tx/${result}`);
+      }
 
       // TODO: After successful on-chain transaction, save off-chain metadata to backend:
       // - senderConnectedWalletId: selectedWalletId
