@@ -5,7 +5,7 @@ import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } f
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
-import { apiClient } from '../lib/api';
+import { apiClient, subscriptionApi } from '../lib/api';
 import { parsePYUSD } from '../lib/utils';
 import type { Address } from 'viem';
 
@@ -267,13 +267,58 @@ export const CreateSubscription: React.FC = () => {
   // Handle create success
   useEffect(() => {
     if (isCreateSuccess && !hasShownCreateSuccess) {
-      toast.success('Success', 'Subscription created successfully!');
       setHasShownCreateSuccess(true);
-      setTimeout(() => {
-        navigate('/subscriptions');
-      }, 2000);
+      
+      // Save subscription metadata to database
+      const saveSubscriptionMetadata = async () => {
+        try {
+          // For now, we'll use a placeholder subscription ID
+          // In a real implementation, you'd get this from the transaction receipt
+          const subscriptionId = Date.now().toString(); // Temporary placeholder
+          
+          await subscriptionApi.create({
+            chainId: 11155111, // Sepolia
+            onChainId: subscriptionId,
+            recipientId: recipientInputType === 'lookup' 
+              ? recipientDetails!.recipientId 
+              : '0',
+            serviceName: formData.serviceName,
+            amount: formData.amount,
+            interval: formData.interval,
+            nextPaymentDue: new Date(formData.startDate).toISOString(),
+            endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+            maxPayments: formData.maxPayments ? parseInt(formData.maxPayments) : undefined,
+            senderWalletAddress: address,
+            recipientWalletAddress: recipientInputType === 'lookup'
+              ? recipientDetails!.recipientAddress
+              : formData.recipientWalletAddress,
+            senderCurrency: formData.senderCurrency,
+            recipientCurrency: recipientInputType === 'lookup'
+              ? recipientDetails!.recipientCurrency
+              : formData.recipientWalletCurrency,
+            metadata: {
+              notes: formData.notes,
+              tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : undefined,
+              serviceDescription: formData.serviceDescription,
+            },
+          });
+          
+          toast.success('Success', 'Subscription created successfully!');
+          setTimeout(() => {
+            navigate('/subscriptions');
+          }, 2000);
+        } catch (error) {
+          console.error('Failed to save subscription metadata:', error);
+          toast.error('Warning', 'Subscription created on blockchain but metadata could not be saved to database');
+          setTimeout(() => {
+            navigate('/subscriptions');
+          }, 2000);
+        }
+      };
+      
+      saveSubscriptionMetadata();
     }
-  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess]);
+  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess, formData, recipientInputType, recipientDetails, address]);
 
   // Calculate total allowance needed for bulk approval
   const calculateTotalAllowance = (): { total: string; paymentCount: number } => {

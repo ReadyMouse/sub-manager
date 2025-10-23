@@ -16,6 +16,37 @@ router.use(authenticate);
 router.get('/', SubscriptionController.getAllSubscriptions);
 
 /**
+ * POST /api/subscriptions
+ * Create a new subscription record
+ */
+router.post(
+  '/',
+  validate([
+    body('chainId').isInt({ min: 1 }),
+    body('onChainId').isString().notEmpty(),
+    body('recipientId').isString().notEmpty(),
+    body('serviceName').isString().notEmpty(),
+    body('amount').isString().notEmpty(),
+    body('interval').isInt({ min: 1 }),
+    body('nextPaymentDue').isISO8601(),
+    body('endDate').optional().isISO8601(),
+    body('maxPayments').optional().isInt({ min: 1 }),
+    body('senderWalletAddress').optional().isString(),
+    body('recipientWalletAddress').optional().isString(),
+    body('senderCurrency').optional().isString(),
+    body('recipientCurrency').optional().isString(),
+    body('processorFee').optional().isString(),
+    body('processorFeeAddress').optional().isString(),
+    body('processorFeeCurrency').optional().isString(),
+    body('processorFeeID').optional().isString(),
+    body('metadata.notes').optional().isString().isLength({ max: 1000 }),
+    body('metadata.tags').optional().isArray(),
+    body('metadata.serviceDescription').optional().isString().isLength({ max: 500 }),
+  ]),
+  SubscriptionController.createSubscription
+);
+
+/**
  * GET /api/subscriptions/sent
  * Get sent subscriptions
  */

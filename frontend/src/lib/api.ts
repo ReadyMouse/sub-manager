@@ -124,6 +124,33 @@ export const subscriptionApi = {
   async getReceived(token?: string) {
     return apiClient.get('/api/subscriptions/received', { token });
   },
+
+  async create(data: {
+    chainId: number;
+    onChainId: string;
+    recipientId: string;
+    serviceName: string;
+    amount: string;
+    interval: number;
+    nextPaymentDue: string;
+    endDate?: string;
+    maxPayments?: number;
+    senderWalletAddress?: string;
+    recipientWalletAddress?: string;
+    senderCurrency?: string;
+    recipientCurrency?: string;
+    processorFee?: string;
+    processorFeeAddress?: string;
+    processorFeeCurrency?: string;
+    processorFeeID?: string;
+    metadata?: {
+      notes?: string;
+      tags?: string[];
+      serviceDescription?: string;
+    };
+  }, token?: string) {
+    return apiClient.post('/api/subscriptions', data, { token });
+  },
 };
 
 /**

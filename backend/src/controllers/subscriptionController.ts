@@ -95,6 +95,70 @@ export class SubscriptionController {
   }
 
   /**
+   * POST /api/subscriptions
+   * Create a new subscription record
+   */
+  static async createSubscription(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const {
+        chainId,
+        onChainId,
+        recipientId,
+        serviceName,
+        amount,
+        interval,
+        nextPaymentDue,
+        endDate,
+        maxPayments,
+        senderWalletAddress,
+        recipientWalletAddress,
+        senderCurrency,
+        recipientCurrency,
+        processorFee,
+        processorFeeAddress,
+        processorFeeCurrency,
+        processorFeeID,
+        metadata,
+      } = req.body;
+
+      const subscription = await SubscriptionService.createSubscriptionRecord(
+        chainId,
+        onChainId,
+        req.user.id, // senderId
+        recipientId,
+        serviceName,
+        amount,
+        interval,
+        new Date(nextPaymentDue),
+        endDate ? new Date(endDate) : undefined,
+        maxPayments,
+        senderWalletAddress,
+        recipientWalletAddress,
+        senderCurrency,
+        recipientCurrency,
+        processorFee,
+        processorFeeAddress,
+        processorFeeCurrency,
+        processorFeeID,
+        metadata
+      );
+
+      res.status(201).json({
+        success: true,
+        data: subscription,
+        message: 'Subscription created successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * PUT /api/subscriptions/:id/metadata
    * Update subscription metadata
    */

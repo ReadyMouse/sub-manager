@@ -123,6 +123,72 @@ export class SubscriptionService {
   }
 
   /**
+   * Create a new subscription record in the database
+   */
+  static async createSubscriptionRecord(
+    chainId: number,
+    onChainId: string,
+    senderId: string,
+    recipientId: string,
+    serviceName: string,
+    amount: string,
+    interval: number,
+    nextPaymentDue: Date,
+    endDate?: Date,
+    maxPayments?: number,
+    senderWalletAddress?: string,
+    recipientWalletAddress?: string,
+    senderCurrency?: string,
+    recipientCurrency?: string,
+    processorFee?: string,
+    processorFeeAddress?: string,
+    processorFeeCurrency?: string,
+    processorFeeID?: string,
+    metadata?: {
+      notes?: string;
+      tags?: string[];
+      serviceDescription?: string;
+    }
+  ) {
+    const subscriptionKey = `${chainId}:${onChainId}`;
+    
+    return await prisma.subscription.create({
+      data: {
+        id: subscriptionKey,
+        chainId,
+        onChainId,
+        senderId,
+        recipientId,
+        serviceName,
+        amount,
+        interval,
+        nextPaymentDue,
+        endDate,
+        maxPayments,
+        paymentCount: 0,
+        failedPaymentCount: 0,
+        isActive: true,
+        syncStatus: 'PENDING', // Will be updated when Envio processes it
+        lastSyncedAt: new Date(),
+        createdAt: new Date(),
+        // Optional fields
+        senderWalletAddress: senderWalletAddress?.toLowerCase(),
+        recipientWalletAddress: recipientWalletAddress?.toLowerCase(),
+        senderCurrency,
+        recipientCurrency,
+        processorFee,
+        processorFeeAddress,
+        processorFeeCurrency,
+        processorFeeID,
+        // Metadata
+        notes: metadata?.notes,
+        tags: metadata?.tags,
+        serviceDescription: metadata?.serviceDescription,
+      },
+    });
+  }
+
+  /**
    * Update subscription metadata (notes, tags, etc.)
    */
   static async updateSubscriptionMetadata(
