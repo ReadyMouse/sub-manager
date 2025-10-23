@@ -196,7 +196,7 @@ export class WebhookService {
         timestamp: paymentTimestamp,
         status: 'SUCCESS',
         senderAddress: senderAddress.toLowerCase(),
-        recipientAddress: subscription.recipientWalletAddress,
+        recipientAddress: subscription.recipientWalletAddress || '',
       },
     });
 
@@ -266,7 +266,7 @@ export class WebhookService {
         status: 'FAILED',
         failureReason: reason,
         senderAddress: senderAddress.toLowerCase(),
-        recipientAddress: subscription.recipientWalletAddress,
+        recipientAddress: subscription.recipientWalletAddress || '',
       },
     });
 
