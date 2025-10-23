@@ -1,0 +1,51 @@
+type Subscription @entity {
+  id: ID!
+  subscriber: Bytes!
+  serviceProviderId: BigInt!
+  amount: BigInt!
+  interval: BigInt!
+  nextPaymentDue: BigInt!
+  endDate: BigInt!
+  maxPayments: BigInt!
+  serviceName: String!
+  paymentType: Int!
+  providerType: Int!
+  recipientAddress: Bytes!
+  recipientCurrency: String!
+  processorFee: BigInt!
+  processorFeeAddress: Bytes!
+  processorFeeCurrency: String!
+  processorFeeID: BigInt!
+  createdAt: BigInt!
+  isActive: Boolean!
+  paymentCount: BigInt!
+  failedPaymentCount: Int!
+  lastPaymentTime: BigInt
+  lastFailedPayment: BigInt
+  cancelledAt: BigInt
+  cancellationReason: String
+}
+
+type Payment @entity {
+  id: ID!
+  subscriptionId: BigInt!
+  subscriber: Bytes!
+  serviceName: String!
+  amount: BigInt!
+  processorFee: BigInt!
+  processorFeeAddress: Bytes!
+  timestamp: BigInt!
+  paymentNumber: BigInt!
+  status: String!
+  transactionHash: String!
+}
+
+type FailedPayment @entity {
+  id: ID!
+  subscriptionId: BigInt!
+  subscriber: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+  reason: String!
+  failedCount: Int!
+}
