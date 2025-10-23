@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { subscriptionApi } from '../lib/api';
+import type { Subscription as SubscriptionType } from '../lib/types';
+import type { Address } from 'viem';
 
-export interface Subscription {
+// Railway Postgres Subscription format (raw from API)
+export interface RailwaySubscription {
   id: string;
   chainId: number;
   onChainId: string;
@@ -36,11 +39,42 @@ export interface Subscription {
     displayName: string;
     email?: string;
   };
+  senderWalletAddress?: string;
+  recipientWalletAddress?: string;
 }
 
+// Helper to convert Railway subscription to the Subscription type expected by components
+export const convertRailwaySubscription = (sub: RailwaySubscription): SubscriptionType & { serviceName: string } => {
+  return {
+    id: sub.id,
+    subscriber: (sub.senderWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
+    serviceProviderId: sub.serviceName,
+    serviceName: sub.serviceName, // Add serviceName for convenience
+    amount: BigInt(sub.amount || '0'),
+    interval: sub.interval,
+    nextPaymentDue: parseInt(sub.nextPaymentDue),
+    isActive: sub.isActive,
+    failedPaymentCount: sub.failedPaymentCount,
+    createdAt: parseInt(sub.createdAt),
+    endDate: sub.endDate ? parseInt(sub.endDate) : undefined,
+    maxPayments: sub.maxPayments,
+    paymentCount: sub.paymentCount,
+    processorFee: BigInt(sub.processorFee || '0'),
+    processorFeeAddress: (sub.processorFeeAddress || '0x0000000000000000000000000000000000000000') as Address,
+    processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
+    processorFeeID: sub.processorFeeID || '0',
+    recipientAddress: (sub.recipientWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
+  };
+};
+
 export interface SubscriptionsResponse {
-  sent: Subscription[];
-  received: Subscription[];
+  sent: (SubscriptionType & { serviceName: string })[];
+  received: (SubscriptionType & { serviceName: string })[];
+}
+
+interface RailwaySubscriptionsResponse {
+  sent: RailwaySubscription[];
+  received: RailwaySubscription[];
 }
 
 export const useSubscriptions = () => {
@@ -60,7 +94,15 @@ export const useSubscriptions = () => {
       setError(null);
 
       const response = await subscriptionApi.getAll(token);
-      setSubscriptions(response.data);
+      const rawData = response.data as RailwaySubscriptionsResponse;
+      
+      // Convert Railway format to component-expected format
+      const convertedData: SubscriptionsResponse = {
+        sent: rawData.sent.map(convertRailwaySubscription),
+        received: rawData.received.map(convertRailwaySubscription),
+      };
+      
+      setSubscriptions(convertedData);
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch subscriptions'));

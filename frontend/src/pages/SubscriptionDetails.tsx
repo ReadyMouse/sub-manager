@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { useEnvioUserSubscriptions, parseEnvioSubscription } from '../hooks/useEnvio';
+import { useSubscriptions } from '../hooks/useSubscriptions';
 import { useStableRentContract } from '../hooks/useContract';
 import { formatPYUSD, formatDate, formatDateTime, getIntervalLabel } from '../lib/utils';
 import { PYUSD_SYMBOL } from '../lib/constants';
@@ -12,23 +12,25 @@ import { useMemo } from 'react';
 export const SubscriptionDetails: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { address, isConnected } = useAccount();
-  const { subscriptions, loading, refetch } = useEnvioUserSubscriptions(address);
+  const { isConnected } = useAccount();
+  const { subscriptions: subsResponse, loading, refetch } = useSubscriptions();
   const { cancelSubscription } = useStableRentContract();
   const toast = useToast();
 
   const subscriptionId = searchParams.get('id');
 
+  // Combine sent and received subscriptions
+  const allSubscriptions = useMemo(() => {
+    return [...subsResponse.sent, ...subsResponse.received];
+  }, [subsResponse]);
+
   // Find the specific subscription
   const subscription = useMemo(() => {
-    if (!subscriptionId || !subscriptions.length) return null;
-    return subscriptions.find((sub: any) => sub.id === subscriptionId);
-  }, [subscriptionId, subscriptions]);
+    if (!subscriptionId || !allSubscriptions.length) return null;
+    return allSubscriptions.find((sub: any) => sub.id === subscriptionId);
+  }, [subscriptionId, allSubscriptions]);
 
-  const parsedSubscription = useMemo(() => {
-    if (!subscription) return null;
-    return parseEnvioSubscription(subscription);
-  }, [subscription]);
+  const parsedSubscription = subscription;
 
   const handleCancel = async () => {
     if (!parsedSubscription || !confirm('Are you sure you want to cancel this subscription?')) {
@@ -110,9 +112,10 @@ export const SubscriptionDetails: React.FC = () => {
     );
   }
 
-  const isOverdue = parsedSubscription.isActive && parsedSubscription.nextPaymentDue < Math.floor(Date.now() / 1000);
-  const isDueSoon = parsedSubscription.isActive && parsedSubscription.nextPaymentDue > Math.floor(Date.now() / 1000) && 
-    (parsedSubscription.nextPaymentDue - Math.floor(Date.now() / 1000)) <= 86400;
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  const isOverdue = parsedSubscription.isActive && parsedSubscription.nextPaymentDue < currentTimestamp;
+  const isDueSoon = parsedSubscription.isActive && parsedSubscription.nextPaymentDue > currentTimestamp && 
+    (parsedSubscription.nextPaymentDue - currentTimestamp) <= 86400;
 
   return (
     <div>
@@ -151,11 +154,11 @@ export const SubscriptionDetails: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600">Service Name</label>
-                <p className="text-lg font-semibold text-brand-navy">{subscription.serviceProviderId}</p>
+                <p className="text-lg font-semibold text-brand-navy">{parsedSubscription.serviceProviderId}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600">Subscription ID</label>
-                <p className="text-sm font-mono text-gray-700">{subscription.id}</p>
+                <p className="text-sm font-mono text-gray-700">{parsedSubscription.id}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600">Status</label>
@@ -221,7 +224,7 @@ export const SubscriptionDetails: React.FC = () => {
                   </p>
                 </div>
               )}
-              {parsedSubscription.endDate && parsedSubscription.endDate > 0 && (
+              {parsedSubscription.endDate && Number(parsedSubscription.endDate) > 0 && (
                 <div>
                   <label className="text-sm text-gray-600">End Date</label>
                   <p className="text-lg font-semibold text-brand-navy">
@@ -238,12 +241,12 @@ export const SubscriptionDetails: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600">Your Wallet Address</label>
-                <p className="text-sm font-mono text-gray-700 break-all">{subscription.subscriber}</p>
+                <p className="text-sm font-mono text-gray-700 break-all">{parsedSubscription.subscriber}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600">Recipient Wallet Address</label>
                 <p className="text-sm font-mono text-gray-700 break-all">
-                  {subscription.recipientAddress || 'Not specified'}
+                  {parsedSubscription.recipientAddress || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -256,19 +259,19 @@ export const SubscriptionDetails: React.FC = () => {
               <div>
                 <label className="text-sm text-gray-600">Processor Fee</label>
                 <p className="text-lg font-semibold text-brand-navy">
-                  {formatPYUSD(parsedSubscription.processorFee)} {PYUSD_SYMBOL}
+                  {formatPYUSD(parsedSubscription.processorFee || 0n)} {PYUSD_SYMBOL}
                 </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600">Total per Payment (Amount + Fee)</label>
                 <p className="text-xl font-bold text-brand-navy">
-                  {formatPYUSD(parsedSubscription.amount + parsedSubscription.processorFee)} {PYUSD_SYMBOL}
+                  {formatPYUSD(parsedSubscription.amount + (parsedSubscription.processorFee || 0n))} {PYUSD_SYMBOL}
                 </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600">Fee Address</label>
                 <p className="text-sm font-mono text-gray-700 break-all">
-                  {subscription.processorFeeAddress || 'Not specified'}
+                  {parsedSubscription.processorFeeAddress || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -296,7 +299,7 @@ export const SubscriptionDetails: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Chain ID</span>
                 <span className="text-sm font-medium text-gray-900">
-                  {subscription.chainId || 'Unknown'}
+                  11155111
                 </span>
               </div>
             </div>
@@ -336,9 +339,7 @@ export const SubscriptionDetails: React.FC = () => {
               <div>
                 <label className="text-sm text-gray-600">Network</label>
                 <p className="text-sm font-medium text-gray-900">
-                  {subscription.chainId === 1 ? 'Ethereum Mainnet' : 
-                   subscription.chainId === 11155111 ? 'Sepolia Testnet' : 
-                   `Chain ID ${subscription.chainId}`}
+                  Sepolia Testnet
                 </p>
               </div>
             </div>

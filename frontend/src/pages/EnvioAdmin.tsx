@@ -9,6 +9,7 @@ export const EnvioAdmin: React.FC = () => {
   const { isConnected } = useAccount();
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Query to get all events from the contract
   const ALL_EVENTS_QUERY = gql`
@@ -53,12 +54,22 @@ export const EnvioAdmin: React.FC = () => {
   useEffect(() => {
     const fetchAllEvents = async () => {
       setEventsLoading(true);
+      setError(null);
       try {
         const result = await apolloClient.query({
           query: ALL_EVENTS_QUERY,
         });
 
         const data = result.data as any;
+        
+        // Add null check for data
+        if (!data) {
+          const errorMsg = 'No data returned from Envio indexer. Please check that the indexer is running and connected.';
+          console.error('Error fetching events:', errorMsg);
+          setError(errorMsg);
+          setAllEvents([]);
+          return;
+        }
         
         // Combine all events and add event type
         const events = [
@@ -72,8 +83,13 @@ export const EnvioAdmin: React.FC = () => {
         events.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
         
         setAllEvents(events);
-      } catch (error) {
-        console.error('Error fetching events:', error);
+      } catch (err: any) {
+        const errorMsg = err.networkError 
+          ? 'Network error: Unable to connect to Envio indexer. Please check that the indexer is running.'
+          : err.message || 'An error occurred while fetching events';
+        console.error('Error fetching events:', err);
+        setError(errorMsg);
+        setAllEvents([]);
       } finally {
         setEventsLoading(false);
       }
@@ -134,6 +150,41 @@ export const EnvioAdmin: React.FC = () => {
             <div className="text-sm text-gray-600 mb-1">Cancellations</div>
             <div className="text-3xl font-bold text-red-600">
               {allEvents.filter(e => e.eventType === 'SubscriptionCancelled').length}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-yellow-800">Envio Indexer Not Available</h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p className="mb-2">{error}</p>
+                <details className="mt-3">
+                  <summary className="cursor-pointer font-medium hover:text-yellow-800">How to fix this</summary>
+                  <div className="mt-2 space-y-2 pl-4">
+                    <p><strong>For local development:</strong></p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>Navigate to the <code className="bg-yellow-100 px-1 rounded">envio/</code> directory</li>
+                      <li>Run <code className="bg-yellow-100 px-1 rounded">pnpm dev</code> to start the local indexer</li>
+                      <li>The indexer will be available at <code className="bg-yellow-100 px-1 rounded">http://localhost:8080/graphql</code></li>
+                    </ol>
+                    <p className="mt-3"><strong>For production:</strong></p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>Deploy the indexer to Envio's hosted service (see <a href="https://docs.envio.dev" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-900">Envio docs</a>)</li>
+                      <li>Set the <code className="bg-yellow-100 px-1 rounded">VITE_ENVIO_ENDPOINT</code> environment variable in your frontend deployment</li>
+                    </ol>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
         </div>

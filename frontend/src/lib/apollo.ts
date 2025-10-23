@@ -2,8 +2,14 @@ import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/clien
 import { ENVIO_GRAPHQL_ENDPOINT } from './constants';
 
 // Create HTTP link for Envio GraphQL endpoint
+// Note: Disable automatic persisted queries (APQ) as Envio indexer doesn't support them
 const httpLink = new HttpLink({
   uri: ENVIO_GRAPHQL_ENDPOINT,
+  fetchOptions: {
+    method: 'POST',
+  },
+  // Disable automatic persisted queries
+  useGETForQueries: false,
 });
 
 // Create Apollo Client for Envio indexer queries
@@ -33,6 +39,12 @@ export const apolloClient = new ApolloClient({
     query: {
       fetchPolicy: 'network-only',
       errorPolicy: 'all',
+    },
+  },
+  // Explicitly disable automatic persisted queries
+  defaultContext: {
+    fetchOptions: {
+      method: 'POST',
     },
   },
 });

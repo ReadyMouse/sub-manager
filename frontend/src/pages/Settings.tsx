@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useSubscriptions, type Subscription } from '../hooks/useSubscriptions';
+import { useSubscriptions } from '../hooks/useSubscriptions';
+import type { Subscription } from '../lib/types';
 import { useEnvioAllUserPayments } from '../hooks/useEnvio';
 import { formatPYUSD, shortenAddress, formatDateTime, getEtherscanLink } from '../lib/utils';
 import { PYUSD_SYMBOL, CONTRACTS } from '../lib/constants';
@@ -33,7 +34,7 @@ interface ReceiveOnlyWallet {
 }
 
 // Backend Subscription Card Component (for database subscriptions)
-const BackendSubscriptionCard: React.FC<{ subscription: Subscription; isActive: boolean }> = ({ subscription, isActive }) => {
+const BackendSubscriptionCard: React.FC<{ subscription: Subscription & { serviceName: string }; isActive: boolean }> = ({ subscription, isActive }) => {
   const formatInterval = (intervalSeconds: number) => {
     if (intervalSeconds === 0 || isNaN(intervalSeconds)) return 'Not set';
     const days = Math.floor(intervalSeconds / 86400);
@@ -44,10 +45,13 @@ const BackendSubscriptionCard: React.FC<{ subscription: Subscription; isActive: 
     return `Every ${days} days`;
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not set';
+  const formatDate = (dateValue: string | number) => {
+    if (!dateValue) return 'Not set';
     try {
-      const date = new Date(dateString);
+      // If it's a number, treat it as a Unix timestamp (in seconds)
+      const date = typeof dateValue === 'number' 
+        ? new Date(dateValue * 1000) 
+        : new Date(dateValue);
       if (isNaN(date.getTime())) return 'Not set';
       return date.toLocaleDateString('en-US', {
         month: 'short',
@@ -59,7 +63,11 @@ const BackendSubscriptionCard: React.FC<{ subscription: Subscription; isActive: 
     }
   };
 
-  const nextPaymentDate = subscription.nextPaymentDue ? new Date(subscription.nextPaymentDue) : null;
+  const nextPaymentDate = subscription.nextPaymentDue 
+    ? (typeof subscription.nextPaymentDue === 'number' 
+      ? new Date(subscription.nextPaymentDue * 1000) 
+      : new Date(subscription.nextPaymentDue)) 
+    : null;
   const hasValidNextPayment = nextPaymentDate && !isNaN(nextPaymentDate.getTime());
   const isOverdue = isActive && hasValidNextPayment && nextPaymentDate.getTime() < Date.now();
   const daysUntilPayment = hasValidNextPayment ? Math.ceil((nextPaymentDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;

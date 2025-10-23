@@ -125,6 +125,7 @@ export interface Subscription {
   processorFeeAddress: Address;
   processorFeeCurrency: string;
   processorFeeID: string;
+  recipientAddress: Address;
 }
 
 export interface ServiceProvider {
