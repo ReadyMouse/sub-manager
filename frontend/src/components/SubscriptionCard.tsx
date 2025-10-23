@@ -93,7 +93,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             </span>
           </div>
         )}
-        {subscription.endDate && subscription.endDate !== '0' && subscription.endDate !== '' && (
+        {subscription.endDate && subscription.endDate > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">End Date</span>
             <span className="font-medium text-gray-900">
