@@ -242,5 +242,5 @@ bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
 
 
 TODO:
-- Fix that engio is not storing transcation hash
+- Fix that envio is not storing transcation hash
 - The frontend did not completely fill out the subscription properly with processor information
