@@ -39,8 +39,8 @@ export const useEnvioUserSubscriptions = (userAddress: Address | undefined) => {
       });
 
       const data = result.data as any;
-      const created = data?.stableRentSubscription_SubscriptionCreateds || [];
-      const cancelled = data?.stableRentSubscription_SubscriptionCancelleds || [];
+      const created = data?.StableRentSubscription_SubscriptionCreated || [];
+      const cancelled = data?.StableRentSubscription_SubscriptionCancelled || [];
 
       // Create a map of cancelled subscriptions
       const cancelledMap = new Map(
@@ -166,8 +166,8 @@ export const useEnvioAllSubscriptions = () => {
       });
 
       const data = result.data as any;
-      const created = data?.stableRentSubscription_SubscriptionCreateds || [];
-      const cancelled = data?.stableRentSubscription_SubscriptionCancelleds || [];
+      const created = data?.StableRentSubscription_SubscriptionCreated || [];
+      const cancelled = data?.StableRentSubscription_SubscriptionCancelled || [];
 
       // Create a map of cancelled subscriptions
       const cancelledMap = new Map(
@@ -300,7 +300,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
         variables: { userAddress: userAddress.toLowerCase() },
       });
 
-      const sentPaymentEvents = (sentPaymentsResult.data as any)?.stableRentSubscription_PaymentProcesseds || [];
+      const sentPaymentEvents = (sentPaymentsResult.data as any)?.StableRentSubscription_PaymentProcessed || [];
       
       // Convert payment events to EnvioPayment format
       const sentPayments: EnvioPayment[] = sentPaymentEvents.map((event: any) => ({
@@ -323,7 +323,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
       });
 
       const data2 = receivingSubscriptionsResult.data as any;
-      const createdEvents = data2?.stableRentSubscription_SubscriptionCreateds || [];
+      const createdEvents = data2?.StableRentSubscription_SubscriptionCreated || [];
 
       const receivingSubscriptions = createdEvents.map((event: any) => ({
         id: event.subscriptionId.toString(),
@@ -339,7 +339,7 @@ export const useEnvioAllUserPayments = (userAddress: Address | undefined) => {
           query: GET_PAYMENTS_BY_SUBSCRIPTION_IDS,
           variables: { subscriptionIds },
         });
-        const receivedPaymentEvents = (receivedPaymentsResult.data as any)?.stableRentSubscription_PaymentProcesseds || [];
+        const receivedPaymentEvents = (receivedPaymentsResult.data as any)?.StableRentSubscription_PaymentProcessed || [];
         
         // Create a map of subscription IDs to service names
         const serviceNameMap = new Map(receivingSubscriptions.map((s: any) => [s.id, s.serviceName]));

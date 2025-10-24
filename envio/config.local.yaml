@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+# LOCAL TESTING CONFIG - Uses local Hardhat WITHOUT forking
+name: envio-indexer
+networks:
+- id: 31337  # Local Hardhat network (NO FORKING)
+  start_block: 0
+  rpc_config:
+    url: http://127.0.0.1:8545  # Local Hardhat node
+  contracts:
+  - name: StableRentSubscription
+    address:
+    - 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512  # Contract from back-propagation script
+    handler: src/EventHandlers.ts
+    events:
+    - event: OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+    - event: PaymentFailed(uint256 indexed subscriptionId, address senderAddress, uint256 indexed senderId, uint256 indexed recipientId, uint256 amount, uint256 timestamp, string reason, uint8 failedCount)
+    - event: PaymentProcessed(uint256 indexed subscriptionId, address senderAddress, uint256 indexed senderId, uint256 indexed recipientId, uint256 amount, uint256 processorFee, address processorFeeAddress, uint256 paymentCount, uint256 timestamp, uint256 nextPaymentDue)
+    - event: SubscriptionCancelled(uint256 indexed subscriptionId, address senderAddress, uint256 indexed senderId, uint256 indexed recipientId, uint256 timestamp, string reason)
+    - event: SubscriptionCreated(uint256 indexed subscriptionId, address senderAddress, uint256 indexed senderId, uint256 indexed recipientId, uint256 amount, uint256 interval, uint256 nextPaymentDue, uint256 endDate, uint256 maxPayments, string serviceName, address recipientAddress, string senderCurrency, string recipientCurrency, uint256 processorFee, address processorFeeAddress, string processorFeeCurrency, uint256 processorFeeID, uint256 timestamp)
+unordered_multichain_mode: true
+preload_handlers: true
+

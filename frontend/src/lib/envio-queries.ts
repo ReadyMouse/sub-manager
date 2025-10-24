@@ -9,10 +9,9 @@ import { gql } from '@apollo/client/index.js';
 // Query: Get all subscription events for a user
 export const GET_USER_SUBSCRIPTIONS = gql`
   query GetUserSubscriptions($userAddress: String!) {
-    stableRentSubscription_SubscriptionCreateds(
-      where: { senderAddress_contains_nocase: $userAddress }
-      orderBy: timestamp
-      orderDirection: desc
+    StableRentSubscription_SubscriptionCreated(
+      where: { senderAddress: { _ilike: $userAddress } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
@@ -32,15 +31,14 @@ export const GET_USER_SUBSCRIPTIONS = gql`
       processorFeeAddress
       processorFeeCurrency
       processorFeeID
-      timestamp
     }
-    stableRentSubscription_SubscriptionCancelleds(
-      where: { senderAddress_contains_nocase: $userAddress }
+    StableRentSubscription_SubscriptionCancelled(
+      where: { senderAddress: { _ilike: $userAddress } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
       senderAddress
-      timestamp
       reason
     }
   }
@@ -49,10 +47,9 @@ export const GET_USER_SUBSCRIPTIONS = gql`
 // Query: Get all subscriptions (for admin/marketplace)
 export const GET_ALL_SUBSCRIPTIONS = gql`
   query GetAllSubscriptions {
-    stableRentSubscription_SubscriptionCreateds(
-      orderBy: timestamp
-      orderDirection: desc
-      first: 100
+    StableRentSubscription_SubscriptionCreated(
+      order_by: { id: desc }
+      limit: 100
     ) {
       id
       subscriptionId
@@ -72,13 +69,14 @@ export const GET_ALL_SUBSCRIPTIONS = gql`
       processorFeeAddress
       processorFeeCurrency
       processorFeeID
-      timestamp
     }
-    stableRentSubscription_SubscriptionCancelleds {
+    StableRentSubscription_SubscriptionCancelled(
+      order_by: { id: desc }
+      limit: 100
+    ) {
       id
       subscriptionId
       senderAddress
-      timestamp
       reason
     }
   }
@@ -87,10 +85,9 @@ export const GET_ALL_SUBSCRIPTIONS = gql`
 // Query: Get payment events for a user
 export const GET_USER_PAYMENTS = gql`
   query GetUserPayments($userAddress: String!) {
-    stableRentSubscription_PaymentProcesseds(
-      where: { senderAddress_contains_nocase: $userAddress }
-      orderBy: timestamp
-      orderDirection: desc
+    StableRentSubscription_PaymentProcessed(
+      where: { senderAddress: { _ilike: $userAddress } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
@@ -99,7 +96,6 @@ export const GET_USER_PAYMENTS = gql`
       processorFee
       processorFeeAddress
       paymentCount
-      timestamp
       nextPaymentDue
     }
   }
@@ -108,10 +104,9 @@ export const GET_USER_PAYMENTS = gql`
 // Query: Get subscriptions where user is the service provider
 export const GET_USER_AS_SERVICE_PROVIDER = gql`
   query GetUserAsServiceProvider($userAddress: String!) {
-    stableRentSubscription_SubscriptionCreateds(
-      where: { recipientAddress_contains_nocase: $userAddress }
-      orderBy: timestamp
-      orderDirection: desc
+    StableRentSubscription_SubscriptionCreated(
+      where: { recipientAddress: { _ilike: $userAddress } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
@@ -131,18 +126,16 @@ export const GET_USER_AS_SERVICE_PROVIDER = gql`
       processorFeeAddress
       processorFeeCurrency
       processorFeeID
-      timestamp
     }
   }
 `;
 
 // Query: Get payments by subscription IDs
 export const GET_PAYMENTS_BY_SUBSCRIPTION_IDS = gql`
-  query GetPaymentsBySubscriptionIds($subscriptionIds: [BigInt!]!) {
-    stableRentSubscription_PaymentProcesseds(
-      where: { subscriptionId_in: $subscriptionIds }
-      orderBy: timestamp
-      orderDirection: desc
+  query GetPaymentsBySubscriptionIds($subscriptionIds: [String!]!) {
+    StableRentSubscription_PaymentProcessed(
+      where: { subscriptionId: { _in: $subscriptionIds } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
@@ -151,7 +144,6 @@ export const GET_PAYMENTS_BY_SUBSCRIPTION_IDS = gql`
       processorFee
       processorFeeAddress
       paymentCount
-      timestamp
       nextPaymentDue
     }
   }
@@ -159,11 +151,10 @@ export const GET_PAYMENTS_BY_SUBSCRIPTION_IDS = gql`
 
 // Query: Get payment events for a specific subscription
 export const GET_SUBSCRIPTION_PAYMENTS = gql`
-  query GetSubscriptionPayments($subscriptionId: BigInt!) {
-    stableRentSubscription_PaymentProcesseds(
-      where: { subscriptionId: $subscriptionId }
-      orderBy: timestamp
-      orderDirection: desc
+  query GetSubscriptionPayments($subscriptionId: String!) {
+    StableRentSubscription_PaymentProcessed(
+      where: { subscriptionId: { _eq: $subscriptionId } }
+      order_by: { id: desc }
     ) {
       id
       subscriptionId
@@ -172,7 +163,6 @@ export const GET_SUBSCRIPTION_PAYMENTS = gql`
       processorFee
       processorFeeAddress
       paymentCount
-      timestamp
       nextPaymentDue
     }
   }

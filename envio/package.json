@@ -7,8 +7,11 @@
     "watch": "tsc --watch",
     "mocha": "ts-mocha test/**/*.ts",
     "codegen": "envio codegen",
+    "codegen:local": "cp config.local.yaml config.yaml && envio codegen && git checkout config.yaml",
     "dev": "envio dev",
+    "dev:local": "cp config.local.yaml config.yaml.backup && cp config.local.yaml config.yaml && envio dev",
     "start": "envio start",
+    "start:local": "cp config.local.yaml config.yaml.backup && cp config.local.yaml config.yaml && envio start",
     "test": "pnpm mocha"
   },
   "devDependencies": {

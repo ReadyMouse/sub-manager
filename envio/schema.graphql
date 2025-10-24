@@ -14,6 +14,9 @@ type StableRentSubscription_PaymentFailed {
   timestamp: BigInt!
   reason: String!
   failedCount: BigInt!
+  # Blockchain metadata
+  blockNumber: BigInt!
+  transactionHash: String!
 }
 
 type StableRentSubscription_PaymentProcessed {
@@ -28,6 +31,9 @@ type StableRentSubscription_PaymentProcessed {
   paymentCount: BigInt!
   timestamp: BigInt!
   nextPaymentDue: BigInt!
+  # Blockchain metadata
+  blockNumber: BigInt!
+  transactionHash: String!
 }
 
 type StableRentSubscription_SubscriptionCancelled {
@@ -38,6 +44,9 @@ type StableRentSubscription_SubscriptionCancelled {
   recipientId: BigInt!
   timestamp: BigInt!
   reason: String!
+  # Blockchain metadata
+  blockNumber: BigInt!
+  transactionHash: String!
 }
 
 type StableRentSubscription_SubscriptionCreated {
@@ -60,5 +69,8 @@ type StableRentSubscription_SubscriptionCreated {
   processorFeeCurrency: String!
   processorFeeID: BigInt!
   timestamp: BigInt!
+  # Blockchain metadata
+  blockNumber: BigInt!
+  transactionHash: String!
 }
 

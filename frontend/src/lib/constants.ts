@@ -24,7 +24,7 @@ export const DEFAULT_CHAIN =
 
 // Envio GraphQL endpoint
 export const ENVIO_GRAPHQL_ENDPOINT = 
-  import.meta.env.VITE_ENVIO_ENDPOINT || 'http://localhost:8080/graphql';
+  import.meta.env.VITE_ENVIO_ENDPOINT || 'http://localhost:8080/v1/graphql';
 
 // PYUSD configuration
 export const PYUSD_DECIMALS = 6;

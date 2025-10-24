@@ -57,7 +57,7 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 ---
 ## Business Plans 
 
-![Business Model graphic](frontend/src/assets/business_models.png)
+![Business Model graphic](frontend/src/assets/business_models_grey.png)
 
 ## Potential Path Forward
 
@@ -241,3 +241,6 @@ bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
 ```
 
 
+TODO:
+- Fix that engio is not storing transcation hash
+- The frontend did not completely fill out the subscription properly with processor information

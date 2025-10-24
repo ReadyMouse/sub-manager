@@ -31,6 +31,9 @@ StableRentSubscription.PaymentFailed.handler(async ({ event, context }) => {
     timestamp: event.params.timestamp,
     reason: event.params.reason,
     failedCount: event.params.failedCount,
+    // Blockchain metadata
+    blockNumber: BigInt(event.block.number),
+    transactionHash: event.transaction.hash,
   };
 
   context.StableRentSubscription_PaymentFailed.set(entity);
@@ -49,6 +52,9 @@ StableRentSubscription.PaymentProcessed.handler(async ({ event, context }) => {
     paymentCount: event.params.paymentCount,
     timestamp: event.params.timestamp,
     nextPaymentDue: event.params.nextPaymentDue,
+    // Blockchain metadata
+    blockNumber: BigInt(event.block.number),
+    transactionHash: event.transaction.hash,
   };
 
   context.StableRentSubscription_PaymentProcessed.set(entity);
@@ -63,6 +69,9 @@ StableRentSubscription.SubscriptionCancelled.handler(async ({ event, context }) 
     recipientId: event.params.recipientId,
     timestamp: event.params.timestamp,
     reason: event.params.reason,
+    // Blockchain metadata
+    blockNumber: BigInt(event.block.number),
+    transactionHash: event.transaction.hash,
   };
 
   context.StableRentSubscription_SubscriptionCancelled.set(entity);
@@ -89,6 +98,9 @@ StableRentSubscription.SubscriptionCreated.handler(async ({ event, context }) =>
     processorFeeCurrency: event.params.processorFeeCurrency,
     processorFeeID: event.params.processorFeeID,
     timestamp: event.params.timestamp,
+    // Blockchain metadata
+    blockNumber: BigInt(event.block.number),
+    transactionHash: event.transaction.hash,
   };
 
   context.StableRentSubscription_SubscriptionCreated.set(entity);

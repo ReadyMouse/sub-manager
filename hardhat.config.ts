@@ -60,9 +60,11 @@ const config: HardhatUserConfig = {
     // "hardhat" is the default local network that Hardhat creates
     // This is where our tests run
     hardhat: {
-      // FORKING CONFIGURATION - This is the key feature for learning!
+      // FORKING CONFIGURATION - Disabled for local testing with Envio
       // Forking creates a local copy of an existing blockchain at a specific point
-      ...(process.env.MAINNET_RPC_URL ? {
+      // NOTE: Disable forking when using Envio locally, as it causes RPC errors
+      // Enable forking only when running tests that need mainnet state
+      ...(process.env.ENABLE_FORKING === 'true' && process.env.MAINNET_RPC_URL ? {
         forking: {
           // url: The RPC endpoint to connect to the real Ethereum mainnet
           // We read it from environment variable MAINNET_RPC_URL

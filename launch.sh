@@ -46,7 +46,8 @@ echo ""
 echo "This script will start the following services:"
 echo "  1. Backend API (user management & database)"
 echo "  2. Local Hardhat blockchain (optional)"
-echo "  3. Frontend application"
+echo "  3. Envio Indexer (optional)"
+echo "  4. Frontend application"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo "============================================================================"
@@ -59,37 +60,49 @@ echo ""
 # Ask user what to start
 echo -e "${CYAN}What would you like to start?${NC}"
 echo ""
-echo "  1) Everything (Backend + Hardhat + Frontend)"
-echo "  2) Backend + Frontend (development mode)"
-echo "  3) Frontend only (connects to existing backend/network)"
-echo "  4) Backend only (API server)"
-echo "  5) Hardhat only (for testing)"
+echo "  1) Everything (Backend + Hardhat + Envio + Frontend)"
+echo "  2) Local Testing (Backend + Hardhat + Envio + Frontend + Fake Data)"
+echo "  3) Backend + Frontend (development mode)"
+echo "  4) Frontend only (connects to existing backend/network)"
+echo "  5) Backend only (API server)"
+echo "  6) Hardhat + Envio (blockchain testing)"
 echo ""
-read -p "Enter choice [1-5]: " CHOICE
+read -p "Enter choice [1-6]: " CHOICE
 echo ""
 
 START_BACKEND=false
 START_HARDHAT=false
+START_ENVIO=false
 START_FRONTEND=false
+GENERATE_FAKE_DATA=false
 
 case $CHOICE in
     1)
         START_BACKEND=true
         START_HARDHAT=true
+        START_ENVIO=true
         START_FRONTEND=true
         ;;
     2)
         START_BACKEND=true
+        START_HARDHAT=true
+        START_ENVIO=true
         START_FRONTEND=true
+        GENERATE_FAKE_DATA=true
         ;;
     3)
+        START_BACKEND=true
         START_FRONTEND=true
         ;;
     4)
-        START_BACKEND=true
+        START_FRONTEND=true
         ;;
     5)
+        START_BACKEND=true
+        ;;
+    6)
         START_HARDHAT=true
+        START_ENVIO=true
         ;;
     *)
         echo -e "${RED}Invalid choice. Exiting.${NC}"
@@ -108,6 +121,46 @@ echo ""
 
 # Create log directory
 mkdir -p logs
+
+# ============================================================================
+# 0. Start Docker (if Envio is needed)
+# ============================================================================
+if [ "$START_ENVIO" = true ]; then
+    echo -e "${BLUE}[0/4] Checking Docker...${NC}"
+    
+    # Check if Docker daemon is running
+    if ! docker ps > /dev/null 2>&1; then
+        echo -e "${YELLOW}       Docker daemon not running, starting Docker Desktop...${NC}"
+        open -a Docker
+        
+        # Wait for Docker daemon to be ready
+        echo -n "       Waiting for Docker daemon to start (this may take 30-60 seconds)"
+        DOCKER_READY=false
+        for i in {1..60}; do
+            if docker ps > /dev/null 2>&1; then
+                echo ""
+                echo -e "${GREEN}       ✅ Docker daemon is running${NC}"
+                DOCKER_READY=true
+                break
+            fi
+            echo -n "."
+            sleep 2
+        done
+        
+        if [ "$DOCKER_READY" = false ]; then
+            echo ""
+            echo -e "${RED}       ❌ Docker daemon failed to start after 2 minutes${NC}"
+            echo -e "${YELLOW}       Please:${NC}"
+            echo -e "${YELLOW}       1. Open Docker Desktop manually${NC}"
+            echo -e "${YELLOW}       2. Wait for it to fully start (whale icon stable in menu bar)${NC}"
+            echo -e "${YELLOW}       3. Run this script again${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}       ✅ Docker daemon is already running${NC}"
+    fi
+    echo ""
+fi
 
 # ============================================================================
 # 1. Start Backend API
@@ -179,46 +232,121 @@ if [ "$START_HARDHAT" = true ]; then
     grep "Account #" logs/hardhat.log | head -3 2>/dev/null || echo "       (check logs/hardhat.log)"
     echo ""
     
-    # Deploy contracts automatically
-    echo -e "${BLUE}       Deploying contracts to local network...${NC}"
-    sleep 2  # Give Hardhat a moment to fully initialize
-    
-    if npx hardhat run scripts/deploy.ts --network localhost > logs/deployment.log 2>&1; then
-        echo -e "${GREEN}       ✅ Contracts deployed successfully${NC}"
+    # Deploy contracts or generate fake data
+    if [ "$GENERATE_FAKE_DATA" = true ]; then
+        echo -e "${BLUE}       Step 1: Generating fake subscription data in database...${NC}"
+        sleep 2  # Give Hardhat a moment to fully initialize
         
-        # Extract contract address from deployment log
-        CONTRACT_ADDRESS=$(grep "VITE_CONTRACT_ADDRESS=" logs/deployment.log | cut -d'=' -f2)
+        if npx tsx scripts/generate-fake-subscriptions.ts > logs/fake-data.log 2>&1; then
+            echo -e "${GREEN}       ✅ Fake data generated in database${NC}"
+        else
+            echo -e "${RED}       ❌ Failed to generate fake data${NC}"
+            echo -e "${YELLOW}       Check logs/fake-data.log for details${NC}"
+        fi
         
-        if [ -n "$CONTRACT_ADDRESS" ]; then
-            echo -e "${CYAN}       📍 StableRent Contract: $CONTRACT_ADDRESS${NC}"
+        echo -e "${BLUE}       Step 2: Deploying contract and emitting blockchain events...${NC}"
+        
+        if npx hardhat run scripts/deploy-and-emit-events.ts --network localhost >> logs/deployment.log 2>&1; then
+            echo -e "${GREEN}       ✅ Contract deployed and events emitted${NC}"
+            echo -e "${CYAN}       📊 Check logs/deployment.log for details${NC}"
             
-            # Update frontend .env if it exists, otherwise create it
-            if [ -f "frontend/.env" ]; then
-                # Remove old contract address if exists
-                grep -v "VITE_CONTRACT_ADDRESS=" frontend/.env > frontend/.env.tmp
-                mv frontend/.env.tmp frontend/.env
+            # Extract contract address from deployment
+            CONTRACT_ADDRESS=$(cat deployments/localhost.json 2>/dev/null | grep -o '"StableRentSubscription": "[^"]*"' | cut -d'"' -f4)
+            
+            if [ -n "$CONTRACT_ADDRESS" ]; then
+                echo -e "${CYAN}       📍 StableRent Contract: $CONTRACT_ADDRESS${NC}"
+                
+                # Update frontend .env
+                if [ -f "frontend/.env" ]; then
+                    grep -v "VITE_CONTRACT_ADDRESS=" frontend/.env > frontend/.env.tmp 2>/dev/null
+                    mv frontend/.env.tmp frontend/.env 2>/dev/null
+                fi
+                echo "VITE_CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> frontend/.env
+                echo -e "${GREEN}       ✅ Frontend .env updated${NC}"
             fi
-            
-            # Append new contract address
-            echo "VITE_CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> frontend/.env
-            echo -e "${GREEN}       ✅ Frontend .env updated with contract address${NC}"
+        else
+            echo -e "${YELLOW}       ⚠️  Deployment failed - check logs/deployment.log${NC}"
         fi
     else
-        echo -e "${YELLOW}       ⚠️  Contract deployment failed - check logs/deployment.log${NC}"
+        echo -e "${BLUE}       Deploying contracts to local network...${NC}"
+        sleep 2  # Give Hardhat a moment to fully initialize
+        
+        if npx hardhat run scripts/deploy.ts --network localhost > logs/deployment.log 2>&1; then
+            echo -e "${GREEN}       ✅ Contracts deployed successfully${NC}"
+            
+            # Extract contract address from deployment log
+            CONTRACT_ADDRESS=$(grep "VITE_CONTRACT_ADDRESS=" logs/deployment.log | cut -d'=' -f2)
+            
+            if [ -n "$CONTRACT_ADDRESS" ]; then
+                echo -e "${CYAN}       📍 StableRent Contract: $CONTRACT_ADDRESS${NC}"
+                
+                # Update frontend .env if it exists, otherwise create it
+                if [ -f "frontend/.env" ]; then
+                    # Remove old contract address if exists
+                    grep -v "VITE_CONTRACT_ADDRESS=" frontend/.env > frontend/.env.tmp 2>/dev/null
+                    mv frontend/.env.tmp frontend/.env 2>/dev/null
+                fi
+                
+                # Append new contract address
+                echo "VITE_CONTRACT_ADDRESS=$CONTRACT_ADDRESS" >> frontend/.env
+                echo -e "${GREEN}       ✅ Frontend .env updated with contract address${NC}"
+            fi
+        else
+            echo -e "${YELLOW}       ⚠️  Contract deployment failed - check logs/deployment.log${NC}"
+        fi
     fi
     echo ""
 fi
 
 # ============================================================================
-# 3. Start Frontend
+# 3. Start Envio Indexer (Optional)
+# ============================================================================
+if [ "$START_ENVIO" = true ]; then
+    # Determine step number
+    STEP_NUM="1/1"
+    if [ "$START_BACKEND" = true ] && [ "$START_HARDHAT" = true ]; then
+        STEP_NUM="3/4"
+    elif [ "$START_BACKEND" = true ] || [ "$START_HARDHAT" = true ]; then
+        STEP_NUM="2/3"
+    fi
+    
+    echo -e "${BLUE}[$STEP_NUM] Starting Envio indexer...${NC}"
+    echo -e "${YELLOW}       Logs: logs/envio.log${NC}"
+    
+    cd envio
+    pnpm dev:local > ../logs/envio.log 2>&1 &
+    ENVIO_PID=$!
+    cd ..
+    
+    # Wait for Envio to start
+    echo -n "       Waiting for Envio indexer to start"
+    sleep 3
+    for i in {1..20}; do
+        if curl -s http://localhost:8080/graphql -H "Content-Type: application/json" -d '{"query":"{ __schema { types { name } } }"}' > /dev/null 2>&1; then
+            echo ""
+            echo -e "${GREEN}       ✅ Envio indexer running (PID: $ENVIO_PID)${NC}"
+            echo -e "${CYAN}       📍 http://localhost:8080/graphql${NC}"
+            break
+        fi
+        echo -n "."
+        sleep 1
+    done
+    echo ""
+    echo ""
+fi
+
+# ============================================================================
+# 4. Start Frontend
 # ============================================================================
 if [ "$START_FRONTEND" = true ]; then
     if [ -d "frontend" ]; then
         # Determine step number
         STEP_NUM="1/1"
-        if [ "$START_BACKEND" = true ] && [ "$START_HARDHAT" = true ]; then
+        if [ "$START_BACKEND" = true ] && [ "$START_HARDHAT" = true ] && [ "$START_ENVIO" = true ]; then
+            STEP_NUM="4/4"
+        elif [ "$START_BACKEND" = true ] && [ "$START_HARDHAT" = true ]; then
             STEP_NUM="3/3"
-        elif [ "$START_BACKEND" = true ] || [ "$START_HARDHAT" = true ]; then
+        elif [ "$START_BACKEND" = true ] || [ "$START_HARDHAT" = true ] || [ "$START_ENVIO" = true ]; then
             STEP_NUM="2/2"
         fi
         
@@ -281,7 +409,11 @@ if [ "$START_HARDHAT" = true ]; then
     echo -e "   URL: http://localhost:8545"
     echo -e "   Chain ID: 31337"
     echo -e "   Logs: logs/hardhat.log"
-    echo -e "   Deployment: logs/deployment.log"
+    if [ "$GENERATE_FAKE_DATA" = true ]; then
+        echo -e "   Fake Data: logs/fake-data.log"
+    else
+        echo -e "   Deployment: logs/deployment.log"
+    fi
     echo -e "   PID: $HARDHAT_PID"
     echo ""
     
@@ -293,6 +425,26 @@ if [ "$START_HARDHAT" = true ]; then
         fi
         echo ""
     fi
+    
+    if [ "$GENERATE_FAKE_DATA" = true ]; then
+        echo -e "   ${CYAN}Fake Data:${NC}"
+        echo -e "   • Generated fake subscriptions and payments"
+        echo -e "   • Check database for details: cd backend && npx prisma studio"
+        echo ""
+    fi
+fi
+
+if [ "$START_ENVIO" = true ]; then
+    echo -e "${MAGENTA}📊 Envio Indexer:${NC}"
+    echo -e "   GraphQL API: http://localhost:8080/graphql"
+    echo -e "   Config: envio/config.local.yaml (Local Hardhat)"
+    echo -e "   Logs: logs/envio.log"
+    echo -e "   PID: $ENVIO_PID"
+    echo ""
+    echo -e "   ${CYAN}Query Examples:${NC}"
+    echo -e "   • Open http://localhost:8080/graphql in browser"
+    echo -e "   • Test with: npx tsx scripts/test-envio-indexer.ts"
+    echo ""
 fi
 
 if [ "$START_FRONTEND" = true ] && [ -d "frontend" ]; then
@@ -344,7 +496,14 @@ if [ "$START_BACKEND" = true ]; then
 fi
 if [ "$START_HARDHAT" = true ]; then
     echo "  tail -f logs/hardhat.log      # Hardhat blockchain"
-    echo "  tail -f logs/deployment.log   # Contract deployment"
+    if [ "$GENERATE_FAKE_DATA" = true ]; then
+        echo "  tail -f logs/fake-data.log    # Fake data generation"
+    else
+        echo "  tail -f logs/deployment.log   # Contract deployment"
+    fi
+fi
+if [ "$START_ENVIO" = true ]; then
+    echo "  tail -f logs/envio.log        # Envio indexer"
 fi
 if [ "$START_FRONTEND" = true ]; then
     echo "  tail -f logs/frontend.log     # Frontend"
