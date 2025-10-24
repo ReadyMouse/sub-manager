@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { SkeletonList } from '../components/Skeleton';
-import { formatPYUSD, formatDateTime } from '../lib/utils';
+import { formatPYUSD } from '../lib/utils';
 import { apolloClient } from '../lib/apollo';
 import { gql } from '@apollo/client/index.js';
 
