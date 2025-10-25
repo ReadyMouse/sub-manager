@@ -45,6 +45,13 @@ export interface RailwaySubscription {
 
 // Helper to convert Railway subscription to the Subscription type expected by components
 export const convertRailwaySubscription = (sub: RailwaySubscription): SubscriptionType & { serviceName: string } => {
+  // Convert ISO date strings to Unix timestamps (seconds)
+  const parseDate = (dateStr: string | undefined): number => {
+    if (!dateStr) return 0;
+    const timestamp = new Date(dateStr).getTime();
+    return Math.floor(timestamp / 1000); // Convert ms to seconds
+  };
+
   return {
     id: sub.id,
     subscriber: (sub.senderWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
@@ -52,11 +59,11 @@ export const convertRailwaySubscription = (sub: RailwaySubscription): Subscripti
     serviceName: sub.serviceName, // Add serviceName for convenience
     amount: BigInt(sub.amount || '0'),
     interval: sub.interval,
-    nextPaymentDue: parseInt(sub.nextPaymentDue),
+    nextPaymentDue: parseDate(sub.nextPaymentDue),
     isActive: sub.isActive,
     failedPaymentCount: sub.failedPaymentCount,
-    createdAt: parseInt(sub.createdAt),
-    endDate: sub.endDate ? parseInt(sub.endDate) : undefined,
+    createdAt: parseDate(sub.createdAt),
+    endDate: sub.endDate ? parseDate(sub.endDate) : undefined,
     maxPayments: sub.maxPayments,
     paymentCount: sub.paymentCount,
     processorFee: BigInt(sub.processorFee || '0'),
@@ -85,7 +92,6 @@ export const useSubscriptions = () => {
 
   const fetchSubscriptions = async () => {
     if (!token) {
-      console.log('[useSubscriptions] No token available');
       setLoading(false);
       return;
     }
@@ -94,13 +100,8 @@ export const useSubscriptions = () => {
       setLoading(true);
       setError(null);
 
-      console.log('[useSubscriptions] Fetching subscriptions...');
       const response = await subscriptionApi.getAll(token);
-      console.log('[useSubscriptions] API response:', response);
       const rawData = response.data as RailwaySubscriptionsResponse;
-      console.log('[useSubscriptions] Raw data:', rawData);
-      console.log('[useSubscriptions] Sent count:', rawData?.sent?.length || 0);
-      console.log('[useSubscriptions] Received count:', rawData?.received?.length || 0);
       
       // Convert Railway format to component-expected format
       const convertedData: SubscriptionsResponse = {
@@ -108,7 +109,6 @@ export const useSubscriptions = () => {
         received: (rawData?.received || []).map(convertRailwaySubscription),
       };
       
-      console.log('[useSubscriptions] Converted data:', convertedData);
       setSubscriptions(convertedData);
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
