@@ -1,15 +1,13 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-# LOCAL TESTING CONFIG - Uses local Hardhat WITHOUT forking
+# PRODUCTION CONFIG - Uses Sepolia Testnet
 name: envio-indexer
 networks:
-- id: 31337  # Local Hardhat network (NO FORKING)
+- id: 11155111  # Sepolia Testnet
   start_block: 0
-  rpc_config:
-    url: http://127.0.0.1:8545  # Local Hardhat node
   contracts:
   - name: StableRentSubscription
     address:
-    - 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512  # Contract from back-propagation script
+    - 0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339  # Production contract on Sepolia
     handler: src/EventHandlers.ts
     events:
     - event: OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
@@ -22,4 +20,3 @@ field_selection:
     - hash
 unordered_multichain_mode: true
 preload_handlers: true
-
