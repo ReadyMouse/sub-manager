@@ -216,6 +216,8 @@ Cursor + Claude AI was used to support development.
 - Automation is currently a cron local -> Gelato or Chainlink for Automation
 - Contracts are not yet Verified on Etherscan
 - Confusing handling of the .env files (main, frontend, backend, envio.env, hardcoded, browser)
+- How to handle the allowance going through, but the subscription cancelling/ending early/etc.
+ 
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"

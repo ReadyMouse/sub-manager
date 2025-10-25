@@ -16,6 +16,8 @@ export const CreateSubscription: React.FC = () => {
   const { signMessageAsync } = useSignMessage();
   const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess, hash: transactionHash } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
+  // Kept for future use - currently disabled to force new allowance approval for each subscription
+  // @ts-expect-error - allowance is intentionally unused
   const { allowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
@@ -321,42 +323,44 @@ export const CreateSubscription: React.FC = () => {
   }, [approveError, toast, hasShownApproveError]);
 
   // Check if allowance is already sufficient
-  useEffect(() => {
-    if (allowance && formData.amount) {
-      const requiredAllowance = allowanceType === 'calculated' 
-        ? calculateTotalAllowance().total 
-        : customAllowance;
-      
-      if (requiredAllowance && parseFloat(requiredAllowance) > 0) {
-        // Convert allowance from wei (6 decimals for PYUSD) to USD
-        const allowanceInUSD = Number(allowance) / 1_000_000;
-        const requiredInUSD = parseFloat(requiredAllowance);
-        
-        console.log('Allowance check:', {
-          allowanceInUSD,
-          requiredInUSD,
-          isSufficient: allowanceInUSD >= requiredInUSD,
-          currentIsApproved: isApproved,
-          hasApproveSuccess: isApproveSuccess,
-          hasApproveHash: !!approveHash
-        });
-        
-        if (allowanceInUSD >= requiredInUSD) {
-          if (!isApproved) {
-            console.log('Setting isApproved to true based on allowance check');
-            setIsApproved(true);
-          }
-        } else {
-          // Don't override approval state if there's a recent successful approval
-          // Wait for allowance to update on-chain
-          if (isApproved && !isApproveSuccess && !approveHash) {
-            console.log('Setting isApproved to false - insufficient allowance');
-            setIsApproved(false);
-          }
-        }
-      }
-    }
-  }, [allowance, formData.amount, allowanceType, customAllowance, isApproved, isApproveSuccess, approveHash]);
+  // DISABLED: We want to force users to sign a new allowance for each subscription
+  // This prevents confusion about which allowance applies to which subscription
+  // useEffect(() => {
+  //   if (allowance && formData.amount) {
+  //     const requiredAllowance = allowanceType === 'calculated' 
+  //       ? calculateTotalAllowance().total 
+  //       : customAllowance;
+  //     
+  //     if (requiredAllowance && parseFloat(requiredAllowance) > 0) {
+  //       // Convert allowance from wei (6 decimals for PYUSD) to USD
+  //       const allowanceInUSD = Number(allowance) / 1_000_000;
+  //       const requiredInUSD = parseFloat(requiredAllowance);
+  //       
+  //       console.log('Allowance check:', {
+  //         allowanceInUSD,
+  //         requiredInUSD,
+  //         isSufficient: allowanceInUSD >= requiredInUSD,
+  //         currentIsApproved: isApproved,
+  //         hasApproveSuccess: isApproveSuccess,
+  //         hasApproveHash: !!approveHash
+  //       });
+  //       
+  //       if (allowanceInUSD >= requiredInUSD) {
+  //         if (!isApproved) {
+  //           console.log('Setting isApproved to true based on allowance check');
+  //           setIsApproved(true);
+  //         }
+  //       } else {
+  //         // Don't override approval state if there's a recent successful approval
+  //         // Wait for allowance to update on-chain
+  //         if (isApproved && !isApproveSuccess && !approveHash) {
+  //           console.log('Setting isApproved to false - insufficient allowance');
+  //           setIsApproved(false);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }, [allowance, formData.amount, allowanceType, customAllowance, isApproved, isApproveSuccess, approveHash]);
 
   // Handle wallet authentication
   const authenticateWithWallet = async (): Promise<boolean> => {
@@ -1204,21 +1208,13 @@ export const CreateSubscription: React.FC = () => {
         <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-8">
           <h2 className="text-xl font-bold text-brand-navy mb-6">Payment Approval</h2>
           <div className="space-y-4">
-            {/* Balance and Allowance Info */}
+            {/* Balance Info */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Your PYUSD Balance:</span>
                 <span className="font-semibold text-gray-900">
                   {pyusdBalance !== undefined 
                     ? `$${(Number(pyusdBalance) / 1_000_000).toFixed(2)}` 
-                    : 'Loading...'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Current Allowance:</span>
-                <span className="font-semibold text-gray-900">
-                  {allowance !== undefined 
-                    ? `$${(Number(allowance) / 1_000_000).toFixed(2)}` 
                     : 'Loading...'}
                 </span>
               </div>
