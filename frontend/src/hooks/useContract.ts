@@ -41,8 +41,9 @@ export const useStableRentContract = () => {
   ) => {
     const amountWei = parsePYUSD(amount);
     // Calculate processor fee (5% of amount) if not provided
+    // NOTE: processorFee is already in wei format (as string), don't parse it again!
     const feeWei = processorFee 
-      ? parsePYUSD(processorFee)
+      ? BigInt(processorFee)
       : (amountWei * BigInt(5)) / BigInt(100);
     
     console.log('=== CREATE SUBSCRIPTION TRANSACTION DEBUG ===');
