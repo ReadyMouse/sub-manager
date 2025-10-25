@@ -428,16 +428,17 @@ export const CreateSubscription: React.FC = () => {
             ? recipientDetails!.recipientId 
             : null;
           
-          // Calculate processor fee using configured percentage
-          const amountFloat = parseFloat(formData.amount);
-          const processorFeeAmount = (amountFloat * processorFeePercent).toFixed(2);
+          // Convert amounts to base units (PYUSD has 6 decimals)
+          // This matches what we send to the blockchain contract
+          const amountWei = parsePYUSD(formData.amount);
+          const processorFeeWei = (amountWei * BigInt(Math.floor(processorFeePercent * 100))) / BigInt(100);
           
           await subscriptionApi.create({
             chainId: 11155111, // Sepolia
             onChainId: subscriptionId,
             recipientId: recipientIdValue,
             serviceName: formData.serviceName,
-            amount: formData.amount,
+            amount: amountWei.toString(), // Send as base units (e.g., "5000000" for $5)
             interval: formData.interval,
             nextPaymentDue: new Date(formData.startDate).toISOString(),
             endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
@@ -450,8 +451,8 @@ export const CreateSubscription: React.FC = () => {
             recipientCurrency: recipientInputType === 'lookup'
               ? recipientDetails!.recipientCurrency
               : formData.recipientWalletCurrency,
-            // Include processor fee information
-            processorFee: processorFeeAmount,
+            // Include processor fee information in base units
+            processorFee: processorFeeWei.toString(), // Send as base units (e.g., "250000" for $0.25)
             processorFeeAddress: processorFeeConfig.processorFeeAddress,
             processorFeeCurrency: processorFeeConfig.processorFeeCurrency,
             processorFeeID: processorFeeConfig.processorFeeID,

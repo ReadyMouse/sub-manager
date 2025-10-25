@@ -150,7 +150,7 @@ export const MySubscriptions: React.FC = () => {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => navigate('/subscriptions')}
+              onClick={() => navigate('/settings?tab=subscriptions')}
               className="btn-secondary"
             >
               ← Back to Subscriptions

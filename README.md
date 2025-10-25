@@ -58,6 +58,8 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 ---
 ## Business Plans 
 
+![Future Vision](/frontend/src/assets/future_vision.png)
+
 ![Business Model graphic](/frontend/src/assets/business_mdoels_grey.png)
 
 ## Potential Path Forward
