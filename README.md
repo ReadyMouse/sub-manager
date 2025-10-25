@@ -46,7 +46,7 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 ### Backend + Database
 **Railway** [stablerent-backend](https://backend-production-a05e.up.railway.app)
-**Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/bd905e6/v1/graphql)
+**Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/89cd207/v1/graphql)
 
 ### 🎯 **How to Test**
 1. Visit the live demo [StableRent](https://stablerent.vercel.app/)
@@ -119,6 +119,14 @@ Deploying the gelato automation contracts:
 ```bash
 npm run deploy:gelato:sepolia
 ```
+
+Pushing Changes: 
+* Enable auto re-deploy on git push in Envio browser 
+* Push changes (this will trigger Envio + frontend to rebuild)
+* Go back to Envio, disable auto re-deploy, get endpoint URL 
+* Change endpoint URL for frontend in variables in browswer (will trigger redeploy) 
+* Re-deploy the backend if needed ```cd backend & railway up ```
+* Hire a devOps/Automation engineer 
 
 📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
 
