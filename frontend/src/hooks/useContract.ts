@@ -45,6 +45,7 @@ export const useStableRentContract = () => {
       ? parsePYUSD(processorFee)
       : (amountWei * BigInt(5)) / BigInt(100);
     
+    console.log('=== CREATE SUBSCRIPTION TRANSACTION DEBUG ===');
     console.log('Creating subscription with parameters:', {
       senderId,
       recipientId,
@@ -53,7 +54,9 @@ export const useStableRentContract = () => {
       interval,
       serviceName,
       startDate,
+      startDateReadable: new Date(startDate * 1000).toISOString(),
       endDate,
+      endDateReadable: endDate ? new Date(endDate * 1000).toISOString() : 'None',
       maxPayments,
       recipientAddress,
       senderCurrency,
@@ -65,35 +68,29 @@ export const useStableRentContract = () => {
     });
     
     try {
-      console.log('About to call writeContract with:', {
-        address: CONTRACTS.StableRentSubscription,
-        functionName: 'createSubscription'
+      console.log('Contract details:', {
+        contractAddress: CONTRACTS.StableRentSubscription,
+        functionName: 'createSubscription',
+        gasLimit: '1000000'
       });
       
-      // First, let's try to simulate the call to see if we can get a better error message
-      try {
-        console.log('Simulating contract call...');
-        // We can't easily simulate with wagmi, but let's log the exact parameters
-        console.log('Contract call parameters:', {
-          senderId: BigInt(senderId || 0),
-          recipientId: BigInt(recipientId || 0),
-          amount: amountWei,
-          interval: BigInt(interval),
-          serviceName,
-          startDate: BigInt(startDate),
-          endDate: BigInt(endDate || 0),
-          maxPayments: BigInt(maxPayments || 0),
-          recipientAddress: recipientAddress || ('0x0000000000000000000000000000000000000000' as Address),
-          senderCurrency: senderCurrency || 'PYUSD',
-          recipientCurrency: recipientCurrency || 'PYUSD',
-          processorFee: feeWei,
-          processorFeeAddress: processorFeeAddress || (CONTRACTS.StableRentSubscription as Address),
-          processorFeeCurrency: processorFeeCurrency || 'PYUSD',
-          processorFeeID: BigInt(processorFeeID || 0),
-        });
-      } catch (simError) {
-        console.error('Simulation error:', simError);
-      }
+      console.log('Contract call arguments (exact order):', [
+        BigInt(senderId || 0).toString(),
+        BigInt(recipientId || 0).toString(),
+        amountWei.toString(),
+        BigInt(interval).toString(),
+        serviceName,
+        BigInt(startDate).toString(),
+        BigInt(endDate || 0).toString(),
+        BigInt(maxPayments || 0).toString(),
+        recipientAddress || '0x0000000000000000000000000000000000000000',
+        senderCurrency || 'PYUSD',
+        recipientCurrency || 'PYUSD',
+        feeWei.toString(),
+        processorFeeAddress || CONTRACTS.StableRentSubscription,
+        processorFeeCurrency || 'PYUSD',
+        BigInt(processorFeeID || 0).toString(),
+      ]);
       
       const result = await writeContract({
         address: CONTRACTS.StableRentSubscription as Address,
@@ -112,28 +109,44 @@ export const useStableRentContract = () => {
           senderCurrency || 'PYUSD',
           recipientCurrency || 'PYUSD',
           feeWei,
-          processorFeeAddress || (CONTRACTS.StableRentSubscription as Address), // Default to contract address
+          processorFeeAddress || (CONTRACTS.StableRentSubscription as Address),
           processorFeeCurrency || 'PYUSD',
           BigInt(processorFeeID || 0),
         ],
-        gas: 1000000n, // Set a high gas limit to avoid estimation issues
+        gas: 1000000n,
       });
       
-      console.log('Write contract result:', result);
+      console.log('✅ CREATE SUBSCRIPTION SUCCESS!');
+      console.log('Transaction hash:', result);
+      console.log('=== END CREATE SUBSCRIPTION DEBUG ===');
       return result;
     } catch (error) {
-      console.error('Write contract error:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        code: (error as any)?.code || 'Unknown code',
-        details: error
-      });
+      console.error('❌ CREATE SUBSCRIPTION FAILED!');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Full error object:', error);
       
-      // Try to extract more specific error information
-      if (error instanceof Error && error.message.includes('reverted')) {
-        console.error('Contract reverted with reason:', error.message);
+      // Extract detailed error information
+      if (error && typeof error === 'object') {
+        const errObj = error as any;
+        if (errObj.code) console.error('Error code:', errObj.code);
+        if (errObj.data) console.error('Error data:', errObj.data);
+        if (errObj.reason) console.error('Error reason:', errObj.reason);
+        if (errObj.cause) console.error('Error cause:', errObj.cause);
+        if (errObj.shortMessage) console.error('Short message:', errObj.shortMessage);
+        if (errObj.metaMessages) console.error('Meta messages:', errObj.metaMessages);
+        
+        // Check for revert reason
+        if (errObj.message && errObj.message.includes('reverted')) {
+          console.error('⚠️  Contract reverted! Looking for reason...');
+          const revertMatch = errObj.message.match(/reverted with reason string '(.+?)'/);
+          if (revertMatch) {
+            console.error('🔴 REVERT REASON:', revertMatch[1]);
+          }
+        }
       }
       
+      console.log('=== END CREATE SUBSCRIPTION DEBUG ===');
       throw error;
     }
   };

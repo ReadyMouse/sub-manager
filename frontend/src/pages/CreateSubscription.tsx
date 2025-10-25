@@ -294,21 +294,28 @@ export const CreateSubscription: React.FC = () => {
       console.error('Approve error:', approveError);
       
       // Provide more specific error messages
+      let errorTitle = 'Approval Failed';
       let errorMessage = 'Failed to approve PYUSD allowance. Please try again.';
       
       if (approveError.message) {
-        if (approveError.message.includes('Insufficient funds')) {
-          errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
-        } else if (approveError.message.includes('User rejected')) {
-          errorMessage = 'Transaction was rejected. Please try again.';
+        if (approveError.message.includes('Insufficient funds') || approveError.message.includes('insufficient funds')) {
+          errorTitle = 'Insufficient Gas';
+          errorMessage = 'You don\'t have enough ETH to pay for gas fees. Please add ETH to your wallet.';
+        } else if (approveError.message.includes('User rejected') || approveError.message.includes('User denied')) {
+          errorTitle = 'Transaction Rejected';
+          errorMessage = 'You rejected the transaction. If MetaMask showed "likely to fail", this usually means you don\'t have enough PYUSD balance. Check your balance above.';
         } else if (approveError.message.includes('Internal JSON-RPC error')) {
+          errorTitle = 'Network Error';
           errorMessage = 'Network error occurred. Please check your connection and try again.';
+        } else if (approveError.message.includes('execution reverted')) {
+          errorTitle = 'Transaction Failed';
+          errorMessage = 'Transaction was reverted. Please ensure you\'re on Sepolia testnet and have sufficient PYUSD balance.';
         } else {
           errorMessage = approveError.message;
         }
       }
       
-      toast.error('Approval Failed', errorMessage);
+      toast.error(errorTitle, errorMessage);
       setHasShownApproveError(true);
     }
   }, [approveError, toast, hasShownApproveError]);
@@ -549,16 +556,19 @@ export const CreateSubscription: React.FC = () => {
         return;
       }
 
-      // Note: No PYUSD balance check needed for approval - this only sets allowance permission
-      // User only needs ETH for gas, not PYUSD tokens
+      // Note: Approval doesn't require PYUSD balance - it only sets allowance permission
+      // User only needs ETH for gas fees
 
-      // Debug logging
+      // Enhanced debug logging to help diagnose MetaMask "likely to fail" errors
+      console.log('=== APPROVAL TRANSACTION DEBUG ===');
       console.log('Approval details:', {
         spender: CONTRACTS.StableRentSubscription,
         amount: approvalAmount,
         amountWei: parsePYUSD(approvalAmount).toString(),
         pyusdAddress: CONTRACTS.PYUSD,
         userAddress: address,
+        currentPYUSDBalance: pyusdBalance !== undefined ? (Number(pyusdBalance) / 1_000_000).toFixed(2) : 'unknown',
+        gasLimit: '100000'
       });
       
       console.log('Contract addresses:', {
@@ -567,11 +577,32 @@ export const CreateSubscription: React.FC = () => {
       });
 
       toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
-      const result = await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
-      console.log('Approval result:', result);
+      
+      try {
+        const result = await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
+        console.log('✅ Approval transaction submitted successfully!');
+        console.log('Transaction hash:', result);
+        console.log('=== END APPROVAL DEBUG ===');
+      } catch (approveErr) {
+        console.error('❌ APPROVAL TRANSACTION FAILED');
+        console.error('Error type:', approveErr?.constructor?.name);
+        console.error('Error message:', approveErr instanceof Error ? approveErr.message : String(approveErr));
+        console.error('Full error object:', approveErr);
+        
+        // Try to extract more details from the error
+        if (approveErr && typeof approveErr === 'object') {
+          const errObj = approveErr as any;
+          if (errObj.code) console.error('Error code:', errObj.code);
+          if (errObj.data) console.error('Error data:', errObj.data);
+          if (errObj.reason) console.error('Error reason:', errObj.reason);
+          if (errObj.cause) console.error('Error cause:', errObj.cause);
+        }
+        console.log('=== END APPROVAL DEBUG ===');
+        throw approveErr; // Re-throw so the useEffect error handler can show the toast
+      }
       
     } catch (error) {
-      console.error('Approve failed:', error);
+      console.error('Outer catch - Approve failed:', error);
       // Error is already handled by useEffect hook
     }
   };
@@ -722,8 +753,35 @@ export const CreateSubscription: React.FC = () => {
       // The transaction will be handled by the success effect
       // which will save metadata and redirect to subscriptions page
     } catch (error) {
-      console.error('Create subscription failed:', error);
-      toast.error('Error', 'Failed to create subscription');
+      console.error('❌ CREATE SUBSCRIPTION PAGE ERROR');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Full error:', error);
+      
+      // Provide more specific error messages based on the error
+      let errorTitle = 'Error';
+      let errorMessage = 'Failed to create subscription';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected') || error.message.includes('User denied')) {
+          errorTitle = 'Transaction Rejected';
+          errorMessage = 'You rejected the transaction in MetaMask. Please try again.';
+        } else if (error.message.includes('insufficient funds') || error.message.includes('Insufficient funds')) {
+          errorTitle = 'Insufficient Gas';
+          errorMessage = 'Not enough ETH for gas fees. Please add ETH to your wallet.';
+        } else if (error.message.includes('ERC20: insufficient allowance')) {
+          errorTitle = 'Insufficient Allowance';
+          errorMessage = 'PYUSD allowance is insufficient. Please approve PYUSD again.';
+        } else if (error.message.includes('Start date must be in the future')) {
+          errorTitle = 'Invalid Date';
+          errorMessage = 'Start date must be in the future. Please check the contract requirements.';
+        } else {
+          // Show the actual error message
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorTitle, errorMessage);
     }
   };
 

@@ -46,7 +46,7 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 ### Backend + Database
 **Railway** [stablerent-backend](https://backend-production-a05e.up.railway.app)
-**Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/89cd207/v1/graphql)
+**Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/02074d1/v1/graphql)
 
 ### 🎯 **How to Test**
 1. Visit the live demo [StableRent](https://stablerent.vercel.app/)
