@@ -85,6 +85,7 @@ export const useSubscriptions = () => {
 
   const fetchSubscriptions = async () => {
     if (!token) {
+      console.log('[useSubscriptions] No token available');
       setLoading(false);
       return;
     }
@@ -93,15 +94,21 @@ export const useSubscriptions = () => {
       setLoading(true);
       setError(null);
 
+      console.log('[useSubscriptions] Fetching subscriptions...');
       const response = await subscriptionApi.getAll(token);
+      console.log('[useSubscriptions] API response:', response);
       const rawData = response.data as RailwaySubscriptionsResponse;
+      console.log('[useSubscriptions] Raw data:', rawData);
+      console.log('[useSubscriptions] Sent count:', rawData?.sent?.length || 0);
+      console.log('[useSubscriptions] Received count:', rawData?.received?.length || 0);
       
       // Convert Railway format to component-expected format
       const convertedData: SubscriptionsResponse = {
-        sent: rawData.sent.map(convertRailwaySubscription),
-        received: rawData.received.map(convertRailwaySubscription),
+        sent: (rawData?.sent || []).map(convertRailwaySubscription),
+        received: (rawData?.received || []).map(convertRailwaySubscription),
       };
       
+      console.log('[useSubscriptions] Converted data:', convertedData);
       setSubscriptions(convertedData);
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
