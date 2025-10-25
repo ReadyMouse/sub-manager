@@ -52,26 +52,44 @@ export const convertRailwaySubscription = (sub: RailwaySubscription): Subscripti
     return Math.floor(timestamp / 1000); // Convert ms to seconds
   };
 
-  return {
-    id: sub.id,
-    subscriber: (sub.senderWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
-    serviceProviderId: sub.serviceName,
-    serviceName: sub.serviceName, // Add serviceName for convenience
-    amount: BigInt(sub.amount || '0'),
-    interval: sub.interval,
-    nextPaymentDue: parseDate(sub.nextPaymentDue),
-    isActive: sub.isActive,
-    failedPaymentCount: sub.failedPaymentCount,
-    createdAt: parseDate(sub.createdAt),
-    endDate: sub.endDate ? parseDate(sub.endDate) : undefined,
-    maxPayments: sub.maxPayments,
-    paymentCount: sub.paymentCount,
-    processorFee: BigInt(sub.processorFee || '0'),
-    processorFeeAddress: (sub.processorFeeAddress || '0x0000000000000000000000000000000000000000') as Address,
-    processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
-    processorFeeID: sub.processorFeeID || '0',
-    recipientAddress: (sub.recipientWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
+  // Safe BigInt conversion with error handling
+  const safeBigInt = (value: string | number | undefined, fieldName: string): bigint => {
+    try {
+      if (value === undefined || value === null || value === '') return 0n;
+      // If it's already a number, convert to string first
+      const strValue = typeof value === 'number' ? value.toString() : value;
+      return BigInt(strValue);
+    } catch (err) {
+      console.error(`Failed to convert ${fieldName} to BigInt:`, value, err);
+      return 0n;
+    }
   };
+
+  try {
+    return {
+      id: sub.id,
+      subscriber: (sub.senderWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
+      serviceProviderId: sub.serviceName,
+      serviceName: sub.serviceName, // Add serviceName for convenience
+      amount: safeBigInt(sub.amount, 'amount'),
+      interval: sub.interval,
+      nextPaymentDue: parseDate(sub.nextPaymentDue),
+      isActive: sub.isActive,
+      failedPaymentCount: sub.failedPaymentCount,
+      createdAt: parseDate(sub.createdAt),
+      endDate: sub.endDate ? parseDate(sub.endDate) : undefined,
+      maxPayments: sub.maxPayments,
+      paymentCount: sub.paymentCount,
+      processorFee: safeBigInt(sub.processorFee, 'processorFee'),
+      processorFeeAddress: (sub.processorFeeAddress || '0x0000000000000000000000000000000000000000') as Address,
+      processorFeeCurrency: sub.processorFeeCurrency || 'PYUSD',
+      processorFeeID: sub.processorFeeID || '0',
+      recipientAddress: (sub.recipientWalletAddress || '0x0000000000000000000000000000000000000000') as Address,
+    };
+  } catch (err) {
+    console.error('Failed to convert subscription:', sub, err);
+    throw err;
+  }
 };
 
 export interface SubscriptionsResponse {
