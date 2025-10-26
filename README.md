@@ -14,7 +14,7 @@ StableRent is a tool for property owners and residents to use Stablecoin digital
 **Discussion in the Industry**: https://www.linkedin.com/posts/shuhaib_crypto-rent-the-100-billion-shift-no-activity-7348397294506975232-thtY/
 
 **Our Solution:**
-StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Gelato Network automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project will leverage Hardhat's capability to fork mainnet ETH for development. 
+StableRent enables users to create recurring rental payments using PYUSD (PayPal's stablecoin) through the ERC-20 allowance pattern to auto-off-ramp into the landlord's PayPal account. Landlords can easily withdraw their PYUSD into their fiat Paypal account, without understanding too much of the crypto world, facilitating greater adoption. Money stays in the renter's wallet until payment is due, preserving financial sovereignty. Backend automation monitors rent due dates and automatically triggers payments from Renter's PYUSD -> Landlord's PYUSD PayPal account when due. The crypto ACH. Truly "set and forget" recurring payments. An Envio-powered indexer tracks all payment events to provide a unified dashboard where renters manage their rent payments, view payment history, and receive balance warnings. Landlords can see payment history, as well as run financial qualification searches to check renter's assets. This project leveraged Hardhat 3's capability to fork mainnet ETH for development. 
 
 **Target Audience:** Crypto-native users who want to pay rent without off-ramping to a traditional bank account.
 
@@ -33,20 +33,28 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 - Rapid multi-chain indexing of renter's addresses to get account balances (on-demand of landlord)
 - Tools for tracking subscriptions and on-chain events without centralized database tracking, or slow block parsing
 
-**Why Hardhat**:
+**Why Hardhat 3**:
 - The forking of mainnet ETH is invaluable for testing indexing of account balances
 - The simulated blockchain is game-changer for rapid development without faucets or testnets
+- Back-dating events on the simulated blockchain enable Envio Index to be fully tested without waiting for many recurring events to happen and then have something to index
 
 ## 🚀 Current Deployment Status
-### Sepolia Contract Deployment
-**🔗 Subscription Smart Contract:** [0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339](https://sepolia.etherscan.io/address/0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339)  
+### Links
+**Subscription Smart Contract:** [0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339](https://sepolia.etherscan.io/address/0x278dD89e80B01772affcC8cAEa6e45fFF8Ae3339)  
 
-### Frontend Demo
 **Frontend:** [StableRent](https://stablerent.vercel.app/)
 
-### Backend + Database
-**Railway** [stablerent-backend](https://backend-production-a05e.up.railway.app)
+**Backend** [Railway](https://backend-production-a05e.up.railway.app)
+
 **Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/02074d1/v1/graphql)
+
+### Other Documentation Files
+
+* [Relevant Links and Hashes](DEMO.md)
+* [Technical Architecture](ARCHITECTURE.md)
+* [Deployment and Operating Guides](DEPLOYMENT_GUIDE.md)
+* [Backend README](/backend/README.md)
+* [Frontend README](/frontend/README.md)
 
 ### 🎯 **How to Test**
 1. Visit the live demo [StableRent](https://stablerent.vercel.app/)
@@ -65,12 +73,12 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 ## Potential Path Forward
 
 -> Investigate need for Money Transmitter License 
--> Integrate a sender-side DEX to accept any ERC20 currency
--> Consider a receiver-side DEX to send any ERC20 currency
+-> Integrate a sender-side DEX to accept any ERC-20 currency
+-> Consider a receiver-side DEX to send any currency
 -> Decide on a business model, build a team, to the moon 🚀 
 
 ## MIT License. Like what you See? 
-Open source but starving. Donate to the builder. 
+Open source. Donate to the builder. 
 
 PYUSD on ETH: 
 ```
@@ -89,14 +97,13 @@ Run the automated setup script to install dependencies and configure your enviro
 
 The script will:
 - ✓ Check Node.js version (requires LTS: 22.x, 20.x, or 18.x)
-- ✓ Create `.env` file (you'll need to add your Alchemy API key)
 - ✓ Install all Hardhat and project dependencies
 - ✓ Compile contracts
 - ✓ Verify setup
 
 **After running setup.sh:**
 1. Get free Alchemy API key from https://www.alchemy.com/
-2. Add it to your `.env` file
+2. Add it to your `.env` file (from `.env.example`)
 3. Run `npx hardhat test` to verify everything works
 
 ### Local Development (Testing Frontend + Backend + Contracts)
@@ -105,32 +112,30 @@ The script will:
 
 ```bash
 ./launch.sh
-# Options available: frontend, backend, etc.
+```
+It will ask:
+```
+What would you like to start?
+
+  1) Everything (Backend + Hardhat + Envio + Frontend)
+  2) Local Testing (Backend + Hardhat + Envio + Frontend + Fake Data)
+  3) Backend + Frontend (development mode)
+  4) Frontend only (connects to existing backend/network)
+  5) Backend only (API server)
+  6) Hardhat + Envio (blockchain testing)
+
+Enter choice [1-6]: 
 ```
 
-### Sepolia Testnet Deployment (For Hackathon Demo)
-
-Deploying ht main subscription service contract:
-
-```bash
-# Quick deployment
-npm run deploy:sepolia
-```
-Deploying the gelato automation contracts:
-
-```bash
-npm run deploy:gelato:sepolia
-```
+### Production Deployment 
 
 Pushing Changes: 
-* Enable auto re-deploy on git push in Envio browser 
+* Enable auto re-deploy on `git push` in Envio browser 
 * Push changes (this will trigger Envio + frontend to rebuild)
 * Go back to Envio, disable auto re-deploy, get endpoint URL 
 * Change endpoint URL for frontend in variables in browswer (will trigger redeploy) 
-* Re-deploy the backend if needed ```cd backend & railway up ```
-* Hire a devOps/Automation engineer 
-
-📚 **Complete deployment guide**: [SEPOLIA_DEPLOYMENT_GUIDE.md](./SEPOLIA_DEPLOYMENT_GUIDE.md)  
+* Re-deploy the backend if needed `cd backend & railway up `
+* Hire a devOps/Automation engineer to automate
 
 # StableRent Notes
 ## Platform Architecture
@@ -192,6 +197,14 @@ Pushing Changes:
 │  Runs every 6 hours, handles failures, sends notifications         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+## Envio 
+* Main files are in envio/
+* Testing scripts: [test-envio](scripts/test-envio-indexer.ts)
+
+## Hardhat 
+* Check out /test for the files that support `npx hardhat test`
+* I kept a record of my hardhat coverage test [coverage results](hardhat_coverage.md)
+* Testing Envio, by backpropagating events, scripts in `scripts/`
 
 ## Note
 
@@ -217,7 +230,6 @@ Cursor + Claude AI was used to support development.
 - Contracts are not yet Verified on Etherscan
 - Confusing handling of the .env files (main, frontend, backend, envio.env, hardcoded, browser)
 - How to handle the allowance going through, but the subscription cancelling/ending early/etc.
- 
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
@@ -232,28 +244,12 @@ Production launch subject to regulatory approval.
 # Like What you See? MIT License
 Open source but starving. Donate to the builder. 
 
-ZEC (preferred): 
-```
-u1s9730x48hwm78q6v6fc9qgwdd46qdkw3lzsvw6ql34sskxhgp82t8xtd7q8j4hsjrhuxglgzj8xdw9llh2qa68alhn59tw72hcjfzu27khep5pktjt077t97t4e529nu8qd88newzvyfhuq37mtjw7jeqqd6y9n8684vmy2me5k30zf5
-```
+ZEC (preferred): `u1s9730x48hwm78q6v6fc9qgwdd46qdkw3lzsvw6ql34sskxhgp82t8xtd7q8j4hsjrhuxglgzj8xdw9llh2qa68alhn59tw72hcjfzu27khep5pktjt077t97t4e529nu8qd88newzvyfhuq37mtjw7jeqqd6y9n8684vmy2me5k30zf5`
+
 But a dollar is a dollar. 
 
-PYUSD on ETH: 
-```
-0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8
-```
+PYUSD on ETH: `0xC24DAA2FcBb102f5Ac711E2Da09010382de9d2B8`
 
-ETH:
-```
-0xcE43a6bEd4bE93DA20fA8F1092Ae3D34662F43b8
-```
+ETH: `0xcE43a6bEd4bE93DA20fA8F1092Ae3D34662F43b8`
 
-BTC: 
-```
-bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn
-```
-
-
-TODO:
-- Fix that envio is not storing transcation hash
-- The frontend did not completely fill out the subscription properly with processor information
+BTC: `bc1qqul68wynrpr6nhe73ahgsgudvsnyrmx3hzr7cn`

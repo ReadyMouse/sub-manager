@@ -22,9 +22,6 @@ Ensure your `.env` file contains:
 # Sepolia Configuration
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 SEPOLIA_PRIVATE_KEY=your-deployer-wallet-private-key
-
-# Optional: Etherscan verification
-ETHERSCAN_API_KEY=your-etherscan-api-key
 ```
 
 ### 3. Railway Environment Variables
@@ -55,7 +52,7 @@ SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 PROCESSOR_PRIVATE_KEY=your-automation-wallet-private-key
 
 # Processor Fee Configuration (loaded from .env file)
-PROCESSOR_FEE_ADDRESS=0x17A4bAf74aC19ab1254fc24D7DcED2ad7639451b
+PROCESSOR_FEE_ADDRESS=0x...
 PROCESSOR_FEE_PERCENT=0.05
 PROCESSOR_FEE_CURRENCY=PYUSD
 PROCESSOR_FEE_ID=1
@@ -117,7 +114,7 @@ The script will:
 
 ### Step 3: Configuration Update
 The script will:
-- Update `backend/env.example` with new contract address
+- Update `backend/.env.example` with new contract address
 - Update `frontend/.env.example` with new addresses
 - Provide configuration commands for manual setup
 
@@ -138,34 +135,6 @@ Check Railway deployment:
 3. Verify environment variables are updated
 4. Test API endpoints
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### Railway CLI Not Found
-```bash
-npm install -g @railway/cli
-railway login
-railway link
-```
-
-#### Low Sepolia ETH Balance
-Get testnet ETH from:
-- [Sepolia Faucet](https://sepoliafaucet.com/)
-- [Alchemy Faucet](https://www.alchemy.com/faucets/ethereum-sepolia)
-
-#### Railway Deployment Fails
-Manually trigger from Railway dashboard:
-1. Go to your Railway project
-2. Click "Deploy" or run `railway up`
-3. Monitor logs for errors
-
-#### Environment Variables Not Updated
-Manually set in Railway dashboard:
-```bash
-CONTRACT_ADDRESS_SEPOLIA=0x...
-DEFAULT_CHAIN_ID=11155111
-```
 
 ### Deployment Logs
 Check deployment logs:
@@ -176,46 +145,3 @@ railway logs --follow
 # Local deployment logs
 tail -f logs/deployment.log
 ```
-
-## 📝 Manual Configuration
-
-If automated deployment fails, manually update:
-
-### Backend Environment
-```bash
-# Update backend/.env
-CONTRACT_ADDRESS_SEPOLIA=0x...
-DEFAULT_CHAIN_ID=11155111
-```
-
-### Frontend Environment
-```bash
-# Update frontend/.env
-VITE_CONTRACT_ADDRESS=0x...
-VITE_PYUSD_ADDRESS=0x669e9c75C6AebBA41f86D39E727FCedd89D5Ea53
-VITE_DEFAULT_CHAIN=sepolia
-VITE_SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
-```
-
-## 🎯 Next Steps After Deployment
-
-1. ✅ **Verify Contract**: Check on Etherscan
-2. ✅ **Test Backend**: Verify API endpoints work
-3. ✅ **Test Frontend**: Ensure contract integration works
-4. ✅ **Monitor**: Check Railway logs and metrics
-5. ✅ **Test Full Flow**: Create test subscriptions and payments
-
-## 📚 Additional Resources
-
-- [Railway Documentation](https://docs.railway.app/)
-- [Hardhat Documentation](https://hardhat.org/docs)
-- [Etherscan Verification](https://docs.etherscan.io/tutorials/verifying-contracts-programmatically)
-
-## 🆘 Support
-
-If you encounter issues:
-1. Check the troubleshooting section above
-2. Review deployment logs
-3. Verify all prerequisites are met
-4. Check Railway dashboard for backend issues
-5. Verify smart contract deployment on Etherscan
