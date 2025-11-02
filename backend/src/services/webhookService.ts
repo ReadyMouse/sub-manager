@@ -6,6 +6,7 @@ import {
   SubscriptionCancelledEvent,
 } from '../types';
 import { NotificationService } from './notificationService';
+import { env } from '../config/env';
 
 export class WebhookService {
   /**
@@ -80,13 +81,13 @@ export class WebhookService {
       : null;
 
     // Create or update subscription
-    const subscriptionKey = `1:${subscriptionId}`; // chainId:onChainId
+    const subscriptionKey = `${env.DEFAULT_CHAIN_ID}:${subscriptionId}`; // chainId:onChainId
 
     await prisma.subscription.upsert({
       where: { id: subscriptionKey },
       create: {
         id: subscriptionKey,
-        chainId: 1,
+        chainId: parseInt(env.DEFAULT_CHAIN_ID),
         onChainId: subscriptionId,
         senderId: sender?.id || senderId,
         senderWalletAddress: senderAddress.toLowerCase(),
@@ -164,7 +165,7 @@ export class WebhookService {
       nextPaymentDue,
     } = event;
 
-    const subscriptionKey = `1:${subscriptionId}`;
+    const subscriptionKey = `${env.DEFAULT_CHAIN_ID}:${subscriptionId}`;
     const paymentTimestamp = new Date(parseInt(timestamp) * 1000);
     const nextPaymentDate = new Date(parseInt(nextPaymentDue) * 1000);
 
@@ -237,7 +238,7 @@ export class WebhookService {
       failedCount,
     } = event;
 
-    const subscriptionKey = `1:${subscriptionId}`;
+    const subscriptionKey = `${env.DEFAULT_CHAIN_ID}:${subscriptionId}`;
     const paymentTimestamp = new Date(parseInt(timestamp) * 1000);
 
     // Update subscription
@@ -305,7 +306,7 @@ export class WebhookService {
       reason,
     } = event;
 
-    const subscriptionKey = `1:${subscriptionId}`;
+    const subscriptionKey = `${env.DEFAULT_CHAIN_ID}:${subscriptionId}`;
     const cancelledAt = new Date(parseInt(timestamp) * 1000);
 
     // Update subscription

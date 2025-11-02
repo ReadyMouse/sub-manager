@@ -57,7 +57,7 @@ export const CreateSubscription: React.FC = () => {
     senderCurrency: 'PYUSD',
     amount: '',
     interval: PAYMENT_INTERVALS.MONTHLY as number,
-    startDate: new Date().toISOString().split('T')[0], // Default to today
+    startDate: new Date().toISOString().slice(0, 16), // Default to current date and time
     endDate: '',
     maxPayments: '',
     recipientIdentifier: '', // Email or username to look up recipient
@@ -931,18 +931,18 @@ export const CreateSubscription: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date <span className="text-red-500">*</span>
+                  Start Date & Time <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={formData.startDate}
                   onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                   className="input"
                   required
-                  min={new Date().toISOString().split('T')[0]} // Can't be in the past
+                  min={new Date().toISOString().slice(0, 16)} // Can't be in the past
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  When the first payment should be due
+                  When the first payment should be due (local time)
                 </p>
               </div>
             </div>
@@ -950,17 +950,17 @@ export const CreateSubscription: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date (Optional)
+                  End Date & Time (Optional)
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={formData.endDate}
                   onChange={e => setFormData({ ...formData, endDate: e.target.value })}
                   className="input"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().slice(0, 16)}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Leave empty for indefinite subscription
+                  Leave empty for indefinite subscription (local time)
                 </p>
               </div>
 
