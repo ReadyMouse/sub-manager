@@ -16,9 +16,8 @@ export const CreateSubscription: React.FC = () => {
   const { signMessageAsync } = useSignMessage();
   const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess, hash: transactionHash } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
-  // Kept for future use - currently disabled to force new allowance approval for each subscription
-  // @ts-expect-error - allowance is intentionally unused
-  const { allowance } = usePYUSDAllowance(
+  // Get current allowance to check if we need to reset it to 0 first (PYUSD requirement)
+  const { allowance, refetch: refetchAllowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
   );
@@ -581,10 +580,69 @@ export const CreateSubscription: React.FC = () => {
         PYUSD: CONTRACTS.PYUSD
       });
 
-      toast.info('Wallet Action Required', 'Please sign the transaction in your wallet to approve PYUSD spending.');
+      // PYUSD (like USDT) requires resetting allowance to 0 before setting a new value
+      // Refetch current allowance to ensure we have the latest value
+      const { data: currentAllowanceData } = await refetchAllowance();
+      const currentAllowance = currentAllowanceData || BigInt(0);
+      const currentAllowanceUSD = Number(currentAllowance) / 1_000_000;
+      console.log('Current allowance:', currentAllowance.toString(), `($${currentAllowanceUSD.toFixed(2)})`);
+      
+      // Calculate the TOTAL allowance needed (existing + new subscription)
+      const newSubscriptionAmount = parseFloat(approvalAmount);
+      const totalAllowanceNeeded = currentAllowanceUSD + newSubscriptionAmount;
+      const totalAllowanceNeededStr = totalAllowanceNeeded.toFixed(2);
+      
+      console.log('Allowance calculation:', {
+        existingAllowance: `$${currentAllowanceUSD.toFixed(2)}`,
+        newSubscriptionNeeds: `$${newSubscriptionAmount.toFixed(2)}`,
+        totalNeeded: `$${totalAllowanceNeeded.toFixed(2)}`
+      });
+      
+      // Check if we actually need to increase allowance
+      if (currentAllowanceUSD >= totalAllowanceNeeded) {
+        console.log('✓ Existing allowance is sufficient, no need to approve more');
+        toast.success('Allowance Sufficient', `You already have $${currentAllowanceUSD.toFixed(2)} approved, which covers this subscription.`);
+        setIsApproved(true);
+        return;
+      }
+      
+      // We need to increase the allowance, which requires reset for PYUSD
+      if (currentAllowance > BigInt(0)) {
+        console.log('⚠️  Existing allowance detected, need to increase it');
+        console.log(`Increasing from $${currentAllowanceUSD.toFixed(2)} to $${totalAllowanceNeeded.toFixed(2)}`);
+        toast.info('Wallet Action Required', `Resetting existing allowance (step 1 of 2). Current: $${currentAllowanceUSD.toFixed(2)}, New total: $${totalAllowanceNeeded.toFixed(2)}`);
+        
+        try {
+          const resetResult = await approve(CONTRACTS.StableRentSubscription as Address, '0');
+          console.log('✅ Reset transaction submitted:', resetResult);
+          toast.info('Waiting...', 'Waiting for reset transaction to confirm (this may take 10-30 seconds)...');
+          
+          // Wait longer for the reset to complete and propagate
+          // On Sepolia testnet, blocks come every ~12 seconds
+          await new Promise(resolve => setTimeout(resolve, 15000));
+          
+          // Verify the reset was successful
+          const { data: verifyAllowance } = await refetchAllowance();
+          if (verifyAllowance && verifyAllowance > BigInt(0)) {
+            console.warn('⚠️  Allowance still not reset, waiting a bit more...');
+            await new Promise(resolve => setTimeout(resolve, 10000));
+          }
+          console.log('✅ Allowance reset confirmed');
+        } catch (resetErr) {
+          console.error('❌ Failed to reset allowance:', resetErr);
+          toast.error('Reset Failed', 'Could not reset existing allowance. Please try again.');
+          throw resetErr;
+        }
+      } else {
+        console.log('✓ No existing allowance detected, proceeding directly to approval');
+      }
+
+      // Use the TOTAL allowance needed (not just this subscription)
+      const finalApprovalAmount = totalAllowanceNeededStr;
+      toast.info('Wallet Action Required', `Please sign to approve $${finalApprovalAmount} total PYUSD spending (covers all your subscriptions).`);
       
       try {
-        const result = await approve(CONTRACTS.StableRentSubscription as Address, approvalAmount);
+        const result = await approve(CONTRACTS.StableRentSubscription as Address, finalApprovalAmount);
         console.log('✅ Approval transaction submitted successfully!');
         console.log('Transaction hash:', result);
         console.log('=== END APPROVAL DEBUG ===');
