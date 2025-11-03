@@ -10,7 +10,7 @@ import { parsePYUSD } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { decodeEventLog } from 'viem';
 import type { Address } from 'viem';
-import StableRentSubscriptionABI from '../contracts/StableRentSubscription.json';
+import { StableRentSubscriptionABI } from '../lib/abi';
 
 export const CreateSubscription: React.FC = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export const CreateSubscription: React.FC = () => {
   const toast = useToast();
   
   // Wait for transaction receipt to extract subscription ID
-  const { data: receipt, isLoading: isReceiptLoading } = useWaitForTransactionReceipt({
+  const { data: receipt } = useWaitForTransactionReceipt({
     hash: transactionHash,
   });
 
@@ -436,7 +436,7 @@ export const CreateSubscription: React.FC = () => {
             for (const log of receipt.logs) {
               try {
                 const decodedLog = decodeEventLog({
-                  abi: StableRentSubscriptionABI.abi,
+                  abi: StableRentSubscriptionABI,
                   data: log.data,
                   topics: log.topics,
                 });
