@@ -134,12 +134,32 @@ export class AutomationService {
         // Payment successful - update database
         await this.handleSuccessfulPayment(subscription, txHash);
       } else {
-        // Payment failed - handle failure
-        await this.handleFailedPayment(subscription, 'Smart contract call failed');
+        // Check if subscription was cancelled (it will have isActive=false now)
+        const updatedSub = await prisma.subscription.findUnique({
+          where: { id: subscription.id },
+          select: { isActive: true, cancellationReason: true }
+        });
+        
+        // Only treat as failed payment if subscription is still active
+        // If it's now inactive, it means it was cancelled on-chain
+        if (updatedSub?.isActive) {
+          await this.handleFailedPayment(subscription, 'Smart contract call failed');
+        } else {
+          logger.info(`Subscription ${subscription.id} was cancelled on-chain, skipping failure handling`);
+        }
       }
     } catch (error) {
       logger.error(`Error processing subscription ${subscription.id}:`, error);
-      await this.handleFailedPayment(subscription, error instanceof Error ? error.message : 'Unknown error');
+      
+      // Check if subscription still exists and is active before handling as failed payment
+      const subscription_check = await prisma.subscription.findUnique({
+        where: { id: subscription.id },
+        select: { isActive: true }
+      });
+      
+      if (subscription_check?.isActive) {
+        await this.handleFailedPayment(subscription, error instanceof Error ? error.message : 'Unknown error');
+      }
     }
   }
 
@@ -176,6 +196,14 @@ export class AutomationService {
         return null;
       }
     } catch (error) {
+      // Check if the error indicates the subscription doesn't exist on-chain
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Subscription does not exist')) {
+        logger.info(`Subscription ${subscription.id} does not exist on-chain, marking as cancelled`);
+        await this.cancelSubscription(subscription.id, 'cancelled_on_chain');
+        return null;
+      }
+      
       logger.error(`Smart contract call failed for subscription ${subscription.id}:`, error);
       return null;
     }

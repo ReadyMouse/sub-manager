@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useSignMessage } from 'wagmi';
+import { useAccount, useSignMessage, useWaitForTransactionReceipt } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { useStableRentContract, usePYUSD, usePYUSDAllowance, usePYUSDBalance } from '../hooks/useContract';
 import { CONTRACTS, PAYMENT_INTERVALS } from '../lib/constants';
@@ -8,7 +8,9 @@ import { ToastContainer } from '../components/Toast';
 import { apiClient, subscriptionApi, configApi } from '../lib/api';
 import { parsePYUSD } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import { decodeEventLog } from 'viem';
 import type { Address } from 'viem';
+import StableRentSubscriptionABI from '../contracts/StableRentSubscription.json';
 
 export const CreateSubscription: React.FC = () => {
   const navigate = useNavigate();
@@ -17,13 +19,18 @@ export const CreateSubscription: React.FC = () => {
   const { createSubscription, isPending: isCreating, isSuccess: isCreateSuccess, hash: transactionHash } = useStableRentContract();
   const { approve, isPending: isApproving, isSuccess: isApproveSuccess, error: approveError, hash: approveHash } = usePYUSD();
   // Get current allowance to check if we need to reset it to 0 first (PYUSD requirement)
-  const { allowance, refetch: refetchAllowance } = usePYUSDAllowance(
+  const { refetch: refetchAllowance } = usePYUSDAllowance(
     address,
     CONTRACTS.StableRentSubscription as Address
   );
   const { balance: pyusdBalance } = usePYUSDBalance(address);
   const { isAuthenticated, loginWithWallet } = useAuth();
   const toast = useToast();
+  
+  // Wait for transaction receipt to extract subscription ID
+  const { data: receipt, isLoading: isReceiptLoading } = useWaitForTransactionReceipt({
+    hash: transactionHash,
+  });
 
   const [isApproved, setIsApproved] = useState(false);
   const [allowanceType, setAllowanceType] = useState<'calculated' | 'custom'>('calculated');
@@ -405,7 +412,7 @@ export const CreateSubscription: React.FC = () => {
 
   // Handle create success
   useEffect(() => {
-    if (isCreateSuccess && !hasShownCreateSuccess) {
+    if (isCreateSuccess && receipt && !hasShownCreateSuccess) {
       setHasShownCreateSuccess(true);
       
       // Save subscription metadata to database
@@ -422,9 +429,35 @@ export const CreateSubscription: React.FC = () => {
             return;
           }
 
-          // Use transaction hash as temporary subscription ID
-          // In a real implementation, you'd parse the transaction receipt to get the actual subscription ID
-          const subscriptionId = transactionHash || Date.now().toString();
+          // Extract subscription ID from transaction logs
+          let subscriptionId: string | null = null;
+          
+          if (receipt.logs && receipt.logs.length > 0) {
+            for (const log of receipt.logs) {
+              try {
+                const decodedLog = decodeEventLog({
+                  abi: StableRentSubscriptionABI.abi,
+                  data: log.data,
+                  topics: log.topics,
+                });
+                
+                if (decodedLog.eventName === 'SubscriptionCreated') {
+                  subscriptionId = (decodedLog.args as any).subscriptionId.toString();
+                  console.log('Extracted subscription ID from event:', subscriptionId);
+                  break;
+                }
+              } catch (e) {
+                // Skip logs that don't match our ABI
+                continue;
+              }
+            }
+          }
+          
+          // Fallback to transaction hash if we can't extract the ID
+          if (!subscriptionId) {
+            console.warn('Could not extract subscription ID from receipt, using transaction hash as fallback');
+            subscriptionId = transactionHash || Date.now().toString();
+          }
           
           // Determine recipientId - null for wallet-only recipients
           const recipientIdValue: string | null = recipientInputType === 'lookup' 
@@ -489,7 +522,7 @@ export const CreateSubscription: React.FC = () => {
       
       saveSubscriptionMetadata();
     }
-  }, [isCreateSuccess, navigate, toast, hasShownCreateSuccess, formData, recipientInputType, recipientDetails, address, isAuthenticated, loginWithWallet, signMessageAsync, transactionHash]);
+  }, [isCreateSuccess, receipt, navigate, toast, hasShownCreateSuccess, formData, recipientInputType, recipientDetails, address, isAuthenticated, loginWithWallet, signMessageAsync, transactionHash]);
 
   // Calculate total allowance needed for bulk approval
   const calculateTotalAllowance = (): { total: string; paymentCount: number } => {
