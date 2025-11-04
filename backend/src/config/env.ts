@@ -43,6 +43,7 @@ const envSchema = z.object({
   // Blockchain
   DEFAULT_CHAIN_ID: z.string().default('1'),
   CONTRACT_ADDRESS_SEPOLIA: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  PYUSD_ADDRESS_SEPOLIA: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
   SEPOLIA_RPC_URL: z.string().url().optional(),
   PROCESSOR_PRIVATE_KEY: z.string().min(64).optional(), // Private key for automation wallet
   

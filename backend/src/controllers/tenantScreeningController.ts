@@ -35,11 +35,16 @@ const getDeploymentConfig = () => {
 const deployment = getDeploymentConfig();
 
 // Log deployment status on module load
-if (!deployment) {
-  console.error('⚠️  WARNING: No deployment config loaded - PYUSD balance checks will fail');
+console.log('\n🔧 Tenant Screening Configuration Check:');
+if (env.PYUSD_ADDRESS_SEPOLIA) {
+  console.log('✅ PYUSD Address from ENV variable:', env.PYUSD_ADDRESS_SEPOLIA);
+} else if (deployment?.contracts?.PYUSD) {
+  console.log('✅ PYUSD Address from deployment file:', deployment.contracts.PYUSD);
 } else {
-  console.log('🚀 Tenant Screening initialized with PYUSD address:', deployment.contracts?.PYUSD);
+  console.error('❌ WARNING: No PYUSD address configured!');
+  console.error('   Set PYUSD_ADDRESS_SEPOLIA environment variable or ensure deployments/sepolia.json exists');
 }
+console.log('');
 
 export class TenantScreeningController {
   /**
@@ -66,12 +71,13 @@ export class TenantScreeningController {
       const balanceWei = await provider.getBalance(checksumAddress);
       const balanceEth = ethers.formatEther(balanceWei);
 
-      // Get PYUSD balance from deployment config
+      // Get PYUSD balance - prefer env variable, fallback to deployment config
       let pyusdBalance = '0';
-      const pyusdAddress = deployment?.contracts?.PYUSD;
+      const pyusdAddress = env.PYUSD_ADDRESS_SEPOLIA || deployment?.contracts?.PYUSD;
       
       console.log(`🔍 Fetching PYUSD balance for ${checksumAddress}`);
       console.log(`   PYUSD Contract Address: ${pyusdAddress || 'NOT CONFIGURED'}`);
+      console.log(`   Source: ${env.PYUSD_ADDRESS_SEPOLIA ? 'ENV variable' : deployment?.contracts?.PYUSD ? 'Deployment file' : 'NONE'}`);
       
       if (pyusdAddress) {
         try {
@@ -87,7 +93,7 @@ export class TenantScreeningController {
           console.error('   ❌ Error fetching PYUSD balance:', error instanceof Error ? error.message : error);
         }
       } else {
-        console.error('   ⚠️  No PYUSD address configured in deployment file');
+        console.error('   ⚠️  No PYUSD address configured - set PYUSD_ADDRESS_SEPOLIA env variable');
       }
 
       // Get associated user info if wallet is connected to an account
