@@ -108,17 +108,80 @@ export const TenantScreening = () => {
         </p>
       </div>
 
+      {/* Blockchain Transparency Info Card */}
+      <div className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl shadow-medium p-6 mb-8 border border-blue-100">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-12 h-12 bg-brand-teal rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-brand-navy mb-2">
+              Blockchain Transparency for Credit Assessment
+            </h3>
+            <p className="text-gray-700 mb-3">
+              Traditional credit scores don't tell the whole story. Blockchain technology provides an 
+              <span className="font-semibold"> immutable and transparent</span> record of financial behavior 
+              that can't be altered or hidden.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-brand-navy">Immutable Records</p>
+                  <p className="text-sm text-gray-600">
+                    Transaction history cannot be deleted or modified, providing an honest financial track record
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-brand-navy">Complete Transparency</p>
+                  <p className="text-sm text-gray-600">
+                    View real-time account balances and payment patterns for informed screening decisions
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-brand-navy">Alternative Credit Assessment</p>
+                  <p className="text-sm text-gray-600">
+                    Perfect for applicants with limited or no traditional credit history
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-brand-teal flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-brand-navy">Instant Verification</p>
+                  <p className="text-sm text-gray-600">
+                    No waiting for credit reports—verify financial responsibility in seconds
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Wallet Balance Search */}
         <div className="bg-white rounded-xl shadow-medium p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-brand-teal/10 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">💰</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-brand-navy">Check Wallet Balance</h2>
-              <p className="text-sm text-gray-600">Enter a wallet address to view balances</p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-brand-navy mb-1">Check Wallet Balance</h2>
+            <p className="text-sm text-gray-600">Enter a wallet address to view balances</p>
           </div>
 
           <form onSubmit={handleWalletSearch} className="space-y-4">
@@ -192,14 +255,9 @@ export const TenantScreening = () => {
 
         {/* Username Search */}
         <div className="bg-white rounded-xl shadow-medium p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-brand-teal/10 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">📋</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-brand-navy">Subscription History</h2>
-              <p className="text-sm text-gray-600">Search by username or email</p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-brand-navy mb-1">Subscription History</h2>
+            <p className="text-sm text-gray-600">Search by username or email</p>
           </div>
 
           <form onSubmit={handleUsernameSearch} className="space-y-4">
