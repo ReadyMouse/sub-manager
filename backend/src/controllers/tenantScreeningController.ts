@@ -8,11 +8,24 @@ import fs from 'fs';
 // Load PYUSD contract address from deployment file
 const getDeploymentConfig = () => {
   try {
-    const deploymentPath = path.join(__dirname, '../../deployments/sepolia.json');
-    if (fs.existsSync(deploymentPath)) {
-      const deployment = JSON.parse(fs.readFileSync(deploymentPath, 'utf-8'));
-      return deployment;
+    // Try both possible paths (source and compiled)
+    const possiblePaths = [
+      path.join(__dirname, '../../deployments/sepolia.json'),  // From dist/
+      path.join(__dirname, '../../../deployments/sepolia.json'), // From dist/controllers/
+      path.join(process.cwd(), 'deployments/sepolia.json'), // From project root
+    ];
+    
+    for (const deploymentPath of possiblePaths) {
+      if (fs.existsSync(deploymentPath)) {
+        const deployment = JSON.parse(fs.readFileSync(deploymentPath, 'utf-8'));
+        console.log(`✅ Loaded deployment config from: ${deploymentPath}`);
+        console.log(`📍 PYUSD Address: ${deployment?.contracts?.PYUSD}`);
+        return deployment;
+      }
     }
+    
+    console.error('❌ Could not find deployment file in any expected location');
+    console.error('Searched paths:', possiblePaths);
   } catch (error) {
     console.error('Error loading deployment config:', error);
   }
@@ -20,6 +33,13 @@ const getDeploymentConfig = () => {
 };
 
 const deployment = getDeploymentConfig();
+
+// Log deployment status on module load
+if (!deployment) {
+  console.error('⚠️  WARNING: No deployment config loaded - PYUSD balance checks will fail');
+} else {
+  console.log('🚀 Tenant Screening initialized with PYUSD address:', deployment.contracts?.PYUSD);
+}
 
 export class TenantScreeningController {
   /**
@@ -50,6 +70,9 @@ export class TenantScreeningController {
       let pyusdBalance = '0';
       const pyusdAddress = deployment?.contracts?.PYUSD;
       
+      console.log(`🔍 Fetching PYUSD balance for ${checksumAddress}`);
+      console.log(`   PYUSD Contract Address: ${pyusdAddress || 'NOT CONFIGURED'}`);
+      
       if (pyusdAddress) {
         try {
           const pyusdContract = new ethers.Contract(
@@ -59,9 +82,12 @@ export class TenantScreeningController {
           );
           const pyusdBalanceWei = await pyusdContract.balanceOf(checksumAddress);
           pyusdBalance = ethers.formatUnits(pyusdBalanceWei, 6); // PYUSD has 6 decimals
+          console.log(`   ✅ PYUSD Balance: ${pyusdBalance} PYUSD (${pyusdBalanceWei.toString()} wei)`);
         } catch (error) {
-          console.error('Error fetching PYUSD balance:', error);
+          console.error('   ❌ Error fetching PYUSD balance:', error instanceof Error ? error.message : error);
         }
+      } else {
+        console.error('   ⚠️  No PYUSD address configured in deployment file');
       }
 
       // Get associated user info if wallet is connected to an account
