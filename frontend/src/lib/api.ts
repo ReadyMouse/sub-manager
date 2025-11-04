@@ -181,5 +181,18 @@ export const configApi = {
   }
 };
 
+/**
+ * Tenant Screening API endpoints
+ */
+export const tenantScreeningApi = {
+  async getWalletBalance(walletAddress: string, token?: string) {
+    return apiClient.get(`/api/tenant-screening/balance/${walletAddress}`, { token });
+  },
+
+  async getSubscriptionsByUsername(username: string, token?: string) {
+    return apiClient.get(`/api/tenant-screening/subscriptions?username=${encodeURIComponent(username)}`, { token });
+  },
+};
+
 export default apiClient;
 

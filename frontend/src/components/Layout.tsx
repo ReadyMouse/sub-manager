@@ -38,6 +38,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/create', label: 'Set Up Payment' },
+    { path: '/tenant-screening', label: 'Tenant Screening' },
   ];
 
   const learnMoreItems = [

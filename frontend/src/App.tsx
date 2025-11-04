@@ -15,6 +15,7 @@ import { Settings } from './pages/Settings';
 import { EnvioAdmin } from './pages/EnvioAdmin';
 import { ForResidents } from './pages/ForResidents';
 import { ForPropertyOwners } from './pages/ForPropertyOwners';
+import { TenantScreening } from './pages/TenantScreening';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/create" element={<CreateSubscription />} />
                 <Route path="/subscriptions" element={<MySubscriptions />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/tenant-screening" element={<TenantScreening />} />
                 <Route path="/envio-admin" element={<EnvioAdmin />} />
                 
                 {/* Legacy redirect - /profile now goes to /settings */}
