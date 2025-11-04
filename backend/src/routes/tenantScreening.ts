@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import { TenantScreeningController } from '../controllers/tenantScreeningController';
-import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-// All tenant screening routes require authentication
-router.use(authenticate);
+// Tenant screening routes are public - no authentication required
+// This allows property owners to screen potential tenants without requiring them to have an account
 
 /**
  * GET /api/tenant-screening/balance/:walletAddress
