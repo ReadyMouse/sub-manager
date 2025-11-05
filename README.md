@@ -3,6 +3,7 @@
 StableRent is a tool for property owners and residents to use Stablecoin digital assets. Property owners can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while residents can automatically send rent payments using stablecoins. 
 
 **🚀 LIVE DEMO:** https://stablerent.vercel.app/
+
 **Screenshot DEMO:** [DEMO](DEMO.md)
 
 **The Problem We're Solving:**
@@ -74,12 +75,12 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 ![Business Model graphic](/frontend/src/assets/business_mdoels_grey.png)
 
 ## Potential Path Forward
-
+```
 -> Investigate need for Money Transmitter License 
 -> Integrate a sender-side DEX to accept any ERC-20 currency
 -> Consider a receiver-side DEX to send any currency
 -> Decide on a business model, build a team, to the moon 🚀 
-
+```
 ## MIT License. Like what you See? 
 Open source. Donate to the builder. 
 
