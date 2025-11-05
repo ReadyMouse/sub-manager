@@ -34,8 +34,10 @@ Triggering new smart contract call to process a recurring payment
 
 ## An actual payment 
 
+[Etherscan Transcation](https://sepolia.etherscan.io/tx/0x18a0fc7d2ed966991d6a73549edf7dab4d53aef861281b2763b651bca94f16d8)
+
+![Successful Payment](./images/success_payment_etherscan.png)
 
 
 
-## Recurring payment 
 

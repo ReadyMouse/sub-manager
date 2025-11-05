@@ -48,6 +48,8 @@ StableRent enables users to create recurring rental payments using PYUSD (PayPal
 
 **Envio** [Envio endpoint](https://indexer.dev.hyperindex.xyz/02074d1/v1/graphql)
 
+**Example Valid Payment Transcation Hash** [Etherscan](https://sepolia.etherscan.io/tx/0x18a0fc7d2ed966991d6a73549edf7dab4d53aef861281b2763b651bca94f16d8)
+
 ### Other Documentation Files
 
 * [Relevant Links and Hashes](DEMO.md)
