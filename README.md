@@ -3,6 +3,7 @@
 StableRent is a tool for property owners and residents to use Stablecoin digital assets. Property owners can screen tenants by checking account balances of assets and accept Paypal's PYUSD, while residents can automatically send rent payments using stablecoins. 
 
 **🚀 LIVE DEMO:** https://stablerent.vercel.app/
+**Screenshot DEMO:** [DEMO](DEMO.md)
 
 **The Problem We're Solving:**
 - The US residential rental market is $291 BILLION dollars
