@@ -234,6 +234,7 @@ Cursor + Claude AI was used to support development.
 - Contracts are not yet Verified on Etherscan
 - Confusing handling of the .env files (main, frontend, backend, envio.env, hardcoded, browser)
 - How to handle the allowance going through, but the subscription cancelling/ending early/etc.
+- Since a single wallet can only have 1 allowance per smart contract, we need to cancel the current allowance and up the value for the 2nd subscription. Perhaps conside a bank of smart contracts (given average number of subscriptions per person) so we don't need to add complexity to signing. Of course needs checks for this, if a use wants more subscriptions than we have contracts (current implementation).
 
 - Listing Resource: 
   - Renters willing to pay rent "I would pay X a month for a 3bed, 2 bath in (zipcode)"
